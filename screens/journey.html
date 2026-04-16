@@ -1,0 +1,482 @@
+<!-- ══════════════════════════════════════
+     PANTALLA 7: MI JOURNEY
+══════════════════════════════════════ -->
+<section id="screen-journey" class="screen">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="logo-icon">🎓</div>
+      <span class="brand-name">SELF SCI</span>
+    </div>
+    <div class="navbar-right">
+      <div class="navbar-points"><i class="fas fa-star"></i> <span>340</span> pts</div>
+      <div class="navbar-avatar">AG</div>
+    </div>
+  </nav>
+
+  <div style="padding:32px 20px;flex:1;">
+    <div class="container-wide">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <span class="badge badge-cyan">Supervisor de Producción</span>
+            <span class="badge badge-orange">Nivel 2 — Avanzado Principiante</span>
+          </div>
+          <h1 class="page-title">Mi Journey de Aprendizaje</h1>
+          <p class="page-subtitle">Programa personalizado · 12 semanas · Inicio: 16 Abr 2025</p>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <button class="btn btn-outline btn-sm" onclick="navigate('screen-dashboard')">
+            <i class="fas fa-chart-bar"></i> Mi progreso
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats rápidos -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--cyan);">62%</div>
+          <div class="stat-label">Diagnóstico Inicial</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--purple);">6/10</div>
+          <div class="stat-label">Módulos del programa</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--magenta);">340</div>
+          <div class="stat-label">Puntos acumulados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:#00ff88;">12</div>
+          <div class="stat-label">Semanas · Cierre: 11 Jul</div>
+        </div>
+      </div>
+
+      <!-- Grid principal: Journey + Calendario -->
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:24px;">
+
+        <!-- COLUMNA IZQUIERDA: Journey map -->
+        <div>
+          <h3 class="section-title" style="margin-bottom:20px;">
+            <i class="fas fa-route" style="color:var(--cyan);"></i> <span>Ruta de Módulos</span>
+          </h3>
+
+          <div class="journey-map">
+
+            <!-- Módulo 0: Diagnóstico -->
+            <div class="journey-node">
+              <div class="journey-dot done">✓</div>
+              <div class="journey-content">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                  <div>
+                    <span class="badge badge-green" style="margin-bottom:6px;">✓ Completado</span>
+                    <h4 style="font-weight:700;margin-bottom:4px;">Diagnóstico Inicial</h4>
+                    <p style="font-size:13px;color:rgba(255,255,255,0.5);">Evaluación de competencias base</p>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:20px;font-weight:800;color:var(--cyan);">62%</div>
+                    <div style="font-size:11px;color:rgba(255,255,255,0.4);">Puntaje</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Módulo 1: Activo -->
+            <div class="journey-node">
+              <div class="journey-dot active">►</div>
+              <div class="journey-content active-module" style="cursor:pointer;" onclick="navigate('screen-modulo')">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+                  <div>
+                    <span class="badge badge-magenta" style="margin-bottom:6px;">🔥 En curso</span>
+                    <h4 style="font-weight:700;margin-bottom:4px;">Módulo 1: Fundamentos del Liderazgo Operativo</h4>
+                    <p style="font-size:13px;color:rgba(255,255,255,0.5);">Estilos de liderazgo · Comunicación efectiva · Gestión del equipo</p>
+                  </div>
+                </div>
+                <div style="margin-bottom:10px;">
+                  <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:4px;">
+                    <span>Progreso del módulo</span><span style="color:var(--magenta);">40%</span>
+                  </div>
+                  <div class="progress-bar-wrap" style="height:6px;">
+                    <div class="progress-bar-fill" style="width:40%;background:linear-gradient(90deg,var(--magenta),var(--purple));"></div>
+                  </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+                  <div style="color:rgba(255,255,255,0.4);">
+                    <i class="fas fa-clock" style="color:var(--magenta);"></i> Cierra en <strong style="color:var(--magenta);">5 días</strong>
+                  </div>
+                  <button class="btn btn-magenta btn-sm">Continuar →</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Módulo 2 -->
+            <div class="journey-node">
+              <div class="journey-dot locked">🔒</div>
+              <div class="journey-content" style="opacity:0.6;">
+                <span class="badge badge-purple" style="margin-bottom:6px;">Próximo · Semana 3</span>
+                <h4 style="font-weight:700;margin-bottom:4px;">Módulo 2: Comunicación Asertiva y Gestión de Conflictos</h4>
+                <p style="font-size:13px;color:rgba(255,255,255,0.4);">Feedback efectivo · Resolución de conflictos · Escucha activa</p>
+              </div>
+            </div>
+
+            <!-- Módulo 3 -->
+            <div class="journey-node">
+              <div class="journey-dot locked">🔒</div>
+              <div class="journey-content" style="opacity:0.5;">
+                <span class="badge badge-purple" style="margin-bottom:6px;">Semana 5</span>
+                <h4 style="font-weight:700;margin-bottom:4px;">Módulo 3: Toma de Decisiones con Datos</h4>
+                <p style="font-size:13px;color:rgba(255,255,255,0.4);">Indicadores clave · Análisis de causa raíz · Herramientas Lean</p>
+              </div>
+            </div>
+
+            <!-- Módulo 4 -->
+            <div class="journey-node">
+              <div class="journey-dot locked">🔒</div>
+              <div class="journey-content" style="opacity:0.4;">
+                <span class="badge badge-purple" style="margin-bottom:6px;">Semana 7</span>
+                <h4 style="font-weight:700;margin-bottom:4px;">Módulo 4: Gestión del Cambio y Adaptabilidad</h4>
+                <p style="font-size:13px;color:rgba(255,255,255,0.4);">Curva del cambio · Resistencia · Agilidad organizacional</p>
+              </div>
+            </div>
+
+            <!-- Evaluación POST -->
+            <div class="journey-node">
+              <div class="journey-dot locked">🏁</div>
+              <div class="journey-content" style="opacity:0.4;background:linear-gradient(135deg,rgba(0,216,218,0.05),rgba(117,114,233,0.05));">
+                <span class="badge badge-cyan" style="margin-bottom:6px;">Semana 12 · Cierre</span>
+                <h4 style="font-weight:700;margin-bottom:4px;">Evaluación Final + Diploma</h4>
+                <p style="font-size:13px;color:rgba(255,255,255,0.4);">Evaluación post · Informe Kirkpatrick · Certificado digital</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: Calendario + Gamificación -->
+        <div style="display:flex;flex-direction:column;gap:20px;">
+
+          <!-- Calendario -->
+          <div class="card">
+            <h3 class="section-title" style="margin-bottom:16px;">
+              <i class="fas fa-calendar" style="color:var(--cyan);"></i> <span>Abril 2025</span>
+            </h3>
+            <div class="calendar-grid" style="margin-bottom:8px;">
+              <div class="calendar-header">L</div>
+              <div class="calendar-header">M</div>
+              <div class="calendar-header">X</div>
+              <div class="calendar-header">J</div>
+              <div class="calendar-header">V</div>
+              <div class="calendar-header">S</div>
+              <div class="calendar-header">D</div>
+
+              <!-- Semana 1 -->
+              <div class="calendar-day empty"></div>
+              <div class="calendar-day">1</div>
+              <div class="calendar-day">2</div>
+              <div class="calendar-day">3</div>
+              <div class="calendar-day">4</div>
+              <div class="calendar-day">5</div>
+              <div class="calendar-day">6</div>
+              <!-- Semana 2 -->
+              <div class="calendar-day">7</div>
+              <div class="calendar-day has-event">8</div>
+              <div class="calendar-day">9</div>
+              <div class="calendar-day">10</div>
+              <div class="calendar-day sync-event">11</div>
+              <div class="calendar-day">12</div>
+              <div class="calendar-day">13</div>
+              <!-- Semana 3 -->
+              <div class="calendar-day">14</div>
+              <div class="calendar-day">15</div>
+              <div class="calendar-day today">16</div>
+              <div class="calendar-day has-event">17</div>
+              <div class="calendar-day">18</div>
+              <div class="calendar-day">19</div>
+              <div class="calendar-day">20</div>
+              <!-- Semana 4 -->
+              <div class="calendar-day sync-event">21</div>
+              <div class="calendar-day">22</div>
+              <div class="calendar-day has-event">23</div>
+              <div class="calendar-day">24</div>
+              <div class="calendar-day">25</div>
+              <div class="calendar-day">26</div>
+              <div class="calendar-day">27</div>
+              <!-- Semana 5 -->
+              <div class="calendar-day">28</div>
+              <div class="calendar-day">29</div>
+              <div class="calendar-day">30</div>
+              <div class="calendar-day empty"></div>
+              <div class="calendar-day empty"></div>
+              <div class="calendar-day empty"></div>
+              <div class="calendar-day empty"></div>
+            </div>
+
+            <!-- Leyenda -->
+            <div style="display:flex;gap:12px;font-size:11px;color:rgba(255,255,255,0.4);flex-wrap:wrap;">
+              <span><span style="color:var(--cyan);">●</span> Módulo async</span>
+              <span><span style="color:var(--magenta);">●</span> Sesión grupal (Zoom)</span>
+              <span style="color:rgba(0,216,218,0.8);">Hoy</span>
+            </div>
+          </div>
+
+          <!-- Próximas sesiones -->
+          <div class="card">
+            <h3 class="section-title" style="margin-bottom:16px;"><span>Próximas Sesiones</span></h3>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.2);border-radius:var(--radius-md);padding:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                  <div>
+                    <div style="font-size:12px;color:var(--magenta);font-weight:600;margin-bottom:2px;">📹 SESIÓN GRUPAL ZOOM</div>
+                    <div style="font-weight:600;font-size:14px;">Taller: Liderazgo Situacional</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;">Vie 18 Abr · 10:00 - 12:00 am</div>
+                  </div>
+                  <button class="btn btn-sm" style="background:rgba(248,0,250,0.2);color:var(--magenta);border:none;">Unirse</button>
+                </div>
+              </div>
+              <div style="background:rgba(0,216,218,0.06);border:1px solid rgba(0,216,218,0.15);border-radius:var(--radius-md);padding:12px;">
+                <div style="font-size:12px;color:var(--cyan);font-weight:600;margin-bottom:2px;">📚 MÓDULO ASYNC</div>
+                <div style="font-weight:600;font-size:14px;">Microlearning: Estilos de Liderazgo</div>
+                <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;">Disponible hasta el Mié 23 Abr</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gamificación -->
+          <div class="card" style="background:linear-gradient(135deg,rgba(117,114,233,0.1),rgba(0,216,218,0.05));">
+            <h3 class="section-title" style="margin-bottom:16px;"><span>Mis Logros</span> 🏆</h3>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;">
+              <div style="text-align:center;">
+                <div class="medal medal-gold">🌟</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.5);">Explorer</div>
+              </div>
+              <div style="text-align:center;">
+                <div class="medal medal-cyan">⚡</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.5);">Fast Start</div>
+              </div>
+              <div style="text-align:center;">
+                <div class="medal" style="background:rgba(255,255,255,0.05);border:2px dashed rgba(255,255,255,0.15);width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;">🔒</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.3);">Módulo 1</div>
+              </div>
+              <div style="text-align:center;">
+                <div class="medal" style="background:rgba(255,255,255,0.05);border:2px dashed rgba(255,255,255,0.15);width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;">🔒</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.3);">Constancy</div>
+              </div>
+            </div>
+            <div style="background:rgba(0,0,0,0.3);border-radius:var(--radius-md);padding:12px;display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-size:12px;color:rgba(255,255,255,0.4);">Próxima medalla</div>
+                <div style="font-weight:700;color:var(--cyan);">⚡ Módulo 1 — 60 pts más</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:22px;font-weight:800;color:var(--cyan);">340</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.4);">puntos totales</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════
+     PANTALLA 8: MÓDULO DE APRENDIZAJE
+══════════════════════════════════════ -->
+<section id="screen-modulo" class="screen">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="logo-icon">🎓</div>
+      <span class="brand-name">SELF SCI</span>
+    </div>
+    <div class="navbar-right">
+      <div class="navbar-points"><i class="fas fa-star"></i> <span>340</span> pts</div>
+      <div class="navbar-avatar">AG</div>
+    </div>
+  </nav>
+
+  <div style="padding:32px 20px;flex:1;">
+    <div class="container">
+
+      <!-- Breadcrumb -->
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;">
+        <span style="cursor:pointer;color:var(--cyan);" onclick="navigate('screen-journey')">← Mi Journey</span>
+        <span style="margin:0 8px;">›</span> Módulo 1: Fundamentos del Liderazgo Operativo
+        <span style="margin:0 8px;">›</span> <span style="color:var(--white);">Lección 2: Estilos de Liderazgo</span>
+      </div>
+
+      <!-- Progress del módulo -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <span class="badge badge-magenta">🔥 En curso — Módulo 1</span>
+        <span style="font-size:13px;color:rgba(255,255,255,0.5);">Lección 2 de 5 · 40% completado</span>
+      </div>
+      <div class="progress-bar-wrap" style="margin-bottom:28px;">
+        <div class="progress-bar-fill" style="width:40%;background:linear-gradient(90deg,var(--magenta),var(--purple));"></div>
+      </div>
+
+      <!-- Contenido principal -->
+      <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:24px;">
+
+        <!-- Izquierda: Contenido -->
+        <div>
+          <h2 style="font-size:22px;font-weight:800;margin-bottom:6px;">Estilos de Liderazgo Situacional</h2>
+          <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:20px;">
+            <i class="fas fa-clock"></i> 12 min de lectura &nbsp;·&nbsp;
+            <i class="fas fa-video"></i> Video 8 min &nbsp;·&nbsp;
+            <i class="fas fa-tasks"></i> Quiz al final
+          </p>
+
+          <!-- Video placeholder -->
+          <div class="video-placeholder" style="margin-bottom:20px;" onclick="showToast('▶ Reproduciendo: Estilos de Liderazgo Situacional','info')">
+            <div class="play-btn">▶</div>
+            <p style="color:rgba(255,255,255,0.5);font-size:14px;">Estilos de Liderazgo Situacional — 8:32 min</p>
+          </div>
+
+          <!-- Contenido texto -->
+          <div class="card" style="margin-bottom:20px;line-height:1.8;">
+            <h4 style="color:var(--cyan);margin-bottom:12px;">¿Qué es el Liderazgo Situacional?</h4>
+            <p style="font-size:15px;color:rgba(255,255,255,0.8);margin-bottom:16px;">
+              El modelo de Liderazgo Situacional de Hersey y Blanchard establece que
+              <strong>no existe un único estilo de liderazgo efectivo</strong>. El líder
+              debe adaptar su comportamiento según el nivel de madurez y competencia
+              de cada colaborador y situación.
+            </p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;">
+              <div style="background:rgba(0,216,218,0.08);border:1px solid rgba(0,216,218,0.2);border-radius:var(--radius-md);padding:14px;">
+                <div style="font-weight:700;color:var(--cyan);margin-bottom:4px;">S1 · Dirigir</div>
+                <div style="font-size:13px;color:rgba(255,255,255,0.6);">Alta tarea, baja relación. Para colaboradores nuevos o sin experiencia.</div>
+              </div>
+              <div style="background:rgba(117,114,233,0.08);border:1px solid rgba(117,114,233,0.2);border-radius:var(--radius-md);padding:14px;">
+                <div style="font-weight:700;color:var(--purple);margin-bottom:4px;">S2 · Entrenar</div>
+                <div style="font-size:13px;color:rgba(255,255,255,0.6);">Alta tarea + alta relación. Explica el por qué y da soporte emocional.</div>
+              </div>
+              <div style="background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.2);border-radius:var(--radius-md);padding:14px;">
+                <div style="font-weight:700;color:var(--magenta);margin-bottom:4px;">S3 · Apoyar</div>
+                <div style="font-size:13px;color:rgba(255,255,255,0.6);">Baja tarea, alta relación. El colaborador decide con tu apoyo.</div>
+              </div>
+              <div style="background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.2);border-radius:var(--radius-md);padding:14px;">
+                <div style="font-weight:700;color:#00ff88;margin-bottom:4px;">S4 · Delegar</div>
+                <div style="font-size:13px;color:rgba(255,255,255,0.6);">Baja tarea + baja relación. Colaborador experto y autónomo.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recursos descargables -->
+          <div class="card" style="margin-bottom:20px;">
+            <h4 style="margin-bottom:14px;font-size:15px;">📎 Recursos de esta lección</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);">
+                <span style="font-size:14px;">📄 Guía de Liderazgo Situacional.pdf</span>
+                <button class="btn btn-outline btn-sm" onclick="showToast('📥 Descargando guía...','info')">
+                  <i class="fas fa-download"></i> Descargar
+                </button>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);">
+                <span style="font-size:14px;">📊 Autoevaluación de Estilo.pptx</span>
+                <button class="btn btn-outline btn-sm" onclick="showToast('📥 Descargando presentación...','info')">
+                  <i class="fas fa-download"></i> Descargar
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quiz inline -->
+          <div class="card" style="border-color:rgba(0,216,218,0.3);margin-bottom:20px;">
+            <h4 style="margin-bottom:16px;color:var(--cyan);">⚡ Mini Quiz — Verifica tu comprensión</h4>
+            <p style="font-size:15px;line-height:1.7;margin-bottom:16px;">
+              Un operador de tu turno lleva 3 meses en el puesto. Conoce los procedimientos básicos
+              pero aún comete errores. ¿Qué estilo de liderazgo aplicarías?
+            </p>
+            <div style="display:flex;flex-direction:column;gap:8px;" id="quiz-opts">
+              <div class="radio-card" onclick="checkQuiz(this,false)" style="cursor:pointer;">
+                <div class="radio-card-label">A. Delegarle completamente la tarea (S4)</div>
+              </div>
+              <div class="radio-card" onclick="checkQuiz(this,true)" style="cursor:pointer;background:rgba(0,216,218,0.05);">
+                <div class="radio-card-label">B. Entrenarle: dar instrucciones claras y apoyo emocional (S2)</div>
+              </div>
+              <div class="radio-card" onclick="checkQuiz(this,false)" style="cursor:pointer;">
+                <div class="radio-card-label">C. Solo apoyarle en las decisiones que tome (S3)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- NPS -->
+          <div class="card" style="border-color:rgba(117,114,233,0.3);text-align:center;">
+            <h4 style="margin-bottom:8px;font-size:15px;">¿Qué tan útil fue esta lección?</h4>
+            <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:16px;">
+              1 = Nada útil &nbsp;·&nbsp; 10 = Muy útil
+            </p>
+            <div class="nps-scale" id="nps-modulo">
+              <button class="nps-btn" data-v="1" onclick="selectNPS(this)">1</button>
+              <button class="nps-btn" data-v="2" onclick="selectNPS(this)">2</button>
+              <button class="nps-btn" data-v="3" onclick="selectNPS(this)">3</button>
+              <button class="nps-btn" data-v="4" onclick="selectNPS(this)">4</button>
+              <button class="nps-btn" data-v="5" onclick="selectNPS(this)">5</button>
+              <button class="nps-btn" data-v="6" onclick="selectNPS(this)">6</button>
+              <button class="nps-btn" data-v="7" onclick="selectNPS(this)">7</button>
+              <button class="nps-btn" data-v="8" onclick="selectNPS(this)">8</button>
+              <button class="nps-btn" data-v="9" onclick="selectNPS(this)">9</button>
+              <button class="nps-btn" data-v="10" onclick="selectNPS(this)">10</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Derecha: Sidebar -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <!-- Lecciones del módulo -->
+          <div class="card">
+            <h4 style="margin-bottom:14px;font-size:15px;color:var(--cyan);">Módulo 1 · Lecciones</h4>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);">
+                <span style="color:#00ff88;font-size:14px;">✓</span>
+                <span style="font-size:13px;text-decoration:line-through;color:rgba(255,255,255,0.4);">L1: ¿Qué es un líder operativo?</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.3);">
+                <span style="color:var(--magenta);font-size:14px;">►</span>
+                <span style="font-size:13px;font-weight:600;">L2: Estilos de Liderazgo</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);opacity:0.4;">
+                <span style="font-size:14px;">🔒</span>
+                <span style="font-size:13px;">L3: Gestión del desempeño</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);opacity:0.4;">
+                <span style="font-size:14px;">🔒</span>
+                <span style="font-size:13px;">L4: Retroalimentación efectiva</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);opacity:0.4;">
+                <span style="font-size:14px;">🔒</span>
+                <span style="font-size:13px;">L5: Caso práctico integral</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Puntos ganados -->
+          <div class="card" style="background:linear-gradient(135deg,rgba(0,216,218,0.1),rgba(117,114,233,0.1));text-align:center;">
+            <div style="font-size:36px;font-weight:900;color:var(--cyan);">+50 pts</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Al completar esta lección</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.5);">
+              Total acumulado: <strong style="color:var(--white);">340 pts</strong>
+            </div>
+          </div>
+
+          <!-- Siguiente sesión -->
+          <div class="card" style="border-color:rgba(248,0,250,0.3);">
+            <div style="font-size:12px;color:var(--magenta);font-weight:600;margin-bottom:6px;">📹 PRÓXIMA SESIÓN GRUPAL</div>
+            <div style="font-weight:700;margin-bottom:4px;">Taller en Zoom: Liderazgo Situacional</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Vie 18 Abr · 10:00 am</div>
+            <button class="btn btn-magenta btn-sm" style="width:100%;" onclick="showToast('📅 Evento en tu calendario','success')">
+              <i class="fas fa-video"></i> Agregar a calendario
+            </button>
+          </div>
+
+          <!-- Botón siguiente lección -->
+          <button class="btn btn-primary" style="width:100%;" onclick="navigate('screen-dashboard')">
+            Completar lección y continuar <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

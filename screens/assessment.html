@@ -1,0 +1,382 @@
+<!-- ══════════════════════════════════════
+     PANTALLA 4: ASSESSMENT
+══════════════════════════════════════ -->
+<section id="screen-assessment" class="screen">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="logo-icon">🎓</div>
+      <span class="brand-name">SELF SCI</span>
+    </div>
+    <div class="navbar-right">
+      <div class="navbar-points">
+        <i class="fas fa-star"></i> <span id="assessment-pts">0</span> pts
+      </div>
+    </div>
+  </nav>
+
+  <div style="padding:32px 20px;flex:1;">
+    <div class="container">
+
+      <!-- Header del assessment -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div>
+          <span class="badge badge-cyan">Supervisor de Producción</span>
+          <span class="badge badge-purple" style="margin-left:8px;">Diagnóstico Inicial</span>
+        </div>
+        <div style="font-size:14px;color:rgba(255,255,255,0.5);">
+          Pregunta <span id="q-current">1</span> de <span id="q-total">8</span>
+        </div>
+      </div>
+
+      <!-- Barra de progreso -->
+      <div class="progress-bar-wrap" style="margin-bottom:32px;">
+        <div class="progress-bar-fill" id="assessment-progress" style="width:12.5%"></div>
+      </div>
+
+      <!-- Capi reactivo -->
+      <div class="capi-container" id="capi-assessment">
+        <div class="capi-avatar">🦫</div>
+        <div class="capi-bubble" id="capi-msg">
+          Lee con atención cada situación y selecciona la opción que mejor describe
+          lo que <strong>harías o conoces</strong> en tu rol. ¡Confía en ti! 💪
+        </div>
+      </div>
+
+      <!-- Pregunta card -->
+      <div class="card card-glow" style="margin-bottom:24px;" id="question-card">
+        <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:24px;">
+          <div style="width:36px;height:36px;border-radius:10px;
+                      background:linear-gradient(135deg,var(--cyan),var(--purple));
+                      display:flex;align-items:center;justify-content:center;
+                      font-weight:800;font-size:14px;flex-shrink:0;" id="q-num">01</div>
+          <div>
+            <span class="badge badge-orange" style="margin-bottom:10px;" id="q-competencia">Liderazgo Operativo</span>
+            <p style="font-size:16px;line-height:1.7;color:var(--white);" id="q-text">
+              Tu línea de producción tiene un retraso del 15% en el turno actual.
+              El operador clave reporta que la máquina principal presenta fallas intermitentes.
+              ¿Cuál es tu primera acción como supervisor?
+            </p>
+          </div>
+        </div>
+
+        <!-- Opciones -->
+        <div style="display:flex;flex-direction:column;gap:10px;" id="options-container">
+          <!-- Opciones se renderizan por JS -->
+        </div>
+
+        <!-- Feedback (oculto hasta responder) -->
+        <div id="feedback-box" style="display:none;margin-top:20px;border-radius:var(--radius-md);padding:16px;"></div>
+      </div>
+
+      <!-- Botones -->
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:13px;color:rgba(255,255,255,0.3);">
+          <i class="fas fa-clock"></i> Sin límite de tiempo — responde con calma
+        </div>
+        <button class="btn btn-primary" id="btn-next-question" onclick="nextQuestion()" disabled>
+          Siguiente <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════
+     PANTALLA 5: INFORME DE RESULTADOS
+══════════════════════════════════════ -->
+<section id="screen-resultados" class="screen">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="logo-icon">🎓</div>
+      <span class="brand-name">SELF SCI</span>
+    </div>
+    <div class="navbar-right">
+      <div class="navbar-points"><i class="fas fa-star"></i> 340 pts</div>
+      <div class="navbar-avatar">AG</div>
+    </div>
+  </nav>
+
+  <div style="padding:40px 20px;flex:1;">
+    <div class="container">
+
+      <!-- Hero resultado -->
+      <div style="text-align:center;margin-bottom:40px;" class="slide-up">
+        <div class="capi-container" style="justify-content:center;flex-direction:column;align-items:center;">
+          <div class="capi-avatar" style="width:80px;height:80px;font-size:44px;margin-bottom:12px;">🦫</div>
+          <div class="capi-bubble" style="max-width:600px;text-align:left;">
+            ¡Excelente trabajo, <strong>Ana</strong>! Completaste tu diagnóstico inicial.
+            Tu resultado nos da una <strong>radiografía clara</strong> de dónde estás hoy
+            y hacia dónde podemos llevarte. Recuerda: esto es solo el <em>punto de partida</em>. 🎯
+          </div>
+        </div>
+      </div>
+
+      <!-- Score general -->
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:24px;margin-bottom:32px;">
+        <div class="card" style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;">
+          <div style="position:relative;width:140px;height:140px;margin-bottom:16px;">
+            <canvas id="donut-score" width="140" height="140"></canvas>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <span style="font-size:36px;font-weight:900;color:var(--cyan);">62%</span>
+              <span style="font-size:11px;color:rgba(255,255,255,0.4);">Puntaje Global</span>
+            </div>
+          </div>
+          <div class="badge badge-orange" style="font-size:14px;padding:8px 20px;">
+            🔶 Nivel Avanzado Principiante
+          </div>
+          <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:8px;">Modelo Dreyfus</p>
+        </div>
+
+        <div class="card">
+          <h3 class="section-title" style="margin-bottom:20px;"><span>Resultados</span> por Competencia</h3>
+          <canvas id="radar-competencias" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Desglose por área -->
+      <div class="card" style="margin-bottom:24px;">
+        <h3 class="section-title" style="margin-bottom:20px;"><span>Análisis</span> Detallado</h3>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <div id="desglose-items">
+            <!-- Renderizado por JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Errores y aprendizaje -->
+      <div class="card" style="margin-bottom:24px;border-color:rgba(248,0,250,0.3);">
+        <h3 class="section-title" style="margin-bottom:16px;">
+          🔍 <span>Lo que estos resultados</span> nos dicen
+        </h3>
+        <p style="color:rgba(255,255,255,0.7);line-height:1.8;margin-bottom:16px;">
+          Tu diagnóstico revela <strong style="color:var(--cyan);">fortalezas claras</strong> en la
+          gestión operativa del día a día y en la identificación de problemas.
+          Sin embargo, encontramos <strong style="color:var(--magenta);">áreas de oportunidad importantes</strong>
+          en liderazgo situacional, comunicación asertiva con el equipo y
+          toma de decisiones con datos.
+        </p>
+        <div style="background:rgba(248,0,250,0.07);border:1px solid rgba(248,0,250,0.2);border-radius:var(--radius-md);padding:16px;">
+          <p style="font-size:14px;color:rgba(255,255,255,0.8);line-height:1.7;">
+            <strong style="color:var(--magenta);">Área de mayor oportunidad:</strong>
+            En la pregunta sobre gestión de conflictos de equipo, seleccionaste una respuesta reactiva
+            en lugar de una estrategia de coaching. Esto refleja que aún no has incorporado
+            herramientas de liderazgo situacional, lo cual es completamente normal en tu nivel.
+            <strong style="color:var(--cyan);">Tu ruta de aprendizaje abordará esto desde el Módulo 2.</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="card" style="background:linear-gradient(135deg,rgba(0,216,218,0.1),rgba(117,114,233,0.1));border-color:rgba(0,216,218,0.3);text-align:center;padding:36px;">
+        <div style="font-size:48px;margin-bottom:12px;">🗺️</div>
+        <h3 style="font-size:22px;font-weight:800;margin-bottom:8px;">¡Tu ruta de aprendizaje está lista!</h3>
+        <p style="color:rgba(255,255,255,0.6);margin-bottom:24px;">
+          Pero antes, cuéntanos un poco más sobre tus hábitos y preferencias
+          para personalizar aún más tu experiencia.
+        </p>
+        <button class="btn btn-primary btn-lg" onclick="navigate('screen-preferencias')">
+          Personalizar mi experiencia <i class="fas fa-sliders"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════
+     PANTALLA 6: PREFERENCIAS + NOM-035
+══════════════════════════════════════ -->
+<section id="screen-preferencias" class="screen">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <div class="logo-icon">🎓</div>
+      <span class="brand-name">SELF SCI</span>
+    </div>
+    <div class="navbar-right">
+      <div class="navbar-points"><i class="fas fa-star"></i> 340 pts</div>
+      <div class="navbar-avatar">AG</div>
+    </div>
+  </nav>
+
+  <div style="padding:40px 20px;flex:1;">
+    <div class="container">
+
+      <div class="step-indicator">
+        <div class="step-dot done">✓</div>
+        <div class="step-line done"></div>
+        <div class="step-dot done">✓</div>
+        <div class="step-line done"></div>
+        <div class="step-dot done">✓</div>
+        <div class="step-line done"></div>
+        <div class="step-dot active">4</div>
+        <div class="step-line"></div>
+        <div class="step-dot">5</div>
+      </div>
+
+      <div class="capi-container">
+        <div class="capi-avatar">🦫</div>
+        <div class="capi-bubble">
+          ¡Casi llegamos! Esta última sección me ayuda a entender
+          <strong>cómo aprendes mejor</strong> y también a identificar factores
+          de bienestar en tu entorno laboral (requerimiento NOM-035). 🌿
+        </div>
+      </div>
+
+      <div class="page-title">Preferencias de Aprendizaje</div>
+      <p class="page-subtitle" style="margin-bottom:32px;">Tu ruta se adaptará a tu estilo de vida y forma de aprender.</p>
+
+      <!-- Estilo de aprendizaje -->
+      <div class="card" style="margin-bottom:20px;">
+        <h3 class="section-title" style="margin-bottom:20px;"><span>Estilo</span> de Aprendizaje</h3>
+
+        <div class="form-group">
+          <label class="form-label">¿Cómo prefieres aprender contenido nuevo?</label>
+          <div class="radio-grid">
+            <label class="radio-card selected">
+              <input type="radio" name="estilo" value="visual"/>
+              <div style="font-size:24px;margin-bottom:6px;">👁️</div>
+              <div class="radio-card-label">Visual (videos, infografías)</div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="estilo" value="lectura"/>
+              <div style="font-size:24px;margin-bottom:6px;">📖</div>
+              <div class="radio-card-label">Lectura y escritura</div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="estilo" value="auditivo"/>
+              <div style="font-size:24px;margin-bottom:6px;">🎧</div>
+              <div class="radio-card-label">Auditivo (podcasts)</div>
+            </label>
+            <label class="radio-card">
+              <input type="radio" name="estilo" value="kinestesico"/>
+              <div style="font-size:24px;margin-bottom:6px;">🎮</div>
+              <div class="radio-card-label">Práctico / Gamificado</div>
+            </label>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Tiempo disponible por día para aprender</label>
+            <select class="form-select">
+              <option>15 – 30 minutos</option>
+              <option selected>30 – 60 minutos</option>
+              <option>1 – 2 horas</option>
+              <option>Más de 2 horas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mejor momento del día para aprender</label>
+            <select class="form-select">
+              <option>Mañana temprano (6–9 am)</option>
+              <option selected>Durante el trabajo (pausas)</option>
+              <option>Tarde (5–8 pm)</option>
+              <option>Noche (8–11 pm)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOM-035 Bienestar -->
+      <div class="card" style="margin-bottom:20px;border-color:rgba(0,216,218,0.2);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+          <span class="badge badge-cyan">NOM-035</span>
+          <h3 class="section-title" style="margin:0;"><span>Bienestar</span> en el Trabajo</h3>
+        </div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:20px;">
+          Estas preguntas son confidenciales y nos ayudan a personalizar tu experiencia de bienestar.
+        </p>
+
+        <div style="display:flex;flex-direction:column;gap:20px;">
+
+          <div>
+            <label class="form-label">¿Con qué frecuencia sientes estrés relacionado con el trabajo?</label>
+            <div class="radio-grid" style="grid-template-columns:repeat(5,1fr);">
+              <label class="radio-card" style="text-align:center;">
+                <input type="radio" name="estres" value="1"/>
+                <div style="font-size:20px;">😊</div><div class="radio-card-label" style="font-size:12px;">Nunca</div>
+              </label>
+              <label class="radio-card" style="text-align:center;">
+                <input type="radio" name="estres" value="2"/>
+                <div style="font-size:20px;">🙂</div><div class="radio-card-label" style="font-size:12px;">Raramente</div>
+              </label>
+              <label class="radio-card selected" style="text-align:center;">
+                <input type="radio" name="estres" value="3" checked/>
+                <div style="font-size:20px;">😐</div><div class="radio-card-label" style="font-size:12px;">A veces</div>
+              </label>
+              <label class="radio-card" style="text-align:center;">
+                <input type="radio" name="estres" value="4"/>
+                <div style="font-size:20px;">😟</div><div class="radio-card-label" style="font-size:12px;">Frecuentemente</div>
+              </label>
+              <label class="radio-card" style="text-align:center;">
+                <input type="radio" name="estres" value="5"/>
+                <div style="font-size:20px;">😩</div><div class="radio-card-label" style="font-size:12px;">Siempre</div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">¿Sientes que tienes claridad sobre lo que se espera de ti en tu rol?</label>
+            <div class="radio-grid" style="grid-template-columns:repeat(3,1fr);">
+              <label class="radio-card selected"><input type="radio" name="claridad" checked/>
+                <div class="radio-card-label">✅ Sí, completamente</div></label>
+              <label class="radio-card"><input type="radio" name="claridad"/>
+                <div class="radio-card-label">🔶 Parcialmente</div></label>
+              <label class="radio-card"><input type="radio" name="claridad"/>
+                <div class="radio-card-label">❌ No, me falta claridad</div></label>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">¿Cómo describes el ambiente de trabajo en tu área?</label>
+            <div class="radio-grid">
+              <label class="radio-card selected"><input type="radio" name="ambiente" checked/>
+                <div class="radio-card-label">🤝 Colaborativo</div></label>
+              <label class="radio-card"><input type="radio" name="ambiente"/>
+                <div class="radio-card-label">⚡ Muy demandante</div></label>
+              <label class="radio-card"><input type="radio" name="ambiente"/>
+                <div class="radio-card-label">😐 Neutro</div></label>
+              <label class="radio-card"><input type="radio" name="ambiente"/>
+                <div class="radio-card-label">😰 Generador de estrés</div></label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hábitos -->
+      <div class="card" style="margin-bottom:32px;">
+        <h3 class="section-title" style="margin-bottom:20px;"><span>Hábitos</span> y Rutinas</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="form-group">
+            <label class="form-label">Horas de sueño promedio por noche</label>
+            <select class="form-select">
+              <option>Menos de 5 horas</option>
+              <option>5–6 horas</option>
+              <option selected>6–7 horas</option>
+              <option>7–8 horas</option>
+              <option>Más de 8 horas</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">¿Realizas actividad física regularmente?</label>
+            <select class="form-select">
+              <option>No realizo</option>
+              <option>1–2 veces/semana</option>
+              <option selected>3–4 veces/semana</option>
+              <option>Todos los días</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;">
+        <button class="btn btn-primary btn-lg" onclick="navigate('screen-journey')">
+          Ver mi Journey de Aprendizaje <i class="fas fa-map"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
