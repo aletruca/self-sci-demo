@@ -619,4 +619,8 @@ document.addEventListener('click', function(e) {
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🦫 SELF SCI Demo loaded!');
+  // Asegurar que la landing sea la pantalla inicial
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const landing = document.getElementById('screen-landing');
+  if (landing) landing.classList.add('active');
 });
