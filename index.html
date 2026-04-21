@@ -67,8 +67,8 @@
           </h1>
         </div>
 
-        <!-- Propósito + Frase destacada en grid -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:48px;align-items:stretch;">
+        <!-- Propósito + Frase destacada — columna vertical -->
+        <div style="display:flex;flex-direction:column;gap:24px;margin-bottom:48px;max-width:680px;margin-left:auto;margin-right:auto;width:100%;">
 
           <!-- Propósito -->
           <div class="card" style="padding:32px;border-color:rgba(0,216,218,0.25);">
@@ -78,32 +78,32 @@
                           display:flex;align-items:center;justify-content:center;font-size:18px;">🎯</div>
               <h2 style="font-size:18px;font-weight:800;color:var(--white);">Nuestro Propósito</h2>
             </div>
-            <div style="display:flex;flex-direction:column;gap:14px;">
-              <div style="display:flex;align-items:flex-start;gap:12px;">
-                <div style="width:8px;height:8px;border-radius:50%;background:var(--cyan);
-                            margin-top:7px;flex-shrink:0;"></div>
-                <p style="font-size:15px;line-height:1.6;color:rgba(255,255,255,0.8);">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div style="display:flex;align-items:flex-start;gap:14px;">
+                <div style="width:10px;height:10px;border-radius:50%;background:var(--cyan);
+                            margin-top:6px;flex-shrink:0;box-shadow:0 0 8px var(--cyan);"></div>
+                <p style="font-size:16px;line-height:1.6;color:rgba(255,255,255,0.85);">
                   Desarrollar talento de forma <strong style="color:var(--white);">estructurada.</strong>
                 </p>
               </div>
-              <div style="display:flex;align-items:flex-start;gap:12px;">
-                <div style="width:8px;height:8px;border-radius:50%;background:var(--purple);
-                            margin-top:7px;flex-shrink:0;"></div>
-                <p style="font-size:15px;line-height:1.6;color:rgba(255,255,255,0.8);">
+              <div style="display:flex;align-items:flex-start;gap:14px;">
+                <div style="width:10px;height:10px;border-radius:50%;background:var(--purple);
+                            margin-top:6px;flex-shrink:0;box-shadow:0 0 8px var(--purple);"></div>
+                <p style="font-size:16px;line-height:1.6;color:rgba(255,255,255,0.85);">
                   Medir brechas de competencias en <strong style="color:var(--white);">tiempo real.</strong>
                 </p>
               </div>
-              <div style="display:flex;align-items:flex-start;gap:12px;">
-                <div style="width:8px;height:8px;border-radius:50%;background:var(--magenta);
-                            margin-top:7px;flex-shrink:0;"></div>
-                <p style="font-size:15px;line-height:1.6;color:rgba(255,255,255,0.8);">
+              <div style="display:flex;align-items:flex-start;gap:14px;">
+                <div style="width:10px;height:10px;border-radius:50%;background:var(--magenta);
+                            margin-top:6px;flex-shrink:0;box-shadow:0 0 8px var(--magenta);"></div>
+                <p style="font-size:16px;line-height:1.6;color:rgba(255,255,255,0.85);">
                   Impulsar el <strong style="color:var(--white);">bienestar organizacional.</strong>
                 </p>
               </div>
-              <div style="display:flex;align-items:flex-start;gap:12px;">
-                <div style="width:8px;height:8px;border-radius:50%;background:var(--cyan);
-                            margin-top:7px;flex-shrink:0;"></div>
-                <p style="font-size:15px;line-height:1.6;color:rgba(255,255,255,0.8);">
+              <div style="display:flex;align-items:flex-start;gap:14px;">
+                <div style="width:10px;height:10px;border-radius:50%;background:var(--cyan);
+                            margin-top:6px;flex-shrink:0;box-shadow:0 0 8px var(--cyan);"></div>
+                <p style="font-size:16px;line-height:1.6;color:rgba(255,255,255,0.85);">
                   Integrar facilitadores para <strong style="color:var(--white);">maximizar resultados.</strong>
                 </p>
               </div>
@@ -113,26 +113,26 @@
           <!-- Frase ecosistema -->
           <div style="background:linear-gradient(135deg,rgba(0,216,218,0.12),rgba(117,114,233,0.12));
                       border:1.5px solid rgba(0,216,218,0.35);border-radius:20px;
-                      padding:32px;display:flex;flex-direction:column;justify-content:center;
-                      position:relative;overflow:hidden;">
-            <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;
-                        border-radius:50%;background:radial-gradient(circle,rgba(0,216,218,0.15),transparent);"></div>
-            <div style="font-size:40px;margin-bottom:16px;">🌐</div>
-            <p style="font-size:17px;font-weight:700;line-height:1.7;color:var(--white);margin-bottom:16px;">
+                      padding:32px;position:relative;overflow:hidden;">
+            <div style="position:absolute;top:-30px;right:-30px;width:140px;height:140px;
+                        border-radius:50%;background:radial-gradient(circle,rgba(0,216,218,0.12),transparent);
+                        pointer-events:none;"></div>
+            <div style="font-size:38px;margin-bottom:14px;">🌐</div>
+            <p style="font-size:18px;font-weight:700;line-height:1.7;color:var(--white);margin-bottom:12px;">
               SELF no es solo una plataforma de capacitación.
             </p>
-            <p style="font-size:15px;line-height:1.8;color:rgba(255,255,255,0.75);">
+            <p style="font-size:16px;line-height:1.8;color:rgba(255,255,255,0.75);margin-bottom:20px;">
               Es un <span style="color:var(--cyan);font-weight:700;">ecosistema inteligente</span>
               para el crecimiento profesional y personal dentro de la organización.
             </p>
-            <!-- Pills de tecnología -->
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:20px;">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
               <span class="badge badge-cyan">🤖 IA</span>
               <span class="badge badge-purple">⚡ Automatización</span>
               <span class="badge badge-magenta">📊 Analítica</span>
               <span class="badge badge-cyan">🎮 Gamificación</span>
             </div>
           </div>
+
         </div>
 
         <!-- CTA -->
