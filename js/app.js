@@ -151,6 +151,21 @@ function navigate(screenId) {
       showPtsPopup();
     }, 300);
   }
+
+  // Admin screens — render on navigate
+  if (screenId === 'screen-admin-empresa-config') {
+    setTimeout(() => {
+      renderTablaParticipantes();
+      renderModulosConfig();
+      renderSesionesSync();
+    }, 80);
+  }
+  if (screenId === 'screen-admin-modulos') {
+    setTimeout(renderModulosGrid, 80);
+  }
+  if (screenId === 'screen-admin-permisos') {
+    setTimeout(renderPermisosTabla, 80);
+  }
 }
 
 // ── SELECCIÓN DE ROL ──
@@ -615,6 +630,227 @@ document.addEventListener('click', function(e) {
     if (radio) radio.checked = true;
   }
 });
+
+// ══════════════════════════════════════════════════
+//  ADMIN — Funciones de la sección de administración
+// ══════════════════════════════════════════════════
+
+// ── Tab switching (Config Empresa) ──
+function showConfigTab(tabId, btn) {
+  document.querySelectorAll('.config-tab-content').forEach(t => { t.style.display = 'none'; });
+  document.querySelectorAll('.config-tab').forEach(b => {
+    b.style.background = 'transparent';
+    b.style.color = 'rgba(255,255,255,0.5)';
+  });
+  const tab = document.getElementById('tab-' + tabId);
+  if (tab) tab.style.display = 'block';
+  if (btn) {
+    btn.style.background = 'linear-gradient(135deg,var(--cyan),var(--purple))';
+    btn.style.color = 'white';
+  }
+  if (tabId === 'participantes')  renderTablaParticipantes();
+  if (tabId === 'modulos-config') renderModulosConfig();
+  if (tabId === 'sesiones-sync')  renderSesionesSync();
+}
+
+// ── Toggle forms ──
+function toggleNuevoUsuario() {
+  const f = document.getElementById('form-nuevo-usuario');
+  if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+function toggleNewEmpresa() {
+  const f = document.getElementById('form-nueva-empresa');
+  if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── Mock data ──
+const mockParticipantes = [
+  { nombre:'Ana García',       correo:'ana.garcia@manufactura.mx',  rol:'Participante',     avance:88, estado:'Activo'   },
+  { nombre:'Carlos Méndez',    correo:'c.mendez@manufactura.mx',    rol:'Líder / Manager',  avance:65, estado:'Activo'   },
+  { nombre:'Laura Torres',     correo:'l.torres@manufactura.mx',    rol:'Participante',     avance:42, estado:'Activo'   },
+  { nombre:'Roberto Silva',    correo:'r.silva@manufactura.mx',     rol:'RH',               avance:95, estado:'Activo'   },
+  { nombre:'María López',      correo:'m.lopez@manufactura.mx',     rol:'Participante',     avance:71, estado:'Activo'   },
+  { nombre:'José Hernández',   correo:'j.hernandez@manufactura.mx', rol:'Participante',     avance:30, estado:'Inactivo' },
+  { nombre:'Sofía Ramírez',    correo:'s.ramirez@manufactura.mx',   rol:'Participante',     avance:58, estado:'Activo'   },
+  { nombre:'Diego Castillo',   correo:'d.castillo@manufactura.mx',  rol:'Líder / Manager',  avance:80, estado:'Activo'   },
+];
+
+const mockModulosConfig = [
+  { nombre:'Liderazgo Operativo',        icono:'⚡', semana:'Semana 1–2',   duracion:'4 horas',   obligatorio:true,  activo:true  },
+  { nombre:'Gestión de Equipos',         icono:'👥', semana:'Semana 3–4',   duracion:'3 horas',   obligatorio:true,  activo:true  },
+  { nombre:'KPIs y Métricas',            icono:'📊', semana:'Semana 5–6',   duracion:'3.5 horas', obligatorio:true,  activo:true  },
+  { nombre:'Comunicación Efectiva',      icono:'💬', semana:'Semana 7–8',   duracion:'2.5 horas', obligatorio:false, activo:true  },
+  { nombre:'Bienestar Laboral (NOM-035)',icono:'🧘', semana:'Semana 9–10',  duracion:'2 horas',   obligatorio:true,  activo:true  },
+  { nombre:'Seguridad e Higiene',        icono:'🦺', semana:'Semana 11–12', duracion:'3 horas',   obligatorio:false, activo:false },
+];
+
+const mockSesiones = [
+  { titulo:'Kick-off del programa',      tipo:'Zoom',       fecha:'16 Abr 2025', hora:'10:00 AM', duracion:'90 min',  facilitador:'Dr. Santiago Rueda', inscritos:48, max:50 },
+  { titulo:'Taller: Liderazgo en acción',tipo:'Teams',      fecha:'30 Abr 2025', hora:'3:00 PM',  duracion:'120 min', facilitador:'Lic. Andrea Mora',   inscritos:32, max:40 },
+  { titulo:'Cierre y diplomas',          tipo:'Presencial', fecha:'10 Jul 2025', hora:'9:00 AM',  duracion:'180 min', facilitador:'Equipo SELF SCI',     inscritos:0,  max:50 },
+];
+
+const mockModulosGrid = [
+  { nombre:'Liderazgo Operativo',  icono:'⚡', nivel:'Nivel 1 — Novato',       temas:['Gestión del turno','Delegación','Resolución de problemas'], duracion:'4h',   activos:3 },
+  { nombre:'Gestión de Equipos',   icono:'👥', nivel:'Nivel 2 — Principiante', temas:['Comunicación','Retroalimentación','Trabajo en equipo'],     duracion:'3h',   activos:2 },
+  { nombre:'KPIs y Métricas',      icono:'📊', nivel:'Nivel 2 — Principiante', temas:['OEE','Productividad','Análisis de datos'],                  duracion:'3.5h', activos:2 },
+  { nombre:'Comunicación Efectiva',icono:'💬', nivel:'Nivel 3 — Competente',   temas:['Escucha activa','Negociación','Presentaciones'],            duracion:'2.5h', activos:1 },
+  { nombre:'Bienestar Laboral',    icono:'🧘', nivel:'Nivel 3 — Competente',   temas:['NOM-035','Manejo del estrés','PERMA'],                      duracion:'2h',   activos:1 },
+  { nombre:'Seguridad e Higiene',  icono:'🦺', nivel:'Nivel 4 — Avanzado',     temas:['Normas STPS','Riesgos laborales','Planes de emergencia'],   duracion:'3h',   activos:0 },
+];
+
+const mockPermisos = [
+  { func:'Ver mi propio dashboard',         admin:true,  rh:true,  manager:true,  empleado:true  },
+  { func:'Ver dashboard del equipo',        admin:true,  rh:true,  manager:true,  empleado:false },
+  { func:'Ver resultados globales',         admin:true,  rh:true,  manager:false, empleado:false },
+  { func:'Exportar reportes',              admin:true,  rh:true,  manager:false, empleado:false },
+  { func:'Agregar / editar participantes', admin:true,  rh:true,  manager:false, empleado:false },
+  { func:'Configurar módulos del programa',admin:true,  rh:false, manager:false, empleado:false },
+  { func:'Ver rutas de aprendizaje',        admin:true,  rh:true,  manager:true,  empleado:true  },
+  { func:'Completar módulos',              admin:false, rh:true,  manager:true,  empleado:true  },
+  { func:'Obtener y ver diploma',          admin:false, rh:true,  manager:true,  empleado:true  },
+  { func:'Acceso al panel de administración',admin:true, rh:false, manager:false, empleado:false },
+  { func:'Invitar participantes por email', admin:true,  rh:true,  manager:false, empleado:false },
+  { func:'Ver sesiones síncronas',          admin:true,  rh:true,  manager:true,  empleado:true  },
+];
+
+// ── Render: Tabla de participantes ──
+function renderTablaParticipantes() {
+  const tbody = document.getElementById('tabla-participantes');
+  if (!tbody) return;
+  tbody.innerHTML = mockParticipantes.map(p => {
+    const colorAvance = p.avance >= 80 ? 'var(--cyan)' : p.avance >= 50 ? 'var(--purple)' : 'orange';
+    return `
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+      <td style="padding:12px 16px;font-weight:600;">${p.nombre}</td>
+      <td style="padding:12px 16px;color:rgba(255,255,255,0.45);font-size:12px;">${p.correo}</td>
+      <td style="text-align:center;padding:12px 16px;">
+        <span style="font-size:11px;background:rgba(117,114,233,0.12);color:var(--purple);border:1px solid rgba(117,114,233,0.3);border-radius:6px;padding:3px 8px;">${p.rol}</span>
+      </td>
+      <td style="padding:12px 16px;min-width:130px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="progress-bar-wrap" style="flex:1;height:5px;"><div class="progress-bar-fill" style="width:${p.avance}%;background:linear-gradient(90deg,${colorAvance},var(--purple));"></div></div>
+          <span style="font-size:12px;color:${colorAvance};min-width:28px;">${p.avance}%</span>
+        </div>
+      </td>
+      <td style="text-align:center;padding:12px 16px;">
+        <span class="badge ${p.estado === 'Activo' ? 'badge-green' : 'badge-orange'}">${p.estado}</span>
+      </td>
+      <td style="text-align:center;padding:12px 16px;">
+        <div style="display:flex;gap:6px;justify-content:center;">
+          <button class="btn btn-sm btn-outline" style="padding:4px 10px;font-size:11px;" onclick="showToast('✏️ Editando a ${p.nombre.split(' ')[0]}','info')"><i class="fas fa-pen"></i></button>
+          <button class="btn btn-sm" style="padding:4px 10px;font-size:11px;background:rgba(0,216,218,0.1);border:1px solid rgba(0,216,218,0.3);color:var(--cyan);" onclick="showToast('📧 Invitación enviada a ${p.nombre.split(' ')[0]}','success')"><i class="fas fa-envelope"></i></button>
+          <button class="btn btn-sm" style="padding:4px 10px;font-size:11px;background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.25);color:var(--magenta);" onclick="showToast('🗑️ Participante eliminado','info')"><i class="fas fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Render: Lista de módulos con tiempos ──
+function renderModulosConfig() {
+  const container = document.getElementById('modulos-config-list');
+  if (!container) return;
+  container.innerHTML = mockModulosConfig.map((m, i) => `
+    <div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div style="width:44px;height:44px;border-radius:10px;background:rgba(0,216,218,0.09);border:1px solid rgba(0,216,218,0.2);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;">${m.icono}</div>
+      <div style="flex:1;min-width:150px;">
+        <div style="font-weight:700;margin-bottom:2px;">${m.nombre}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);">${m.duracion} · ${m.obligatorio ? '<span style="color:var(--magenta);">Obligatorio</span>' : '<span style="color:rgba(255,255,255,0.3);">Opcional</span>'}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;min-width:220px;">
+        <label style="font-size:12px;color:rgba(255,255,255,0.4);white-space:nowrap;"><i class="fas fa-calendar-days" style="margin-right:4px;color:var(--cyan);"></i>Disponible:</label>
+        <input class="form-input" value="${m.semana}" style="font-size:12px;padding:7px 10px;width:130px;" onchange="showToast('📅 Fecha actualizada','info')"/>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:rgba(255,255,255,0.4);">Activo</span>
+        <div style="position:relative;width:42px;height:24px;cursor:pointer;" onclick="this.dataset.on=this.dataset.on==='1'?'0':'1';this.querySelector('.toggle-knob').style.left=this.dataset.on==='1'?'20px':'3px';this.querySelector('.toggle-track').style.background=this.dataset.on==='1'?'var(--cyan)':'rgba(255,255,255,0.1)';showToast(this.dataset.on==='1'?'✅ Módulo activado':'⏸️ Módulo desactivado','info');" data-on="${m.activo ? '1' : '0'}">
+          <div class="toggle-track" style="position:absolute;inset:0;border-radius:24px;background:${m.activo ? 'var(--cyan)' : 'rgba(255,255,255,0.1)'};transition:0.3s;"></div>
+          <div class="toggle-knob" style="position:absolute;width:18px;height:18px;background:white;border-radius:50%;top:3px;left:${m.activo ? '20px' : '3px'};transition:0.3s;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>
+        </div>
+      </div>
+      <button class="btn btn-outline btn-sm" style="font-size:12px;padding:7px 14px;" onclick="showToast('📋 Config avanzada: ${m.nombre}','info')">
+        <i class="fas fa-sliders"></i> Detalles
+      </button>
+    </div>
+  `).join('');
+}
+
+// ── Render: Sesiones síncronas ──
+function renderSesionesSync() {
+  const container = document.getElementById('sesiones-sync-list');
+  if (!container) return;
+  const iconoTipo = { 'Zoom':'🎥', 'Teams':'💼', 'Presencial':'🏢' };
+  container.innerHTML = mockSesiones.map(s => `
+    <div class="card" style="padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-color:rgba(0,216,218,0.12);">
+      <div style="width:48px;height:48px;border-radius:12px;background:rgba(0,216,218,0.09);border:1px solid rgba(0,216,218,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${iconoTipo[s.tipo] || '📅'}</div>
+      <div style="flex:1;min-width:160px;">
+        <div style="font-weight:700;margin-bottom:3px;">${s.titulo}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);">${s.facilitador} · <span style="color:var(--cyan);">${s.tipo}</span></div>
+      </div>
+      <div style="text-align:center;min-width:110px;">
+        <div style="font-size:13px;font-weight:700;">${s.fecha}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);">${s.hora} · ${s.duracion}</div>
+      </div>
+      <div style="text-align:center;min-width:70px;">
+        <div style="font-size:15px;font-weight:700;color:var(--purple);">${s.inscritos}/${s.max}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);">inscritos</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <button class="btn btn-outline btn-sm" style="font-size:12px;padding:6px 10px;" onclick="showToast('🔗 Liga copiada al portapapeles','success')" title="Copiar liga"><i class="fas fa-link"></i></button>
+        <button class="btn btn-outline btn-sm" style="font-size:12px;padding:6px 10px;" onclick="showToast('✏️ Editando sesión','info')" title="Editar"><i class="fas fa-pen"></i></button>
+        <button class="btn btn-sm" style="font-size:12px;padding:6px 10px;background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.25);color:var(--magenta);" onclick="showToast('🗑️ Sesión eliminada','info')" title="Eliminar"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Render: Grid de módulos (biblioteca) ──
+function renderModulosGrid() {
+  const container = document.getElementById('modulos-grid');
+  if (!container) return;
+  container.innerHTML = mockModulosGrid.map(m => `
+    <div class="card" style="border-color:rgba(0,216,218,0.14);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+        <div style="width:46px;height:46px;border-radius:11px;background:rgba(0,216,218,0.09);border:1px solid rgba(0,216,218,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;">${m.icono}</div>
+        <span style="font-size:10px;font-weight:700;background:rgba(117,114,233,0.1);color:var(--purple);border:1px solid rgba(117,114,233,0.25);border-radius:6px;padding:3px 8px;">${m.nivel}</span>
+      </div>
+      <h3 style="font-weight:700;margin-bottom:8px;font-size:15px;">${m.nombre}</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px;">
+        ${m.temas.map(t => `<span style="font-size:11px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:6px;padding:3px 8px;color:rgba(255,255,255,0.55);">${t}</span>`).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:16px;">
+        <span><i class="fas fa-clock" style="color:var(--cyan);margin-right:4px;"></i>${m.duracion}</span>
+        <span><i class="fas fa-building" style="color:var(--purple);margin-right:4px;"></i>${m.activos} empresa${m.activos !== 1 ? 's' : ''}</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" style="flex:1;font-size:12px;" onclick="showToast('✏️ Editando: ${m.nombre}','info')"><i class="fas fa-pen"></i> Editar</button>
+        <button class="btn btn-primary btn-sm" style="flex:1;font-size:12px;" onclick="showToast('📋 Módulo duplicado','success')"><i class="fas fa-copy"></i> Duplicar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Render: Matriz de permisos ──
+function renderPermisosTabla() {
+  const tbody = document.getElementById('permisos-tabla');
+  if (!tbody) return;
+  const roles = ['admin','rh','manager','empleado'];
+  tbody.innerHTML = mockPermisos.map((p, i) => `
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);${i % 2 === 0 ? '' : 'background:rgba(255,255,255,0.015);'}">
+      <td style="padding:13px 16px;font-size:13px;color:rgba(255,255,255,0.8);">${p.func}</td>
+      ${roles.map(rol => `
+        <td style="text-align:center;padding:13px 16px;">
+          <label style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">
+            <input type="checkbox" ${p[rol] ? 'checked' : ''}
+              style="width:16px;height:16px;accent-color:var(--cyan);cursor:pointer;"
+              onchange="showToast('🔐 Permiso actualizado','info')"/>
+          </label>
+        </td>
+      `).join('')}
+    </tr>
+  `).join('');
+}
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {

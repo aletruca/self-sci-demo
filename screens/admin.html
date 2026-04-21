@@ -1,0 +1,646 @@
+<!-- ══════════════════════════════════════════════════════
+     SECCIÓN ADMINISTRADOR — SELF SCI
+     Pantallas: Dashboard · Empresas · Config Empresa
+                Módulos · Permisos
+════════════════════════════════════════════════════════ -->
+
+<!-- ── NAVBAR ADMIN (compartido) ── -->
+<template id="tpl-admin-nav">
+  <nav class="navbar" style="border-bottom-color:rgba(248,0,250,0.2);">
+    <div class="navbar-brand">
+      <img src="assets/logo-self.svg" alt="SELF" style="height:30px;width:auto;filter:brightness(1.1);"/>
+      <img src="assets/sci-logo.png" alt="SCI" style="height:22px;width:auto;opacity:0.7;"/>
+      <span style="font-size:12px;font-weight:700;letter-spacing:2px;color:var(--magenta);
+                   background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);
+                   border-radius:6px;padding:2px 8px;margin-left:4px;">ADMIN</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <button onclick="navigate('screen-admin-dashboard')" class="btn btn-sm btn-secondary"><i class="fas fa-home"></i></button>
+      <button onclick="navigate('screen-admin-empresas')" class="btn btn-sm btn-secondary"><i class="fas fa-building"></i> Empresas</button>
+      <button onclick="navigate('screen-admin-modulos')" class="btn btn-sm btn-secondary"><i class="fas fa-cubes"></i> Módulos</button>
+      <button onclick="navigate('screen-admin-permisos')" class="btn btn-sm btn-secondary"><i class="fas fa-lock"></i> Permisos</button>
+      <button onclick="navigate('screen-login')" class="btn btn-sm" style="background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);color:var(--magenta);">
+        <i class="fas fa-right-from-bracket"></i> Salir
+      </button>
+    </div>
+  </nav>
+</template>
+
+
+<!-- ══════════════════════════════════════
+     ADMIN 1: DASHBOARD PRINCIPAL
+══════════════════════════════════════ -->
+<section id="screen-admin-dashboard" class="screen">
+  <nav class="navbar" style="border-bottom-color:rgba(248,0,250,0.2);">
+    <div class="navbar-brand">
+      <img src="assets/logo-self.svg" alt="SELF" style="height:30px;width:auto;"/>
+      <img src="assets/sci-logo.png" alt="SCI" style="height:22px;width:auto;opacity:0.7;"/>
+      <span style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--magenta);
+                   background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);
+                   border-radius:6px;padding:2px 8px;margin-left:4px;">ADMIN</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="navigate('screen-admin-empresas')" class="btn btn-sm btn-secondary"><i class="fas fa-building"></i> Empresas</button>
+      <button onclick="navigate('screen-admin-modulos')" class="btn btn-sm btn-secondary"><i class="fas fa-cubes"></i> Módulos</button>
+      <button onclick="navigate('screen-admin-permisos')" class="btn btn-sm btn-secondary"><i class="fas fa-lock"></i> Permisos</button>
+      <button onclick="navigate('screen-login')" class="btn btn-sm" style="background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);color:var(--magenta);">
+        <i class="fas fa-right-from-bracket"></i> Salir
+      </button>
+    </div>
+  </nav>
+
+  <div style="padding:32px 20px;flex:1;">
+    <div class="container-wide">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px;">
+        <div>
+          <h1 class="page-title">Panel de Administración</h1>
+          <p class="page-subtitle">Bienvenido, <strong style="color:var(--white);">Admin SELF SCI</strong> · Gestión global de la plataforma</p>
+        </div>
+        <button class="btn btn-magenta" onclick="navigate('screen-admin-empresas')">
+          <i class="fas fa-plus"></i> Nueva empresa
+        </button>
+      </div>
+
+      <!-- KPIs globales -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;">
+        <div class="stat-card" style="border-color:rgba(0,216,218,0.2);">
+          <div class="stat-value" style="color:var(--cyan);">3</div>
+          <div class="stat-label">Empresas activas</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(248,0,250,0.2);">
+          <div class="stat-value" style="color:var(--magenta);">124</div>
+          <div class="stat-label">Participantes totales</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(117,114,233,0.2);">
+          <div class="stat-value" style="color:var(--purple);">6</div>
+          <div class="stat-label">Módulos configurados</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(0,255,136,0.2);">
+          <div class="stat-value" style="color:#00ff88;">78%</div>
+          <div class="stat-label">Avance promedio</div>
+        </div>
+      </div>
+
+      <!-- Tabla de empresas -->
+      <div class="card" style="margin-bottom:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h3 class="section-title" style="margin:0;"><span>Empresas</span> configuradas</h3>
+          <button class="btn btn-outline btn-sm" onclick="navigate('screen-admin-empresas')">Ver todas</button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                <th style="text-align:left;padding:10px 12px;color:rgba(255,255,255,0.4);font-weight:600;">Empresa</th>
+                <th style="text-align:center;padding:10px 12px;color:rgba(255,255,255,0.4);font-weight:600;">Participantes</th>
+                <th style="text-align:center;padding:10px 12px;color:rgba(255,255,255,0.4);font-weight:600;">Módulos</th>
+                <th style="text-align:center;padding:10px 12px;color:rgba(255,255,255,0.4);font-weight:600;">Avance</th>
+                <th style="text-align:center;padding:10px 12px;color:rgba(255,255,255,0.4);font-weight:600;">Estado</th>
+                <th style="text-align:center;padding:10px 12px;color:rgba(255,255,255,0.4);font-weight:600;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:14px 12px;">
+                  <div style="font-weight:600;">Manufactura Avanzada S.A.</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.4);">manufactura@empresa.com</div>
+                </td>
+                <td style="text-align:center;padding:14px 12px;">48</td>
+                <td style="text-align:center;padding:14px 12px;">6/6</td>
+                <td style="text-align:center;padding:14px 12px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="progress-bar-wrap" style="flex:1;height:6px;"><div class="progress-bar-fill" style="width:72%"></div></div>
+                    <span style="font-size:12px;color:var(--cyan);">72%</span>
+                  </div>
+                </td>
+                <td style="text-align:center;padding:14px 12px;"><span class="badge badge-green">Activa</span></td>
+                <td style="text-align:center;padding:14px 12px;">
+                  <button class="btn btn-sm btn-outline" onclick="navigate('screen-admin-empresa-config')">Configurar</button>
+                </td>
+              </tr>
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                <td style="padding:14px 12px;">
+                  <div style="font-weight:600;">Grupo Salud Integral</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.4);">admin@saludintegral.com</div>
+                </td>
+                <td style="text-align:center;padding:14px 12px;">36</td>
+                <td style="text-align:center;padding:14px 12px;">4/6</td>
+                <td style="text-align:center;padding:14px 12px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="progress-bar-wrap" style="flex:1;height:6px;"><div class="progress-bar-fill" style="width:58%;background:linear-gradient(90deg,var(--purple),var(--magenta));"></div></div>
+                    <span style="font-size:12px;color:var(--purple);">58%</span>
+                  </div>
+                </td>
+                <td style="text-align:center;padding:14px 12px;"><span class="badge badge-green">Activa</span></td>
+                <td style="text-align:center;padding:14px 12px;">
+                  <button class="btn btn-sm btn-outline" onclick="navigate('screen-admin-empresa-config')">Configurar</button>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:14px 12px;">
+                  <div style="font-weight:600;">Retail Express MX</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.4);">hr@retailexpress.mx</div>
+                </td>
+                <td style="text-align:center;padding:14px 12px;">40</td>
+                <td style="text-align:center;padding:14px 12px;">0/6</td>
+                <td style="text-align:center;padding:14px 12px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="progress-bar-wrap" style="flex:1;height:6px;"><div style="width:0%;height:100%;background:var(--border);border-radius:10px;"></div></div>
+                    <span style="font-size:12px;color:rgba(255,255,255,0.3);">—</span>
+                  </div>
+                </td>
+                <td style="text-align:center;padding:14px 12px;"><span class="badge badge-orange">Pendiente</span></td>
+                <td style="text-align:center;padding:14px 12px;">
+                  <button class="btn btn-sm btn-magenta" onclick="navigate('screen-admin-empresa-config')">Configurar</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Accesos rápidos -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <div class="card" style="cursor:pointer;border-color:rgba(0,216,218,0.2);" onclick="navigate('screen-admin-empresa-config')">
+          <div style="font-size:32px;margin-bottom:12px;">⚙️</div>
+          <div style="font-weight:700;margin-bottom:4px;">Configurar empresa</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.45);">Participantes, módulos, tiempos y customización</div>
+        </div>
+        <div class="card" style="cursor:pointer;border-color:rgba(248,0,250,0.2);" onclick="navigate('screen-admin-modulos')">
+          <div style="font-size:32px;margin-bottom:12px;">📚</div>
+          <div style="font-weight:700;margin-bottom:4px;">Biblioteca de módulos</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.45);">Crear y editar módulos de capacitación</div>
+        </div>
+        <div class="card" style="cursor:pointer;border-color:rgba(117,114,233,0.2);" onclick="navigate('screen-admin-permisos')">
+          <div style="font-size:32px;margin-bottom:12px;">🔐</div>
+          <div style="font-weight:700;margin-bottom:4px;">Permisos por rol</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.45);">Controla qué puede ver cada perfil</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════
+     ADMIN 2: EMPRESAS
+══════════════════════════════════════ -->
+<section id="screen-admin-empresas" class="screen">
+  <nav class="navbar" style="border-bottom-color:rgba(248,0,250,0.2);">
+    <div class="navbar-brand">
+      <img src="assets/logo-self.svg" alt="SELF" style="height:30px;width:auto;"/>
+      <img src="assets/sci-logo.png" alt="SCI" style="height:22px;width:auto;opacity:0.7;"/>
+      <span style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--magenta);background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);border-radius:6px;padding:2px 8px;margin-left:4px;">ADMIN</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="navigate('screen-admin-dashboard')" class="btn btn-sm btn-secondary"><i class="fas fa-home"></i></button>
+      <button onclick="navigate('screen-admin-modulos')" class="btn btn-sm btn-secondary"><i class="fas fa-cubes"></i> Módulos</button>
+      <button onclick="navigate('screen-admin-permisos')" class="btn btn-sm btn-secondary"><i class="fas fa-lock"></i> Permisos</button>
+      <button onclick="navigate('screen-login')" class="btn btn-sm" style="background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);color:var(--magenta);"><i class="fas fa-right-from-bracket"></i></button>
+    </div>
+  </nav>
+
+  <div style="padding:32px 20px;flex:1;">
+    <div class="container-wide">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px;">
+        <div>
+          <h1 class="page-title">Gestión de Empresas</h1>
+          <p class="page-subtitle">Crea y administra las empresas clientes de la plataforma</p>
+        </div>
+        <button class="btn btn-magenta" onclick="toggleNewEmpresa()">
+          <i class="fas fa-plus"></i> Nueva empresa
+        </button>
+      </div>
+
+      <!-- Formulario nueva empresa (colapsable) -->
+      <div id="form-nueva-empresa" style="display:none;margin-bottom:24px;">
+        <div class="card" style="border-color:rgba(248,0,250,0.3);">
+          <h3 class="section-title" style="margin-bottom:20px;"><span>Nueva</span> Empresa</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group">
+              <label class="form-label">Nombre de la empresa *</label>
+              <input class="form-input" placeholder="Ej: Grupo Industrial del Norte"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Correo del administrador *</label>
+              <input class="form-input" type="email" placeholder="admin@empresa.com"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Industria / Sector</label>
+              <select class="form-select">
+                <option>Manufactura</option>
+                <option>Salud</option>
+                <option>Retail / Comercio</option>
+                <option>Servicios</option>
+                <option>Logística</option>
+                <option>Tecnología</option>
+                <option>Otro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">No. de participantes estimados</label>
+              <input class="form-input" type="number" placeholder="Ej: 50"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha inicio del programa</label>
+              <input class="form-input" type="date" value="2025-05-01"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Duración del programa (semanas)</label>
+              <select class="form-select">
+                <option>8 semanas</option>
+                <option selected>12 semanas</option>
+                <option>16 semanas</option>
+                <option>24 semanas</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:8px;">
+            <button class="btn btn-magenta" onclick="navigate('screen-admin-empresa-config');showToast('✅ Empresa creada — configura los detalles','success')">
+              Crear empresa y configurar <i class="fas fa-arrow-right"></i>
+            </button>
+            <button class="btn btn-secondary" onclick="toggleNewEmpresa()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cards de empresas -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+
+        <!-- Empresa 1 -->
+        <div class="card" style="border-color:rgba(0,216,218,0.25);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,rgba(0,216,218,0.2),rgba(117,114,233,0.2));border:1px solid rgba(0,216,218,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;">🏭</div>
+            <span class="badge badge-green">Activa</span>
+          </div>
+          <h3 style="font-weight:700;margin-bottom:4px;">Manufactura Avanzada</h3>
+          <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:16px;">manufactura@empresa.com</p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:13px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Participantes</span><strong>48</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Módulos activos</span><strong>6/6</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Inicio programa</span><strong>16 Abr 2025</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Avance global</span><strong style="color:var(--cyan);">72%</strong></div>
+          </div>
+          <div class="progress-bar-wrap" style="margin-bottom:16px;"><div class="progress-bar-fill" style="width:72%"></div></div>
+          <button class="btn btn-outline btn-sm" style="width:100%;" onclick="navigate('screen-admin-empresa-config')">
+            <i class="fas fa-gear"></i> Configurar
+          </button>
+        </div>
+
+        <!-- Empresa 2 -->
+        <div class="card" style="border-color:rgba(117,114,233,0.25);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,rgba(117,114,233,0.2),rgba(248,0,250,0.2));border:1px solid rgba(117,114,233,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;">🏥</div>
+            <span class="badge badge-green">Activa</span>
+          </div>
+          <h3 style="font-weight:700;margin-bottom:4px;">Grupo Salud Integral</h3>
+          <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:16px;">admin@saludintegral.com</p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:13px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Participantes</span><strong>36</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Módulos activos</span><strong>4/6</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Inicio programa</span><strong>1 May 2025</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Avance global</span><strong style="color:var(--purple);">58%</strong></div>
+          </div>
+          <div class="progress-bar-wrap" style="margin-bottom:16px;"><div class="progress-bar-fill" style="width:58%;background:linear-gradient(90deg,var(--purple),var(--magenta));"></div></div>
+          <button class="btn btn-outline btn-sm" style="width:100%;" onclick="navigate('screen-admin-empresa-config')">
+            <i class="fas fa-gear"></i> Configurar
+          </button>
+        </div>
+
+        <!-- Empresa 3 — pendiente -->
+        <div class="card" style="border-color:rgba(255,165,0,0.2);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+            <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;">🛒</div>
+            <span class="badge badge-orange">Pendiente config.</span>
+          </div>
+          <h3 style="font-weight:700;margin-bottom:4px;">Retail Express MX</h3>
+          <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:16px;">hr@retailexpress.mx</p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:13px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Participantes</span><strong>40</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Módulos activos</span><strong style="color:orange;">0/6</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Inicio programa</span><strong style="color:rgba(255,255,255,0.3);">Sin configurar</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Avance global</span><strong style="color:rgba(255,255,255,0.3);">—</strong></div>
+          </div>
+          <div class="progress-bar-wrap" style="margin-bottom:16px;"><div style="width:0%;height:100%;"></div></div>
+          <button class="btn btn-magenta btn-sm" style="width:100%;" onclick="navigate('screen-admin-empresa-config')">
+            <i class="fas fa-rocket"></i> Configurar ahora
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════
+     ADMIN 3: CONFIGURACIÓN DE EMPRESA
+══════════════════════════════════════ -->
+<section id="screen-admin-empresa-config" class="screen">
+  <nav class="navbar" style="border-bottom-color:rgba(248,0,250,0.2);">
+    <div class="navbar-brand">
+      <img src="assets/logo-self.svg" alt="SELF" style="height:30px;width:auto;"/>
+      <img src="assets/sci-logo.png" alt="SCI" style="height:22px;width:auto;opacity:0.7;"/>
+      <span style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--magenta);background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);border-radius:6px;padding:2px 8px;margin-left:4px;">ADMIN</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="navigate('screen-admin-empresas')" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left"></i> Empresas</button>
+      <button onclick="navigate('screen-login')" class="btn btn-sm" style="background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);color:var(--magenta);"><i class="fas fa-right-from-bracket"></i></button>
+    </div>
+  </nav>
+
+  <div style="padding:32px 20px;flex:1;">
+    <div class="container-wide">
+
+      <!-- Header empresa -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
+        <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,rgba(0,216,218,0.2),rgba(117,114,233,0.2));border:1px solid rgba(0,216,218,0.3);display:flex;align-items:center;justify-content:center;font-size:26px;">🏭</div>
+        <div style="flex:1;">
+          <h1 class="page-title" style="margin-bottom:2px;">Manufactura Avanzada S.A.</h1>
+          <p class="page-subtitle">Configura todos los aspectos del programa para esta empresa</p>
+        </div>
+        <button class="btn btn-primary" onclick="showToast('✅ Configuración guardada correctamente','success')">
+          <i class="fas fa-save"></i> Guardar cambios
+        </button>
+      </div>
+
+      <!-- Tabs de configuración -->
+      <div style="display:flex;gap:4px;margin-bottom:24px;background:rgba(255,255,255,0.04);border-radius:12px;padding:4px;flex-wrap:wrap;" id="config-tabs">
+        <button class="config-tab active" onclick="showConfigTab('participantes',this)" style="flex:1;padding:10px 16px;border-radius:9px;border:none;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,var(--cyan),var(--purple));color:white;transition:all 0.3s;">
+          <i class="fas fa-users"></i> Participantes
+        </button>
+        <button class="config-tab" onclick="showConfigTab('modulos-config',this)" style="flex:1;padding:10px 16px;border-radius:9px;border:none;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:transparent;color:rgba(255,255,255,0.5);transition:all 0.3s;">
+          <i class="fas fa-cubes"></i> Módulos y Tiempos
+        </button>
+        <button class="config-tab" onclick="showConfigTab('customizacion',this)" style="flex:1;padding:10px 16px;border-radius:9px;border:none;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:transparent;color:rgba(255,255,255,0.5);transition:all 0.3s;">
+          <i class="fas fa-palette"></i> Customización
+        </button>
+        <button class="config-tab" onclick="showConfigTab('sesiones-sync',this)" style="flex:1;padding:10px 16px;border-radius:9px;border:none;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:transparent;color:rgba(255,255,255,0.5);transition:all 0.3s;">
+          <i class="fas fa-video"></i> Sesiones Síncronas
+        </button>
+      </div>
+
+      <!-- TAB: PARTICIPANTES -->
+      <div id="tab-participantes" class="config-tab-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h3 class="section-title" style="margin:0;"><span>Participantes</span> registrados (48)</h3>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline btn-sm" onclick="showToast('📥 Plantilla Excel descargada','info')"><i class="fas fa-download"></i> Plantilla</button>
+            <button class="btn btn-magenta btn-sm" onclick="showToast('📤 Importando participantes...','info')"><i class="fas fa-upload"></i> Importar</button>
+            <button class="btn btn-primary btn-sm" onclick="toggleNuevoUsuario()"><i class="fas fa-plus"></i> Agregar</button>
+          </div>
+        </div>
+
+        <!-- Formulario nuevo usuario -->
+        <div id="form-nuevo-usuario" style="display:none;margin-bottom:20px;">
+          <div class="card" style="border-color:rgba(0,216,218,0.3);">
+            <h4 style="margin-bottom:16px;color:var(--cyan);">Nuevo participante</h4>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Nombre completo</label>
+                <input class="form-input" placeholder="Ana García"/>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Correo / Usuario</label>
+                <input class="form-input" placeholder="ana@empresa.com"/>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Contraseña inicial</label>
+                <input class="form-input" type="password" placeholder="••••••••"/>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Rol</label>
+                <select class="form-select">
+                  <option>Participante</option>
+                  <option>Líder / Manager</option>
+                  <option>RH</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Área</label>
+                <input class="form-input" placeholder="Operaciones"/>
+              </div>
+              <div class="form-group" style="margin:0;display:flex;align-items:flex-end;gap:8px;">
+                <button class="btn btn-primary btn-sm" onclick="showToast('✅ Participante agregado','success');toggleNuevoUsuario()">Guardar</button>
+                <button class="btn btn-secondary btn-sm" onclick="toggleNuevoUsuario()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de participantes -->
+        <div class="card" style="padding:0;overflow:hidden;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead style="background:rgba(255,255,255,0.04);">
+              <tr>
+                <th style="text-align:left;padding:12px 16px;color:rgba(255,255,255,0.4);font-weight:600;">Nombre</th>
+                <th style="text-align:left;padding:12px 16px;color:rgba(255,255,255,0.4);font-weight:600;">Usuario / Correo</th>
+                <th style="text-align:center;padding:12px 16px;color:rgba(255,255,255,0.4);font-weight:600;">Rol</th>
+                <th style="text-align:center;padding:12px 16px;color:rgba(255,255,255,0.4);font-weight:600;">Avance</th>
+                <th style="text-align:center;padding:12px 16px;color:rgba(255,255,255,0.4);font-weight:600;">Estado</th>
+                <th style="text-align:center;padding:12px 16px;color:rgba(255,255,255,0.4);font-weight:600;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-participantes">
+              <!-- Renderizado por JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: MÓDULOS Y TIEMPOS -->
+      <div id="tab-modulos-config" class="config-tab-content" style="display:none;">
+        <h3 class="section-title" style="margin-bottom:20px;"><span>Módulos</span> y Tiempos del Programa</h3>
+        <div style="display:flex;flex-direction:column;gap:14px;" id="modulos-config-list">
+          <!-- Renderizado por JS -->
+        </div>
+      </div>
+
+      <!-- TAB: CUSTOMIZACIÓN -->
+      <div id="tab-customizacion" class="config-tab-content" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+
+          <div class="card">
+            <h3 class="section-title" style="margin-bottom:20px;"><span>Identidad</span> Visual</h3>
+            <div class="form-group">
+              <label class="form-label">Logo de la empresa</label>
+              <div style="border:2px dashed rgba(255,255,255,0.15);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all 0.3s;" onclick="showToast('📂 Selector de archivo abierto','info')">
+                <div style="font-size:36px;margin-bottom:8px;">🏭</div>
+                <div style="font-size:14px;color:rgba(255,255,255,0.5);">Clic para subir logo<br><span style="font-size:12px;">PNG o SVG con fondo transparente</span></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Color primario de la empresa</label>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <input type="color" value="#00d8da" style="width:44px;height:44px;border-radius:8px;border:none;background:none;cursor:pointer;"/>
+                <input class="form-input" value="#00d8da" style="flex:1;font-family:monospace;"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Color secundario</label>
+              <div style="display:flex;align-items:center;gap:12px;">
+                <input type="color" value="#7572e9" style="width:44px;height:44px;border-radius:8px;border:none;background:none;cursor:pointer;"/>
+                <input class="form-input" value="#7572e9" style="flex:1;font-family:monospace;"/>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">URL personalizada (subdominio)</label>
+              <div style="display:flex;align-items:center;gap:0;">
+                <span style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-right:none;border-radius:8px 0 0 8px;padding:12px 14px;font-size:14px;color:rgba(255,255,255,0.4);">selfsci.app/</span>
+                <input class="form-input" value="manufactura" style="border-radius:0 8px 8px 0;border-left:none;"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vista previa -->
+          <div>
+            <h3 class="section-title" style="margin-bottom:16px;"><span>Vista</span> previa</h3>
+            <div style="background:#0a0a12;border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);">
+              <div style="background:rgba(0,216,218,0.08);border-bottom:1px solid rgba(0,216,218,0.2);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#00d8da,#7572e9);display:flex;align-items:center;justify-content:center;font-size:14px;">🏭</div>
+                  <span style="font-weight:700;font-size:14px;color:#00d8da;">Manufactura Avanzada</span>
+                </div>
+                <span style="font-size:11px;color:rgba(255,255,255,0.3);">powered by SELF SCI</span>
+              </div>
+              <div style="padding:20px;text-align:center;">
+                <div style="font-size:32px;margin-bottom:8px;">🦫</div>
+                <div style="font-size:16px;font-weight:700;margin-bottom:4px;">¡Bienvenido a tu programa!</div>
+                <div style="font-size:12px;color:rgba(255,255,255,0.4);">selfsci.app/manufactura</div>
+                <div style="margin-top:16px;padding:8px 20px;background:linear-gradient(135deg,#00d8da,#7572e9);border-radius:8px;font-size:13px;font-weight:600;display:inline-block;">Comenzar →</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TAB: SESIONES SÍNCRONAS -->
+      <div id="tab-sesiones-sync" class="config-tab-content" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h3 class="section-title" style="margin:0;"><span>Sesiones</span> Síncronas Grupales</h3>
+          <button class="btn btn-magenta btn-sm" onclick="showToast('📅 Nueva sesión agregada al calendario','success')">
+            <i class="fas fa-plus"></i> Nueva sesión
+          </button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;" id="sesiones-sync-list">
+          <!-- Renderizado por JS -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════
+     ADMIN 4: BIBLIOTECA DE MÓDULOS
+══════════════════════════════════════ -->
+<section id="screen-admin-modulos" class="screen">
+  <nav class="navbar" style="border-bottom-color:rgba(248,0,250,0.2);">
+    <div class="navbar-brand">
+      <img src="assets/logo-self.svg" alt="SELF" style="height:30px;width:auto;"/>
+      <img src="assets/sci-logo.png" alt="SCI" style="height:22px;width:auto;opacity:0.7;"/>
+      <span style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--magenta);background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);border-radius:6px;padding:2px 8px;margin-left:4px;">ADMIN</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="navigate('screen-admin-dashboard')" class="btn btn-sm btn-secondary"><i class="fas fa-home"></i></button>
+      <button onclick="navigate('screen-admin-permisos')" class="btn btn-sm btn-secondary"><i class="fas fa-lock"></i> Permisos</button>
+      <button onclick="navigate('screen-login')" class="btn btn-sm" style="background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);color:var(--magenta);"><i class="fas fa-right-from-bracket"></i></button>
+    </div>
+  </nav>
+
+  <div style="padding:32px 20px;flex:1;">
+    <div class="container-wide">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px;">
+        <div>
+          <h1 class="page-title">Biblioteca de Módulos</h1>
+          <p class="page-subtitle">Gestiona el contenido de aprendizaje disponible en la plataforma</p>
+        </div>
+        <button class="btn btn-magenta" onclick="showToast('✏️ Editor de módulo abierto','info')">
+          <i class="fas fa-plus"></i> Nuevo módulo
+        </button>
+      </div>
+
+      <!-- Filtros -->
+      <div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm">Todos (6)</button>
+        <button class="btn btn-secondary btn-sm">Nivel 1 — Novato</button>
+        <button class="btn btn-secondary btn-sm">Nivel 2 — Principiante</button>
+        <button class="btn btn-secondary btn-sm">Nivel 3 — Competente</button>
+        <button class="btn btn-secondary btn-sm">Nivel 4 — Avanzado</button>
+        <button class="btn btn-secondary btn-sm">Nivel 5 — Experto</button>
+      </div>
+
+      <!-- Grid de módulos -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;" id="modulos-grid">
+        <!-- Renderizado por JS -->
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════
+     ADMIN 5: PERMISOS POR ROL
+══════════════════════════════════════ -->
+<section id="screen-admin-permisos" class="screen">
+  <nav class="navbar" style="border-bottom-color:rgba(248,0,250,0.2);">
+    <div class="navbar-brand">
+      <img src="assets/logo-self.svg" alt="SELF" style="height:30px;width:auto;"/>
+      <img src="assets/sci-logo.png" alt="SCI" style="height:22px;width:auto;opacity:0.7;"/>
+      <span style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--magenta);background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);border-radius:6px;padding:2px 8px;margin-left:4px;">ADMIN</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="navigate('screen-admin-dashboard')" class="btn btn-sm btn-secondary"><i class="fas fa-home"></i></button>
+      <button onclick="navigate('screen-login')" class="btn btn-sm" style="background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);color:var(--magenta);"><i class="fas fa-right-from-bracket"></i></button>
+    </div>
+  </nav>
+
+  <div style="padding:32px 20px;flex:1;">
+    <div class="container-wide">
+
+      <div style="margin-bottom:28px;">
+        <h1 class="page-title">Permisos por Rol</h1>
+        <p class="page-subtitle">Define qué puede ver y hacer cada perfil de usuario en la plataforma</p>
+      </div>
+
+      <div class="card" style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;min-width:700px;">
+          <thead>
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+              <th style="text-align:left;padding:14px 16px;color:rgba(255,255,255,0.5);font-weight:600;width:35%;">Funcionalidad</th>
+              <th style="text-align:center;padding:14px 16px;width:65px;">
+                <div style="color:var(--magenta);font-size:12px;font-weight:700;">ADMIN</div>
+              </th>
+              <th style="text-align:center;padding:14px 16px;width:65px;">
+                <div style="color:var(--cyan);font-size:12px;font-weight:700;">RH</div>
+              </th>
+              <th style="text-align:center;padding:14px 16px;width:65px;">
+                <div style="color:var(--purple);font-size:12px;font-weight:700;">MANAGER</div>
+              </th>
+              <th style="text-align:center;padding:14px 16px;width:65px;">
+                <div style="color:rgba(255,255,255,0.6);font-size:12px;font-weight:700;">EMPLEADO</div>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="permisos-tabla">
+            <!-- Renderizado por JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:20px;gap:12px;">
+        <button class="btn btn-secondary" onclick="showToast('↩️ Permisos restaurados a valores predeterminados','info')">Restablecer</button>
+        <button class="btn btn-primary" onclick="showToast('✅ Permisos guardados correctamente','success')">
+          <i class="fas fa-save"></i> Guardar permisos
+        </button>
+      </div>
+
+    </div>
+  </div>
+</section>
