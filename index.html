@@ -172,18 +172,16 @@
 
       <!-- Logo -->
       <div style="text-align:center;margin-bottom:40px;">
-        <div style="display:inline-flex;align-items:center;justify-content:center;
-                    width:80px;height:80px;border-radius:22px;
-                    background:linear-gradient(135deg,#00d8da,#7572e9);
-                    box-shadow:0 0 40px rgba(0,216,218,0.4);
-                    margin-bottom:16px;font-size:36px;">
-          🎓
+        <div style="display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:12px;flex-wrap:wrap;">
+          <img src="assets/logo-self.svg" alt="SELF"
+               style="height:52px;width:auto;filter:drop-shadow(0 0 14px rgba(255,255,255,0.18));"
+               onerror="this.outerHTML='<span style=font-size:28px;font-weight:900;color:white;font-style:italic>Self</span>'"/>
+          <div style="width:1.5px;height:42px;background:linear-gradient(180deg,transparent,rgba(0,216,218,0.5),transparent);"></div>
+          <img src="assets/sci-logo.png" alt="Supply Chain Institute"
+               style="height:38px;width:auto;opacity:0.85;"
+               onerror="this.outerHTML='<span style=color:rgba(255,255,255,0.5);font-size:11px;font-weight:600;letter-spacing:1px>SCI</span>'"/>
         </div>
-        <div>
-          <span style="font-size:32px;font-weight:900;background:linear-gradient(90deg,#00d8da,#7572e9);
-                       -webkit-background-clip:text;-webkit-text-fill-color:transparent;">SELF SCI</span>
-        </div>
-        <p style="color:rgba(255,255,255,0.45);font-size:14px;margin-top:6px;">
+        <p style="color:rgba(255,255,255,0.4);font-size:13px;margin-top:4px;letter-spacing:0.5px;">
           Plataforma de Desarrollo Profesional
         </p>
       </div>
@@ -192,7 +190,7 @@
       <div class="card card-glow" style="padding:36px;">
         <!-- Capi bienvenida -->
         <div class="capi-container" style="margin-bottom:24px;">
-          <div class="capi-avatar">🦫</div>
+          <div class="capi-avatar"><img src="assets/CAPI%20Bienvenida.png" alt="Capi" style="width:90%;height:90%;object-fit:contain;"/></div>
           <div class="capi-bubble">
             ¡Hola! Soy <strong>Capi</strong>, tu guía en SELF SCI.<br>
             Ingresa para comenzar tu viaje de transformación. 🚀
@@ -273,7 +271,7 @@
 
         <!-- Capi -->
         <div class="capi-container">
-          <div class="capi-avatar">🦫</div>
+          <div class="capi-avatar"><img src="assets/CAPI%20Bienvenida.png" alt="Capi" style="width:90%;height:90%;object-fit:contain;"/></div>
           <div class="capi-bubble">
             ¡Bienvenida, <strong>Ana</strong>! 👋 Antes de comenzar tu diagnóstico,
             quiero conocerte mejor. Cuéntame sobre tu rol actual y tu día a día.
@@ -451,7 +449,7 @@
 
         <!-- Capi -->
         <div class="capi-container">
-          <div class="capi-avatar">🦫</div>
+          <div class="capi-avatar"><img src="assets/CAPI%20Bienvenida.png" alt="Capi" style="width:90%;height:90%;object-fit:contain;"/></div>
           <div class="capi-bubble">
             ¡Perfecto, Ana! Analicé tus respuestas y encontré <strong>3 perfiles</strong>
             muy alineados contigo. Selecciona el que mejor describe tu rol actual
@@ -587,7 +585,7 @@
           <div class="progress-bar-fill" id="assessment-progress" style="width:12.5%"></div>
         </div>
         <div class="capi-container" id="capi-assessment">
-          <div class="capi-avatar">🦫</div>
+          <div class="capi-avatar"><img src="assets/CAPI%20Bienvenida.png" alt="Capi" style="width:90%;height:90%;object-fit:contain;"/></div>
           <div class="capi-bubble" id="capi-msg">Lee con atención cada situación y selecciona la opción que mejor describe lo que <strong>harías o conoces</strong> en tu rol. ¡Confía en ti! 💪</div>
         </div>
         <div class="card card-glow" style="margin-bottom:24px;" id="question-card">
@@ -612,13 +610,16 @@
   <!-- ══ RESULTADOS ══ -->
   <section id="screen-resultados" class="screen">
     <nav class="navbar">
-      <div class="navbar-brand"><div class="logo-icon">🎓</div><span class="brand-name">SELF SCI</span></div>
+      <div class="navbar-brand">
+        <img src="assets/logo-self.svg" alt="SELF" style="height:32px;width:auto;filter:brightness(1.1);"/>
+        <img src="assets/sci-logo.png" alt="SCI" style="height:24px;width:auto;opacity:0.75;"/>
+      </div>
       <div class="navbar-right"><div class="navbar-points"><i class="fas fa-star"></i> 340 pts</div><div class="navbar-avatar">AG</div></div>
     </nav>
     <div style="padding:40px 20px;flex:1;"><div class="container">
       <div style="text-align:center;margin-bottom:40px;" class="slide-up">
         <div class="capi-container" style="justify-content:center;flex-direction:column;align-items:center;">
-          <div class="capi-avatar" style="width:80px;height:80px;font-size:44px;margin-bottom:12px;">🦫</div>
+          <div class="capi-avatar" style="width:80px;height:80px;margin-bottom:12px;"><img src="assets/CAPI%20Bienvenida.png" alt="Capi" style="width:90%;height:90%;object-fit:contain;"/></div>
           <div class="capi-bubble" style="max-width:600px;text-align:left;">¡Excelente trabajo, <strong>Ana</strong>! Completaste tu diagnóstico inicial. Tu resultado nos da una <strong>radiografía clara</strong> de dónde estás hoy y hacia dónde podemos llevarte. Recuerda: esto es solo el <em>punto de partida</em>. 🎯</div>
         </div>
       </div>
@@ -662,7 +663,10 @@
   <!-- ══ PREFERENCIAS + NOM-035 ══ -->
   <section id="screen-preferencias" class="screen">
     <nav class="navbar">
-      <div class="navbar-brand"><div class="logo-icon">🎓</div><span class="brand-name">SELF SCI</span></div>
+      <div class="navbar-brand">
+        <img src="assets/logo-self.svg" alt="SELF" style="height:32px;width:auto;filter:brightness(1.1);"/>
+        <img src="assets/sci-logo.png" alt="SCI" style="height:24px;width:auto;opacity:0.75;"/>
+      </div>
       <div class="navbar-right"><div class="navbar-points"><i class="fas fa-star"></i> 340 pts</div><div class="navbar-avatar">AG</div></div>
     </nav>
     <div style="padding:40px 20px;flex:1;"><div class="container">
@@ -674,7 +678,7 @@
         <div class="step-dot">5</div>
       </div>
       <div class="capi-container">
-        <div class="capi-avatar">🦫</div>
+        <div class="capi-avatar"><img src="assets/CAPI%20Bienvenida.png" alt="Capi" style="width:90%;height:90%;object-fit:contain;"/></div>
         <div class="capi-bubble">¡Casi llegamos! Esta sección me ayuda a entender <strong>cómo aprendes mejor</strong> y también a identificar factores de bienestar en tu entorno laboral (NOM-035). 🌿</div>
       </div>
       <div class="page-title">Preferencias de Aprendizaje</div>
