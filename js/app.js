@@ -900,11 +900,22 @@ function showPtsPopup() {
   }
 }
 
-// ── CARD INTERACTIVITY: radio-cards ──
+// ── CARD INTERACTIVITY: radio-cards y checkbox-cards ──
 document.addEventListener('click', function(e) {
   const card = e.target.closest('.radio-card');
   if (!card) return;
   const group = card.parentElement;
+
+  // Checkbox cards: sync .selected class after native toggle
+  const checkbox = card.querySelector('input[type="checkbox"]');
+  if (checkbox) {
+    setTimeout(() => {
+      card.classList.toggle('selected', checkbox.checked);
+    }, 0);
+    return;
+  }
+
+  // Radio cards: deselect siblings, mark this one
   const radios = group.querySelectorAll('input[type="radio"]');
   if (radios.length > 0) {
     const name = radios[0]?.name;
