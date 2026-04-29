@@ -257,7 +257,8 @@ body {
 }
 .radio-card:hover { border-color: rgba(0,216,218,0.4); background: rgba(0,216,218,0.05); }
 .radio-card.selected { border-color: var(--cyan); background: rgba(0,216,218,0.1); }
-.radio-card input { position: absolute; opacity: 0; }
+.radio-card input:not(.otro-input) { position: absolute; opacity: 0; }
+.otro-input { position: relative !important; opacity: 1 !important; width: 100%; box-sizing: border-box; }
 .radio-card-label { font-size: 14px; font-weight: 500; cursor: pointer; }
 .radio-card.selected .radio-card-label { color: var(--cyan); }
 
