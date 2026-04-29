@@ -295,6 +295,15 @@ function selectRol(id) {
   showToast('✓ Rol seleccionado — ¡Listo para el diagnóstico!', 'success');
 }
 
+// ── OTRO: mostrar/ocultar input en selects ──
+function toggleOtroSelect(sel) {
+  const inp = sel.parentElement.querySelector('.otro-select-input');
+  if (!inp) return;
+  const isOtro = sel.value === 'otro';
+  inp.style.display = isOtro ? 'block' : 'none';
+  if (isOtro) inp.focus();
+}
+
 // ── RENDER ROLE CARDS ──
 function renderRoleCards() {
   const container = document.getElementById('rol-cards');
@@ -303,7 +312,30 @@ function renderRoleCards() {
   // Compute profile match from exploration checkboxes
   const profileCaps = new Set();
   document.querySelectorAll('#screen-exploracion .radio-card input:checked').forEach(cb => {
-    const label = cb.closest('.radio-card')?.querySelector('.radio-card-label')?.textContent?.trim();
+    const card = cb.closest('.radio-card');
+    if (!card) return;
+
+    if (card.dataset.otro === 'true') {
+      // Free-text Otro: keyword match against known capability names
+      const customText = (card.querySelector('.otro-input')?.value || '').toLowerCase().trim();
+      if (customText) {
+        CAPS.forEach(cap => {
+          if (customText.split(/\s+/).some(word => word.length > 3 && cap.toLowerCase().includes(word))) {
+            profileCaps.add(cap);
+          }
+        });
+        // Also try known label maps
+        Object.keys(actividadCaps).forEach(key => {
+          if (customText.includes(key.toLowerCase().substring(0, 8))) actividadCaps[key].forEach(c => profileCaps.add(c));
+        });
+        Object.keys(retoCaps).forEach(key => {
+          if (customText.includes(key.toLowerCase().substring(0, 8))) retoCaps[key].forEach(c => profileCaps.add(c));
+        });
+      }
+      return;
+    }
+
+    const label = card.querySelector('.radio-card-label')?.textContent?.trim();
     if (label) {
       (actividadCaps[label] || retoCaps[label] || []).forEach(c => profileCaps.add(c));
     }
@@ -906,11 +938,18 @@ document.addEventListener('click', function(e) {
   if (!card) return;
   const group = card.parentElement;
 
-  // Checkbox cards: sync .selected class after native toggle
+  // Checkbox cards: sync .selected class + show/hide Otro text input
   const checkbox = card.querySelector('input[type="checkbox"]');
   if (checkbox) {
     setTimeout(() => {
       card.classList.toggle('selected', checkbox.checked);
+      if (card.dataset.otro === 'true') {
+        const otroInput = card.querySelector('.otro-input');
+        if (otroInput) {
+          otroInput.style.display = checkbox.checked ? 'block' : 'none';
+          if (checkbox.checked) otroInput.focus();
+        }
+      }
     }, 0);
     return;
   }

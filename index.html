@@ -395,7 +395,7 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
           </div>
           <div class="form-group">
             <label class="form-label">Área / Departamento</label>
-            <select class="form-select">
+            <select class="form-select" onchange="toggleOtroSelect(this)">
               <option>Operaciones / Producción</option>
               <option>Calidad</option>
               <option>Logística</option>
@@ -403,7 +403,9 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
               <option>Seguridad Industrial</option>
               <option>Mantenimiento</option>
               <option>Administración</option>
+              <option value="otro">Otro (especificar)</option>
             </select>
+            <input type="text" class="form-input otro-select-input" style="display:none;margin-top:8px;" placeholder="Escribe tu área o departamento..."/>
           </div>
           <div class="form-group">
             <label class="form-label">¿Cuánto tiempo llevas en este puesto?</label>
@@ -452,6 +454,18 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
               <div style="font-size:20px;margin-bottom:6px;">🎯</div>
               <div class="radio-card-label">Gestión de objetivos / metas</div>
             </label>
+            <label class="radio-card" data-otro="true">
+              <input type="checkbox"/>
+              <div style="font-size:20px;margin-bottom:6px;">✏️</div>
+              <div class="radio-card-label">Otro</div>
+              <input type="text" class="otro-input" placeholder="Describe tu actividad..."
+                     style="display:none;margin-top:10px;width:100%;box-sizing:border-box;
+                            background:rgba(255,255,255,0.07);border:1px solid rgba(0,216,218,0.3);
+                            border-radius:6px;padding:7px 10px;color:white;font-size:12px;
+                            font-family:'Outfit',Arial,sans-serif;outline:none;"
+                     onclick="event.stopPropagation()"
+                     onfocus="this.closest('.radio-card').querySelector('input[type=checkbox]').checked=true;this.closest('.radio-card').classList.add('selected');"/>
+            </label>
           </div>
         </div>
 
@@ -484,6 +498,17 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
               <input type="checkbox"/>
               <div class="radio-card-label">Toma de decisiones bajo presión</div>
             </label>
+            <label class="radio-card" data-otro="true">
+              <input type="checkbox"/>
+              <div class="radio-card-label">Otro</div>
+              <input type="text" class="otro-input" placeholder="Describe tu reto..."
+                     style="display:none;margin-top:10px;width:100%;box-sizing:border-box;
+                            background:rgba(255,255,255,0.07);border:1px solid rgba(0,216,218,0.3);
+                            border-radius:6px;padding:7px 10px;color:white;font-size:12px;
+                            font-family:'Outfit',Arial,sans-serif;outline:none;"
+                     onclick="event.stopPropagation()"
+                     onfocus="this.closest('.radio-card').querySelector('input[type=checkbox]').checked=true;this.closest('.radio-card').classList.add('selected');"/>
+            </label>
           </div>
         </div>
 
@@ -494,20 +519,24 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <div>
               <label class="form-label">KPI Principal</label>
-              <select class="form-select">
+              <select class="form-select" onchange="toggleOtroSelect(this)">
                 <option>OEE (Efectividad del equipo)</option>
                 <option selected>Productividad por turno</option>
                 <option>Nivel de calidad / defectos</option>
                 <option>Rotación de personal</option>
+                <option value="otro">Otro (especificar)</option>
               </select>
+              <input type="text" class="form-input otro-select-input" style="display:none;margin-top:8px;" placeholder="Escribe tu KPI principal..."/>
             </div>
             <div>
               <label class="form-label">KPI Secundario</label>
-              <select class="form-select">
+              <select class="form-select" onchange="toggleOtroSelect(this)">
                 <option selected>Ausentismo del equipo</option>
                 <option>Satisfacción del cliente interno</option>
                 <option>Tiempo de respuesta</option>
+                <option value="otro">Otro (especificar)</option>
               </select>
+              <input type="text" class="form-input otro-select-input" style="display:none;margin-top:8px;" placeholder="Escribe tu KPI secundario..."/>
             </div>
           </div>
         </div>
