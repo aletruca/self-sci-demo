@@ -6,6 +6,7 @@
 const state = {
   currentScreen: 'screen-login',
   rolSelected: null,
+  roleName: null,
   assessmentScore: 0,
   assessmentPts: 0,
   currentQuestion: 0,
@@ -13,111 +14,209 @@ const state = {
   npsValue: null
 };
 
+// ══════════════════════════════════════════════════
+//  DATOS REALES — Roles y Capabilities (Base SCI)
+// ══════════════════════════════════════════════════
+
+// 8 capabilities evaluadas en el assessment
+const CAPS = [
+  'MBWA',
+  'Gestión de Equipos',
+  'Gestión por sistemas',
+  'Toma de Decisiones',
+  'Grit (resilencia + empuje)',
+  'Orientación a datos',
+  'Resolución de problemas',
+  'Mejora continua'
+];
+
+// 3 roles T2 extraídos de "Base de datos Roles Capabilities SCI.xlsx"
+const rolesData = {
+  'Supervisor de Almacén': {
+    id: 1,
+    area: 'T2', nivel: 'Competent', puntaje: 1.89,
+    icono: '🏭', color: 'var(--cyan)',
+    descripcion: 'Planifica, coordina y estandariza las operaciones del almacén garantizando eficiencia, seguridad y precisión en el inventario.',
+    capabilities: {
+      'MBWA':                        { puntaje: 2.0, nivel: 'Competent' },
+      'Gestión de Equipos':          { puntaje: 1.9, nivel: 'Competent' },
+      'Gestión por sistemas':        { puntaje: 2.0, nivel: 'Competent' },
+      'Toma de Decisiones':          { puntaje: 2.0, nivel: 'Competent' },
+      'Grit (resilencia + empuje)':  { puntaje: 1.8, nivel: 'Competent' },
+      'Orientación a datos':         { puntaje: 1.8, nivel: 'Competent' },
+      'Resolución de problemas':     { puntaje: 1.9, nivel: 'Competent' },
+      'Mejora continua':             { puntaje: 1.9, nivel: 'Competent' }
+    },
+    tags: ['Inventarios', 'Almacén', 'Operaciones', 'WMS']
+  },
+  'Supervisor de Distribución': {
+    id: 2,
+    area: 'T2', nivel: 'Competent', puntaje: 1.95,
+    icono: '🚛', color: 'var(--purple)',
+    descripcion: 'Garantiza el servicio y entrega de producto, gestionando operaciones de distribución, flota y cumplimiento de indicadores de servicio al cliente.',
+    capabilities: {
+      'MBWA':                        { puntaje: 2.0, nivel: 'Competent' },
+      'Gestión de Equipos':          { puntaje: 2.0, nivel: 'Competent' },
+      'Gestión por sistemas':        { puntaje: 2.0, nivel: 'Competent' },
+      'Toma de Decisiones':          { puntaje: 2.1, nivel: 'Competent' },
+      'Grit (resilencia + empuje)':  { puntaje: 1.9, nivel: 'Competent' },
+      'Orientación a datos':         { puntaje: 1.9, nivel: 'Competent' },
+      'Resolución de problemas':     { puntaje: 2.0, nivel: 'Competent' },
+      'Mejora continua':             { puntaje: 1.9, nivel: 'Competent' }
+    },
+    tags: ['Distribución', 'Servicio al cliente', 'Last-mile', 'Flota']
+  },
+  'Gerente de Operaciones de Distribución': {
+    id: 3,
+    area: 'T2', nivel: 'Proficient', puntaje: 2.33,
+    icono: '🎯', color: 'var(--magenta)',
+    descripcion: 'Lidera las operaciones de distribución, optimiza procesos, desarrolla equipos y garantiza niveles de servicio, eficiencia y rentabilidad operativa.',
+    capabilities: {
+      'MBWA':                        { puntaje: 2.3, nivel: 'Proficient' },
+      'Gestión de Equipos':          { puntaje: 2.4, nivel: 'Proficient' },
+      'Gestión por sistemas':        { puntaje: 2.4, nivel: 'Proficient' },
+      'Toma de Decisiones':          { puntaje: 2.3, nivel: 'Proficient' },
+      'Grit (resilencia + empuje)':  { puntaje: 2.1, nivel: 'Competent' },
+      'Orientación a datos':         { puntaje: 2.2, nivel: 'Competent' },
+      'Resolución de problemas':     { puntaje: 2.3, nivel: 'Proficient' },
+      'Mejora continua':             { puntaje: 2.4, nivel: 'Proficient' }
+    },
+    tags: ['Liderazgo', 'Estrategia', 'Mejora operativa', 'Finanzas']
+  }
+};
+
+// Mapa actividades exploración → capabilities relevantes
+const actividadCaps = {
+  'Supervisión de equipos':              ['MBWA', 'Gestión de Equipos'],
+  'Análisis de datos / KPIs':            ['Orientación a datos', 'Gestión por sistemas'],
+  'Resolución de problemas operativos':  ['Resolución de problemas', 'Mejora continua'],
+  'Coordinación interdepartamental':     ['Toma de Decisiones', 'MBWA'],
+  'Elaboración de reportes':             ['Orientación a datos', 'Gestión por sistemas'],
+  'Gestión de objetivos / metas':        ['Toma de Decisiones', 'Grit (resilencia + empuje)']
+};
+const retoCaps = {
+  'Gestión del tiempo y prioridades':       ['Gestión por sistemas', 'Grit (resilencia + empuje)'],
+  'Liderazgo y motivación del equipo':      ['Gestión de Equipos', 'MBWA'],
+  'Comunicación efectiva':                  ['MBWA', 'Gestión de Equipos'],
+  'Cumplimiento de indicadores':            ['Orientación a datos', 'Gestión por sistemas'],
+  'Manejo del cambio y adaptabilidad':      ['Grit (resilencia + empuje)', 'Mejora continua'],
+  'Toma de decisiones bajo presión':        ['Toma de Decisiones', 'Resolución de problemas']
+};
+
 // ── PREGUNTAS DEL ASSESSMENT ──
+// Cada pregunta evalúa una capability específica del marco SCI (Dreyfus level: Competent)
 const questions = [
   {
     id: 1,
-    competencia: 'Liderazgo Operativo',
-    text: 'Tu línea tiene un retraso del 15% en el turno actual. El operador clave reporta fallas intermitentes en la máquina principal. ¿Cuál es tu primera acción?',
+    capability: 'MBWA',
+    competencia: 'Management by Walking Around',
+    text: 'Llegas a tu turno en el centro de distribución y notas que una zona de almacenamiento opera más lento de lo habitual, aunque no hay ningún reporte formal de problema. ¿Cuál es tu primera acción?',
     options: [
-      { text: 'Esperar a que el operador resuelva el problema por su cuenta.', correct: false },
-      { text: 'Notificar a mantenimiento, reasignar al operador y registrar el incidente.', correct: true },
-      { text: 'Reportar el retraso a tu jefe sin tomar ninguna acción inmediata.', correct: false },
-      { text: 'Detener completamente la línea hasta resolver la falla.', correct: false }
+      { text: 'Esperar el briefing formal de handover para conocer el estado oficial de las operaciones.', correct: false },
+      { text: 'Enviar un mensaje al supervisor de turno anterior solicitando un reporte escrito.', correct: false },
+      { text: 'Recorrer físicamente la zona, dialogar con los operadores directamente, identificar el cuello de botella en ese momento y tomar acción antes del briefing.', correct: true },
+      { text: 'Revisar el WMS desde la oficina para detectar anomalías en el sistema.', correct: false }
     ],
-    feedback_correct: '¡Correcto! 🎯 La acción simultánea de resolver el problema técnico, reasignar al operador y documentar el incidente es la respuesta más efectiva. Esto refleja liderazgo proactivo y gestión de contingencias.',
-    feedback_wrong: '📚 La respuesta correcta era: Notificar a mantenimiento, reasignar al operador y registrar el incidente. Un líder efectivo actúa en paralelo: resuelve el problema técnico, gestiona a las personas y documenta para el análisis posterior.'
+    feedback_correct: '✅ Correcto. El MBWA (Competent) consiste en liderar presencialmente: recorrer, observar e interactuar de forma directa con el equipo para identificar y resolver problemas operativos en tiempo real, no desde la distancia.',
+    feedback_wrong: '📚 El nivel Competente de MBWA implica presencia activa en el piso de operaciones. Esperar reportes o revisar sistemas de forma remota puede retrasar la detección de problemas. El líder efectivo ve, pregunta y actúa directamente.'
   },
   {
     id: 2,
+    capability: 'Gestión de Equipos',
     competencia: 'Gestión de Equipos',
-    text: 'Dos operadores de tu turno tienen un conflicto personal que está afectando el ambiente laboral. ¿Cómo lo gestionas?',
+    text: 'Un operador con 5 años de experiencia resiste los nuevos procedimientos de picking. Paralelamente, un operador reciente muestra mucho interés en aprender pero necesita más acompañamiento. ¿Qué haces?',
     options: [
-      { text: 'Ignorarlo y esperar que se resuelva solo.', correct: false },
-      { text: 'Llamar a cada uno por separado, escuchar ambas perspectivas y llegar a un acuerdo.', correct: true },
-      { text: 'Amenazar con cambiarlos de turno si no se arreglan.', correct: false },
-      { text: 'Reportarlo directamente a Recursos Humanos sin intervenir.', correct: false }
+      { text: 'Asignas al operador nuevo una capacitación en línea y dejas al veterano en su zona habitual sin intervenir.', correct: false },
+      { text: 'Llamas al operador veterano a tu oficina y le adviertes que debe seguir los nuevos procedimientos o habrá consecuencias.', correct: false },
+      { text: 'Asignas al veterano como instructor del nuevo procedimiento, defines metas de mejora conjunta y das seguimiento mensual con retroalimentación estructurada.', correct: true },
+      { text: 'Escala el caso a Recursos Humanos para que intervenga formalmente.', correct: false }
     ],
-    feedback_correct: '¡Excelente! 🌟 La mediación activa —escuchar a ambas partes por separado y facilitar un acuerdo— es el enfoque más efectivo de liderazgo situacional para resolver conflictos.',
-    feedback_wrong: '📚 Lo ideal es escuchar a cada persona de forma individual antes de cualquier confrontación conjunta. Esto reduce la tensión y permite entender el origen real del conflicto.'
+    feedback_correct: '🌟 Excelente. El nivel Competente de Gestión de Equipos implica delegar tareas de desarrollo, proporcionar retroalimentación constructiva y aprovechar el talento interno para multiplicar capacidades. Convertir al veterano en coach resuelve dos problemas a la vez.',
+    feedback_wrong: '📚 La Gestión de Equipos Competente va más allá de la autoridad o la escalada. Implica identificar el potencial individual, asignar roles de desarrollo y dar seguimiento. Ignorar o amenazar no desarrolla talento — lo bloquea.'
   },
   {
     id: 3,
-    competencia: 'KPIs y Métricas',
-    text: '¿Cuál de los siguientes indicadores te permite identificar de manera más directa la eficiencia global de tu línea de producción?',
+    capability: 'Gestión por sistemas',
+    competencia: 'Gestión por sistemas',
+    text: 'Tus indicadores del fin de semana muestran que el fill rate bajó de 97% a 91%. Los niveles de inventario están dentro del rango, pero el sistema reporta alta tasa de "no encontrado" en picking. ¿Cómo actúas?',
     options: [
-      { text: 'Número de operadores presentes en el turno.', correct: false },
-      { text: 'OEE (Overall Equipment Effectiveness).', correct: true },
-      { text: 'Horas extras utilizadas en el mes.', correct: false },
-      { text: 'Temperatura ambiente del área de trabajo.', correct: false }
+      { text: 'Ordenas un conteo físico total del inventario y suspendes el picking hasta completarlo.', correct: false },
+      { text: 'Cruzas en el WMS los registros de ubicación vs. inventario reciente, identificas discrepancias de ubicación en SKUs de alto movimiento y coordinas la corrección con tu equipo de forma inmediata.', correct: true },
+      { text: 'Contactas al proveedor de mayor rotación para acelerar el siguiente pedido y compensar el faltante.', correct: false },
+      { text: 'Informas a tu gerente y esperas instrucciones antes de tomar alguna acción.', correct: false }
     ],
-    feedback_correct: '✅ Correcto. El OEE integra disponibilidad, rendimiento y calidad, siendo el indicador más completo para evaluar la eficiencia operativa de una línea.',
-    feedback_wrong: '📚 El OEE (Overall Equipment Effectiveness) es el estándar internacional para medir eficiencia en manufactura, ya que integra tres dimensiones clave: disponibilidad del equipo, rendimiento y calidad del producto.'
+    feedback_correct: '📊 Correcto. Gestión por sistemas Competente significa usar los datos del sistema para diagnosticar antes de actuar. Cruzar el WMS con el inventario físico permite identificar la causa raíz (desalineación de ubicaciones) sin detener operaciones innecesariamente.',
+    feedback_wrong: '📚 El nivel Competente en Gestión por sistemas implica aprovechar los estándares y herramientas del sistema para diagnosticar y resolver. Suspender operaciones sin análisis o escalar sin propuesta genera mayor impacto negativo.'
   },
   {
     id: 4,
-    competencia: 'Comunicación Efectiva',
-    text: 'Al inicio del turno, ¿cuál es la forma más efectiva de asegurarte que tu equipo entendió los objetivos del día?',
+    capability: 'Toma de Decisiones',
+    competencia: 'Toma de Decisiones',
+    text: 'Un envío crítico para un cliente clave lleva 3 horas de retraso por falla del camión. Opciones: esperar 2 horas más la reparación, o contratar transporte de emergencia al 40% de costo adicional con entrega en 1 hora. ¿Qué haces?',
     options: [
-      { text: 'Publicar los objetivos en el tablero del área y asumir que los leyeron.', correct: false },
-      { text: 'Enviar un mensaje de WhatsApp con los objetivos.', correct: false },
-      { text: 'Realizar una reunión breve de 5 minutos, comunicar objetivos y pedir confirmación de comprensión.', correct: true },
-      { text: 'Confiar en que el turno anterior les transmitió la información.', correct: false }
+      { text: 'Esperas la reparación para no exceder el presupuesto, sin consultar a nadie.', correct: false },
+      { text: 'Escala de inmediato a tu gerente y esperas su decisión sin proponer ninguna alternativa.', correct: false },
+      { text: 'Calculas el costo de la penalización del SLA vs. el transporte adicional, presentas la recomendación justificada a tu gerente, comunicas proactivamente al cliente la situación y gestionas la autorización.', correct: true },
+      { text: 'Llamas al cliente, informas del retraso y confirmas entrega para el día siguiente sin consultar el SLA.', correct: false }
     ],
-    feedback_correct: '🎯 Exacto. Las reuniones de arranque de turno ("stand-up" o "daily brief") son una práctica de liderazgo efectiva que asegura alineación, permite resolver dudas y activa al equipo.',
-    feedback_wrong: '📚 La comunicación bidireccional cara a cara (aunque breve) es la más efectiva para asegurar comprensión real. Publicar información o depender de terceros genera brechas de comunicación.'
+    feedback_correct: '🎯 Correcto. Toma de Decisiones Competente implica analizar datos (costos, SLA, impacto), proponer alternativas con justificación y comunicar a los interesados. No esperar instrucciones, pero tampoco decidir unilateralmente algo de alto impacto.',
+    feedback_wrong: '📚 La toma de decisiones efectiva combina análisis de datos, proactividad y comunicación. Esperar sin proponer o decidir sin análisis refleja niveles Novice/Advanced Beginner. El nivel Competente genera opciones respaldadas con datos.'
   },
   {
     id: 5,
-    competencia: 'Toma de Decisiones',
-    text: 'Al finalizar el turno, tu línea quedó al 88% de la meta. Tu jefe te pregunta la causa. ¿Qué haces?',
+    capability: 'Grit (resilencia + empuje)',
+    competencia: 'Grit (Resiliencia y Empuje)',
+    text: 'En plena semana pico, tres operadores de tu turno reportan incapacidad, el sistema WMS cae 4 horas y tu gerente añade un embarque prioritario con ventana de entrega de 6 horas. ¿Cuál es tu respuesta?',
     options: [
-      { text: 'Explicar que fue por factores externos fuera de tu control.', correct: false },
-      { text: 'Presentar un análisis de causa raíz con datos concretos y las acciones que tomarás.', correct: true },
-      { text: 'Prometer que mañana se cumplirá sin más explicaciones.', correct: false },
-      { text: 'Culpar al turno anterior por el retraso acumulado.', correct: false }
+      { text: 'Informas a tu gerente que el embarque prioritario no es posible dadas las circunstancias y documentas todo para cubrirte.', correct: false },
+      { text: 'Atiendes primero el sistema, luego el personal y al final el embarque, siguiendo el orden lógico de los problemas.', correct: false },
+      { text: 'Haces triaje de las tres crisis simultáneamente: reasignas personal disponible, activas proceso manual de respaldo, comunicas tiempos realistas a todos los interesados y das seguimiento directo al embarque prioritario.', correct: true },
+      { text: 'Te enfocas únicamente en el embarque prioritario y dejas el resto para el siguiente turno.', correct: false }
     ],
-    feedback_correct: '💪 ¡Correcto! Un líder basado en datos presenta hechos, identifica causas raíz y propone soluciones concretas. Esto construye credibilidad y confianza con la dirección.',
-    feedback_wrong: '📚 La respuesta correcta implica presentar datos, análisis de causa raíz y plan de acción. Culpar a factores externos o a terceros sin análisis refleja ausencia de metodología y liderazgo reactivo.'
+    feedback_correct: '💪 Excelente. El Grit Competente consiste en perseverar ante dificultades significativas, adaptarse a situaciones cambiantes y mantener al equipo motivado. El triaje simultáneo refleja resiliencia operativa real.',
+    feedback_wrong: '📚 El nivel Competente de Grit va más allá de la perseverancia individual: implica mantener el desempeño del equipo bajo presión múltiple. Renunciar ante la adversidad o atender los problemas secuencialmente refleja niveles inferiores.'
   },
   {
     id: 6,
-    competencia: 'Bienestar y Seguridad',
-    text: 'Un operador llega al turno con señales visibles de cansancio extremo. ¿Cuál es tu acción prioritaria?',
+    capability: 'Orientación a datos',
+    competencia: 'Orientación a datos',
+    text: 'Tu gerente te pide una proyección de necesidades de personal para el siguiente mes. Tienes datos de throughput histórico, pedidos proyectados, ajustes estacionales del año anterior y métricas individuales de productividad. ¿Cómo construyes la proyección?',
     options: [
-      { text: 'Ignorarlo y asignarlo a su puesto normal para no afectar la producción.', correct: false },
-      { text: 'Hablar con él en privado, evaluar su estado y si hay riesgo, asignarlo a una actividad de menor riesgo o dar intervención médica.', correct: true },
-      { text: 'Reportarlo a RH sin hablar con él directamente.', correct: false },
-      { text: 'Pedirle que se tome un café y continúe normalmente.', correct: false }
+      { text: 'Usas el mismo número de personal del mes pasado con un 10% de margen de seguridad.', correct: false },
+      { text: 'Basas la proyección únicamente en los pedidos proyectados del siguiente mes.', correct: false },
+      { text: 'Cruzas el throughput histórico con los pedidos proyectados, aplicas ajustes estacionales y modelas tres escenarios (bajo, base, alto) usando métricas de productividad individual para dimensionar el equipo con precisión.', correct: true },
+      { text: 'Pides a RH que calcule el personal según el presupuesto disponible.', correct: false }
     ],
-    feedback_correct: '🌟 Excelente. La seguridad de las personas está siempre por encima de la productividad. Este enfoque está alineado con la NOM-035 sobre factores de riesgo psicosocial.',
-    feedback_wrong: '📚 La NOM-035 y las buenas prácticas de liderazgo priorizan el bienestar del trabajador. Asignar a una persona con fatiga extrema a puestos de riesgo puede resultar en accidentes graves.'
+    feedback_correct: '📈 Correcto. Orientación a datos Competente implica recopilar, cruzar e interpretar múltiples fuentes para construir análisis accionables. El modelo de tres escenarios es una práctica de planificación basada en datos reconocida en supply chain.',
+    feedback_wrong: '📚 El nivel Competente requiere ir más allá de los datos simples o del criterio subjetivo. Usar solo una fuente (pedidos) o delegar el análisis a otro es un indicador de nivel Advanced Beginner.'
   },
   {
     id: 7,
-    competencia: 'Mejora Continua',
-    text: 'Identificas que un proceso en tu área genera desperdicio de material de forma constante. ¿Qué metodología aplicarías primero?',
+    capability: 'Resolución de problemas',
+    competencia: 'Resolución de Problemas',
+    text: 'Por tercer mes consecutivo, tu área registra una tasa de daño de producto del 5%, por encima del 2% objetivo. Distintos miembros del equipo señalan causas distintas: velocidad de montacargas, calidad del empaque y prácticas de apilamiento. ¿Qué haces primero?',
     options: [
-      { text: 'Ignorarlo si el impacto económico es pequeño.', correct: false },
-      { text: '5S para organizar el área.', correct: false },
-      { text: 'Análisis de causa raíz con la herramienta 5 Porqués y propuesta de mejora.', correct: true },
-      { text: 'Comprar nuevo equipo de producción.', correct: false }
+      { text: 'Implementas las tres acciones correctivas simultáneamente para cubrir todas las causas posibles.', correct: false },
+      { text: 'Emites un comunicado al equipo recordando los estándares de manejo con cuidado.', correct: false },
+      { text: 'Realizas un análisis de causa raíz estructurado (5 Porqués o espina de pescado), recopilas datos segmentados por turno, zona y equipo, identificas la causa principal, implementas una acción correctiva específica y mides el impacto en 30 días.', correct: true },
+      { text: 'Cambias al proveedor de empaque asumiendo que es el origen del problema.', correct: false }
     ],
-    feedback_correct: '✅ Correcto. Los 5 Porqués permiten identificar la causa raíz del problema antes de implementar soluciones. Actuar sin conocer la causa raíz puede ser costoso e inefectivo.',
-    feedback_wrong: '📚 El análisis de causa raíz (5 Porqués) debe ser el primer paso antes de cualquier solución. El 5S es una buena práctica pero no resuelve problemas de proceso específicos, y comprar equipo nuevo sin diagnóstico es un error costoso.'
+    feedback_correct: '🔍 Correcto. La Resolución de problemas Competente requiere análisis estructurado antes de actuar. Identificar la causa raíz con datos segmentados evita corregir síntomas y permite soluciones duraderas.',
+    feedback_wrong: '📚 Implementar varias acciones sin análisis genera ruido y desperdicio. Un comunicado es insuficiente para problemas recurrentes. El nivel Competente exige metodología (5 Porqués, espina de pescado) y medición del impacto de la solución.'
   },
   {
     id: 8,
-    competencia: 'Desarrollo de Talento',
-    text: 'Tienes un operador con alto potencial que ya domina su proceso. Para retenerlo y desarrollarlo, ¿qué harías?',
+    capability: 'Mejora continua',
+    competencia: 'Mejora Continua',
+    text: 'El proceso de recepción de tu área toma 45 minutos por camión. El benchmark sectorial es 28 minutos y tu meta es llegar a 30. El equipo trabaja duro pero los tiempos no mejoran. ¿Cuál es tu enfoque?',
     options: [
-      { text: 'Dejarlo en su puesto actual porque trabaja bien.', correct: false },
-      { text: 'Asignarle responsabilidades de formación de nuevos operadores y un plan de desarrollo.', correct: true },
-      { text: 'Subirle el sueldo y no hacer nada más.', correct: false },
-      { text: 'Esperar a que RH tome la iniciativa.', correct: false }
+      { text: 'Contratas personal adicional para tener más manos en el proceso.', correct: false },
+      { text: 'Presionas al equipo para que trabaje más rápido y reduces los tiempos de descanso.', correct: false },
+      { text: 'Mapeas el proceso actual paso a paso, identificas actividades sin valor añadido (esperas, reprocesos, movimientos innecesarios), pruebas el flujo mejorado con un turno piloto, mides los resultados y escalas al resto del equipo.', correct: true },
+      { text: 'Solicitas inversión en automatización para reemplazar los pasos manuales sin antes analizar el flujo.', correct: false }
     ],
-    feedback_correct: '🏆 Perfecto. El desarrollo de talento es una responsabilidad del líder directo. Convertir a un operador experto en multiplicador de conocimiento genera valor para toda la organización.',
-    feedback_wrong: '📚 Los empleados de alto potencial necesitan retos y planes de desarrollo para no caer en el estancamiento y eventualmente buscar otras oportunidades. El líder directo tiene rol fundamental en esto.'
+    feedback_correct: '🔄 Excelente. Mejora continua Competente implica mapear el proceso, eliminar desperdicios con metodología Lean, pilotar antes de escalar y medir el impacto. Agregar recursos o presión sin análisis de flujo no resuelve el problema.',
+    feedback_wrong: '📚 El nivel Competente en Mejora continua requiere análisis del proceso antes de cualquier solución. Contratar más personal o presionar sin diagnóstico añade costo sin mejorar el sistema. La automatización sin análisis puede perpetuar ineficiencias.'
   }
 ];
 
@@ -135,15 +234,18 @@ function navigate(screenId) {
   }
 
   // Acciones especiales al entrar a pantallas
+  if (screenId === 'screen-seleccion-rol') {
+    setTimeout(renderRoleCards, 80);
+  }
   if (screenId === 'screen-assessment') {
     state.currentQuestion = 0;
     state.assessmentPts = 0;
+    state.assessmentScore = 0;
     state.answers = [];
     renderQuestion();
   }
   if (screenId === 'screen-resultados') {
-    setTimeout(initResultadosCharts, 100);
-    renderDesglose();
+    setTimeout(initResultadosCharts, 150);
   }
   if (screenId === 'screen-dashboard') {
     setTimeout(() => {
@@ -171,19 +273,92 @@ function navigate(screenId) {
 // ── SELECCIÓN DE ROL ──
 function selectRol(id) {
   state.rolSelected = id;
+  // Store role name for later use in charts
+  const rolEntry = Object.entries(rolesData).find(([, r]) => r.id === id);
+  state.roleName = rolEntry ? rolEntry[0] : null;
+
   document.querySelectorAll('.rol-card').forEach(c => {
     c.style.borderColor = 'rgba(255,255,255,0.08)';
     c.style.background = 'rgba(255,255,255,0.03)';
+    c.style.boxShadow = 'none';
   });
   const selected = document.querySelector(`.rol-card[data-rol="${id}"]`);
   if (selected) {
-    selected.style.borderColor = 'var(--cyan)';
-    selected.style.background = 'rgba(0,216,218,0.08)';
-    selected.style.boxShadow = '0 0 20px rgba(0,216,218,0.2)';
+    const rol = rolEntry ? rolEntry[1] : null;
+    const color = rol ? rol.color : 'var(--cyan)';
+    selected.style.borderColor = color;
+    selected.style.background = `rgba(0,216,218,0.08)`;
+    selected.style.boxShadow = `0 0 24px rgba(0,216,218,0.2)`;
   }
   const btn = document.getElementById('btn-iniciar-assessment');
   if (btn) btn.disabled = false;
   showToast('✓ Rol seleccionado — ¡Listo para el diagnóstico!', 'success');
+}
+
+// ── RENDER ROLE CARDS ──
+function renderRoleCards() {
+  const container = document.getElementById('rol-cards');
+  if (!container) return;
+
+  // Compute profile match from exploration checkboxes
+  const profileCaps = new Set();
+  document.querySelectorAll('#screen-exploracion .radio-card input:checked').forEach(cb => {
+    const label = cb.closest('.radio-card')?.querySelector('.radio-card-label')?.textContent?.trim();
+    if (label) {
+      (actividadCaps[label] || retoCaps[label] || []).forEach(c => profileCaps.add(c));
+    }
+  });
+
+  const matchScores = {};
+  Object.entries(rolesData).forEach(([name, rol]) => {
+    const rolCapNames = Object.keys(rol.capabilities);
+    const overlap = [...profileCaps].filter(pc =>
+      rolCapNames.some(rc => rc.toLowerCase().includes(pc.toLowerCase().substring(0, 10)))
+    ).length;
+    const base = profileCaps.size > 0 ? Math.round(55 + (overlap / Math.max(profileCaps.size, 1)) * 38) : 72;
+    matchScores[name] = Math.min(98, base + rol.id * 3);
+  });
+  // Ensure role 1 > role 2 > role 3 for "recommendation" feel
+  const names = Object.keys(rolesData);
+  const sorted = [...Object.values(matchScores)].sort((a, b) => b - a);
+  names.forEach((n, i) => { matchScores[n] = sorted[i]; });
+
+  container.innerHTML = Object.entries(rolesData).map(([name, rol], i) => {
+    const match = matchScores[name];
+    const isTop = i === 0;
+    const capEntries = Object.entries(rol.capabilities).slice(0, 4);
+    const colorVar = rol.color;
+    return `
+    <div class="card rol-card" data-rol="${rol.id}" onclick="selectRol(${rol.id})"
+         style="cursor:pointer;position:relative;border-color:${isTop ? colorVar : 'rgba(255,255,255,0.08)'};">
+      ${isTop ? `<div style="position:absolute;top:14px;right:14px;"><span class="badge badge-cyan">⭐ Recomendado</span></div>` : ''}
+      <div style="font-size:44px;margin-bottom:10px;">${rol.icono}</div>
+      <h3 style="font-size:16px;font-weight:700;color:${colorVar};margin-bottom:6px;padding-right:${isTop?'90px':'0'}">${name}</h3>
+      <p style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5;margin-bottom:14px;">${rol.descripcion}</p>
+
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:5px;">
+          <span>Coincidencia con tu perfil</span>
+          <span style="color:${colorVar};font-weight:700;">${match}%</span>
+        </div>
+        <div class="progress-bar-wrap" style="height:6px;">
+          <div class="progress-bar-fill" style="width:${match}%;background:${colorVar === 'var(--cyan)' ? 'linear-gradient(90deg,var(--cyan),var(--purple))' : colorVar === 'var(--purple)' ? 'linear-gradient(90deg,var(--purple),var(--magenta))' : 'linear-gradient(90deg,var(--magenta),var(--purple))'}"></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;">Capabilities clave</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+          ${capEntries.map(([cap]) => `<span style="font-size:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:5px;padding:3px 7px;color:rgba(255,255,255,0.55);">${cap}</span>`).join('')}
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.35);">
+        <span>Área ${rol.area} · Score ${rol.puntaje}</span>
+        <span style="color:${colorVar};font-weight:600;">${rol.nivel}</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── ASSESSMENT: RENDER PREGUNTA ──
@@ -320,20 +495,74 @@ function nextQuestion() {
   }
 }
 
+// ── UTILIDAD: calcular scores por capability desde respuestas ──
+function getCapabilityScores() {
+  // Correct = 2.0 (Competent), Incorrect = 1.0 (Advanced Beginner), per Dreyfus scale
+  const scores = {};
+  CAPS.forEach((cap, i) => {
+    const ans = state.answers.find(a => a.question.capability === cap);
+    scores[cap] = ans ? (ans.correct ? 2.0 : 1.0) : 1.0;
+  });
+  return scores;
+}
+
+function getRequiredScores() {
+  const rol = state.roleName ? rolesData[state.roleName] : rolesData['Supervisor de Distribución'];
+  const scores = {};
+  CAPS.forEach(cap => {
+    scores[cap] = rol.capabilities[cap]?.puntaje || 1.8;
+  });
+  return scores;
+}
+
+function getDreyfusLabel(score) {
+  if (score >= 2.5) return { label: 'Proficiente', color: '#00d8da' };
+  if (score >= 2.0) return { label: 'Competente', color: '#00ff88' };
+  if (score >= 1.5) return { label: 'Avanzado Principiante', color: 'orange' };
+  return { label: 'Novato', color: 'var(--magenta)' };
+}
+
+const capIcons = {
+  'MBWA': '👁️',
+  'Gestión de Equipos': '👥',
+  'Gestión por sistemas': '⚙️',
+  'Toma de Decisiones': '🎯',
+  'Grit (resilencia + empuje)': '💪',
+  'Orientación a datos': '📊',
+  'Resolución de problemas': '🔍',
+  'Mejora continua': '🔄'
+};
+
 // ── GRÁFICAS: RESULTADOS ──
 function initResultadosCharts() {
-  // Donut score
+  const userScores = getCapabilityScores();
+  const reqScores  = getRequiredScores();
+
+  const correctCount = state.answers.filter(a => a.correct).length;
+  const totalQ = questions.length;
+  const pct = Math.round((correctCount / totalQ) * 100);
+
+  // Dreyfus level del candidato
+  const avgScore = Object.values(userScores).reduce((s, v) => s + v, 0) / CAPS.length;
+  const { label: dreyfusLabel } = getDreyfusLabel(avgScore);
+
+  // Destroy existing charts if re-entering
+  ['donut-score','radar-competencias'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el?._chart) { el._chart.destroy(); el._chart = null; }
+  });
+
+  // Donut — % correcto
   const donutCtx = document.getElementById('donut-score');
-  if (donutCtx && !donutCtx._chart) {
+  if (donutCtx) {
     donutCtx._chart = new Chart(donutCtx, {
       type: 'doughnut',
       data: {
         datasets: [{
-          data: [62, 38],
+          data: [pct, 100 - pct],
           backgroundColor: ['#00d8da', 'rgba(255,255,255,0.06)'],
           borderColor: ['#00d8da', 'rgba(255,255,255,0.04)'],
-          borderWidth: 2,
-          hoverOffset: 4
+          borderWidth: 2, hoverOffset: 4
         }]
       },
       options: {
@@ -342,30 +571,34 @@ function initResultadosCharts() {
         animation: { duration: 1200, easing: 'easeInOutQuart' }
       }
     });
+    // Update the score text overlaid on donut
+    const overlay = donutCtx.parentElement?.querySelector('.donut-overlay-score');
+    if (overlay) { overlay.innerHTML = `<span style="font-size:36px;font-weight:900;color:var(--cyan);">${pct}%</span>`; }
   }
 
-  // Radar competencias
+  // Radar — usuario vs. rol requerido (escala 0–3)
   const radarCtx = document.getElementById('radar-competencias');
-  if (radarCtx && !radarCtx._chart) {
+  if (radarCtx) {
+    const shortLabels = CAPS.map(c => c.split(' ').slice(0, 2).join(' '));
     radarCtx._chart = new Chart(radarCtx, {
       type: 'radar',
       data: {
-        labels: ['Liderazgo', 'Comunicación', 'KPIs', 'Decisiones', 'Bienestar', 'Mejora Continua', 'Talento'],
+        labels: shortLabels,
         datasets: [{
           label: 'Tu nivel actual',
-          data: [65, 50, 80, 55, 70, 60, 45],
+          data: CAPS.map(c => userScores[c]),
           borderColor: '#00d8da',
-          backgroundColor: 'rgba(0,216,218,0.12)',
+          backgroundColor: 'rgba(0,216,218,0.13)',
           borderWidth: 2,
           pointBackgroundColor: '#00d8da',
-          pointRadius: 4
+          pointRadius: 5
         }, {
-          label: 'Nivel esperado del rol',
-          data: [85, 80, 85, 80, 80, 75, 75],
-          borderColor: 'rgba(117,114,233,0.6)',
-          backgroundColor: 'rgba(117,114,233,0.06)',
+          label: `Requerido: ${state.roleName || 'Rol seleccionado'}`,
+          data: CAPS.map(c => reqScores[c]),
+          borderColor: 'rgba(117,114,233,0.7)',
+          backgroundColor: 'rgba(117,114,233,0.07)',
           borderWidth: 1.5,
-          borderDash: [5,3],
+          borderDash: [5, 3],
           pointBackgroundColor: '#7572e9',
           pointRadius: 3
         }]
@@ -373,17 +606,26 @@ function initResultadosCharts() {
       options: {
         scales: {
           r: {
-            min: 0, max: 100,
-            ticks: { display: false },
+            min: 0, max: 3,
+            ticks: { display: false, stepSize: 1 },
             grid: { color: 'rgba(255,255,255,0.08)' },
             angleLines: { color: 'rgba(255,255,255,0.06)' },
-            pointLabels: { color: 'rgba(255,255,255,0.6)', font: { size: 11, family: 'Outfit' } }
+            pointLabels: { color: 'rgba(255,255,255,0.65)', font: { size: 11, family: 'Outfit' } }
           }
         },
         plugins: {
           legend: {
             position: 'bottom',
             labels: { color: 'rgba(255,255,255,0.5)', font: { size: 11, family: 'Outfit' }, boxWidth: 14 }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const v = ctx.raw;
+                const lvl = getDreyfusLabel(v).label;
+                return ` ${ctx.dataset.label}: ${v.toFixed(1)} (${lvl})`;
+              }
+            }
           }
         },
         animation: { duration: 1200 }
@@ -391,62 +633,101 @@ function initResultadosCharts() {
     });
   }
 
+  // Update dynamic elements in results screen
+  const overlay = document.getElementById('donut-overlay');
+  if (overlay) overlay.innerHTML = `<span style="font-size:36px;font-weight:900;color:var(--cyan);">${pct}%</span><span style="font-size:11px;color:rgba(255,255,255,0.4);">Puntaje Global</span>`;
+  const dreyfusBadge = document.getElementById('dreyfus-badge');
+  if (dreyfusBadge) dreyfusBadge.innerHTML = `🔶 ${dreyfusLabel}`;
+
   renderDesglose();
 }
 
-// ── DESGLOSE POR COMPETENCIA ──
+// ── DESGLOSE POR CAPABILITY ──
 function renderDesglose() {
   const container = document.getElementById('desglose-items');
   if (!container) return;
 
-  const items = [
-    { name: 'KPIs y Métricas', score: 80, color: '#00d8da', icon: '📊', nivel: 'Bueno' },
-    { name: 'Bienestar y Seguridad', score: 70, color: '#00ff88', icon: '🌿', nivel: 'Bueno' },
-    { name: 'Liderazgo Operativo', score: 65, color: '#7572e9', icon: '👷', nivel: 'En desarrollo' },
-    { name: 'Mejora Continua', score: 60, color: '#F800fa', icon: '🔄', nivel: 'En desarrollo' },
-    { name: 'Toma de Decisiones', score: 55, color: 'orange', icon: '🎯', nivel: 'Área de oportunidad' },
-    { name: 'Comunicación Efectiva', score: 50, color: 'orange', icon: '💬', nivel: 'Área de oportunidad' },
-    { name: 'Desarrollo de Talento', score: 45, color: '#F800fa', icon: '💡', nivel: 'Área de oportunidad' }
-  ];
+  const userScores = getCapabilityScores();
+  const reqScores  = getRequiredScores();
+  const rolNombre  = state.roleName || 'el rol seleccionado';
 
-  container.innerHTML = items.map(item => `
-    <div style="margin-bottom:16px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+  // Sort: biggest gap first
+  const items = CAPS.map(cap => {
+    const user = userScores[cap];
+    const req  = reqScores[cap];
+    const gap  = req - user;
+    return { cap, user, req, gap };
+  }).sort((a, b) => b.gap - a.gap);
+
+  container.innerHTML = items.map(({ cap, user, req, gap }) => {
+    const { label, color } = getDreyfusLabel(user);
+    const reqPct  = Math.round((req / 3) * 100);
+    const userPct = Math.round((user / 3) * 100);
+    const hasGap  = gap > 0;
+    return `
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <span>${item.icon}</span>
-          <span style="font-size:14px;font-weight:600;">${item.name}</span>
-          <span class="badge" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);font-size:11px;">${item.nivel}</span>
+          <span style="font-size:18px;">${capIcons[cap] || '⚡'}</span>
+          <span style="font-size:14px;font-weight:600;">${cap}</span>
+          <span class="badge" style="font-size:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:${color};">${label}</span>
         </div>
-        <span style="font-size:16px;font-weight:800;color:${item.color};">${item.score}%</span>
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
+          <span style="color:${color};font-weight:700;">${user.toFixed(1)}</span>
+          <span style="color:rgba(255,255,255,0.3);">vs</span>
+          <span style="color:rgba(117,114,233,0.8);font-weight:600;">${req.toFixed(1)} req.</span>
+          ${hasGap ? `<span style="color:var(--magenta);font-size:11px;font-weight:700;">−${gap.toFixed(1)} brecha</span>` : `<span style="color:#00ff88;font-size:11px;font-weight:700;">✓ Cumple</span>`}
+        </div>
       </div>
-      <div class="progress-bar-wrap" style="height:10px;">
-        <div style="width:${item.score}%;height:100%;border-radius:10px;background:${item.color};transition:width 1s ease;opacity:0.85;"></div>
+      <div style="position:relative;height:10px;background:rgba(255,255,255,0.06);border-radius:10px;overflow:hidden;">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${reqPct}%;background:rgba(117,114,233,0.2);border-radius:10px;"></div>
+        <div style="position:absolute;left:0;top:0;height:100%;width:${userPct}%;background:${hasGap ? 'linear-gradient(90deg,'+color+',rgba(117,114,233,0.5))' : 'linear-gradient(90deg,#00ff88,var(--cyan))'};border-radius:10px;transition:width 1s ease;"></div>
       </div>
-    </div>
-  `).join('');
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;text-align:right;">
+        Requerido para ${rolNombre.split(' ').slice(0,3).join(' ')}: ${req.toFixed(1)}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── GRÁFICAS: DASHBOARD ──
 function initDashboardCharts() {
-  // Barras de progreso por competencia
+  const userScores = getCapabilityScores();
+  const reqScores  = getRequiredScores();
+  const shortLabels = CAPS.map(c => c.split(' ').slice(0, 2).join(' '));
+
+  // Convert Dreyfus 0–3 scale → 0–100 for bar chart
+  const userPcts = CAPS.map(c => Math.round((userScores[c] / 3) * 100));
+  const reqPcts  = CAPS.map(c => Math.round((reqScores[c]  / 3) * 100));
+
+  const correctCount = state.answers.filter(a => a.correct).length;
+  const diagScore    = Math.round((correctCount / questions.length) * 100);
+
+  // Destroy on re-entry
+  ['progress-bars-chart', 'kirkpatrick-chart'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el?._chart) { el._chart.destroy(); el._chart = null; }
+  });
+
+  // Barras: nivel actual vs. nivel requerido por rol
   const barsCtx = document.getElementById('progress-bars-chart');
-  if (barsCtx && !barsCtx._chart) {
+  if (barsCtx) {
     barsCtx._chart = new Chart(barsCtx, {
       type: 'bar',
       data: {
-        labels: ['Liderazgo', 'Comunicación', 'KPIs', 'Decisiones', 'Bienestar', 'Mejora'],
+        labels: shortLabels,
         datasets: [
           {
-            label: 'Pre-diagnóstico',
-            data: [65, 50, 80, 55, 70, 60],
+            label: 'Tu nivel actual',
+            data: userPcts,
             backgroundColor: 'rgba(0,216,218,0.25)',
             borderColor: '#00d8da',
             borderWidth: 1.5,
             borderRadius: 4
           },
           {
-            label: 'Post-estimado',
-            data: [78, 72, 88, 74, 82, 78],
+            label: `Requerido: ${state.roleName ? state.roleName.split(' ').slice(0, 3).join(' ') : 'Rol seleccionado'}`,
+            data: reqPcts,
             backgroundColor: 'rgba(117,114,233,0.25)',
             borderColor: '#7572e9',
             borderWidth: 1.5,
@@ -470,6 +751,15 @@ function initDashboardCharts() {
         plugins: {
           legend: {
             labels: { color: 'rgba(255,255,255,0.6)', font: { size: 11, family: 'Outfit' }, boxWidth: 14 }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => {
+                const v = ctx.raw;
+                const dreyfus = getDreyfusLabel(v / 100 * 3).label;
+                return ` ${ctx.dataset.label}: ${v}% (${dreyfus})`;
+              }
+            }
           }
         },
         animation: { duration: 1000 }
@@ -477,17 +767,17 @@ function initDashboardCharts() {
     });
   }
 
-  // Kirkpatrick
+  // Kirkpatrick — nivel 2 refleja el diagnóstico real
   const kirkCtx = document.getElementById('kirkpatrick-chart');
-  if (kirkCtx && !kirkCtx._chart) {
+  if (kirkCtx) {
     kirkCtx._chart = new Chart(kirkCtx, {
       type: 'bar',
       data: {
         labels: ['Nivel 1\nReacción', 'Nivel 2\nAprendizaje', 'Nivel 3\nAplicación', 'Nivel 4\nResultados'],
         datasets: [
           {
-            label: 'Inicio del programa',
-            data: [0, 62, 0, 0],
+            label: 'Diagnóstico inicial',
+            data: [0, diagScore, 0, 0],
             backgroundColor: 'rgba(248,0,250,0.3)',
             borderColor: '#F800fa',
             borderWidth: 1.5,
@@ -495,7 +785,7 @@ function initDashboardCharts() {
           },
           {
             label: 'Proyección al finalizar',
-            data: [85, 82, 75, 70],
+            data: [85, Math.min(95, diagScore + 20), 75, 70],
             backgroundColor: 'rgba(0,216,218,0.25)',
             borderColor: '#00d8da',
             borderWidth: 1.5,
