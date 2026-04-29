@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "name": "self-sci-demo",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

@@ -10,6 +10,108 @@
 </head>
 <body>
 
+<!-- ══════════════════════════════════════
+     DEMO ACCESS GATE (password)
+══════════════════════════════════════ -->
+<div id="access-gate" style="
+  position:fixed;inset:0;z-index:9999;
+  background:#020202;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+  font-family:'Outfit',Arial,sans-serif;">
+
+  <div style="width:100%;max-width:400px;text-align:center;">
+
+    <!-- Logos -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:32px;flex-wrap:wrap;">
+      <img src="assets/logo-self.svg" alt="SELF"
+           style="height:50px;width:auto;filter:drop-shadow(0 0 14px rgba(255,255,255,0.15));"
+           onerror="this.style.display='none'"/>
+      <div style="width:1.5px;height:40px;background:linear-gradient(180deg,transparent,rgba(0,216,218,0.5),transparent);"></div>
+      <img src="assets/sci-logo.png" alt="Supply Chain Institute"
+           style="height:36px;width:auto;opacity:0.85;"
+           onerror="this.style.display='none'"/>
+    </div>
+
+    <!-- Card -->
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(0,216,218,0.25);
+                border-radius:20px;padding:36px 32px;">
+
+      <div style="font-size:32px;margin-bottom:12px;">🔒</div>
+      <h2 style="font-size:20px;font-weight:700;color:white;margin-bottom:6px;">Demo Privado</h2>
+      <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:28px;line-height:1.6;">
+        Este demo es de uso exclusivo.<br>Ingresa la clave de acceso para continuar.
+      </p>
+
+      <div style="margin-bottom:16px;">
+        <input id="gate-input" type="password"
+               placeholder="Clave de acceso"
+               style="width:100%;padding:14px 18px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);
+                      background:rgba(255,255,255,0.06);color:white;font-size:15px;
+                      font-family:'Outfit',Arial,sans-serif;outline:none;box-sizing:border-box;
+                      transition:border-color 0.3s;"
+               onfocus="this.style.borderColor='rgba(0,216,218,0.6)'"
+               onblur="this.style.borderColor='rgba(255,255,255,0.12)'"
+               onkeydown="if(event.key==='Enter') checkGatePassword()"/>
+      </div>
+
+      <div id="gate-error" style="display:none;color:#ff6b6b;font-size:13px;margin-bottom:12px;">
+        ❌ Clave incorrecta. Intenta de nuevo.
+      </div>
+
+      <button onclick="checkGatePassword()"
+              style="width:100%;padding:14px;border-radius:10px;border:none;cursor:pointer;
+                     background:linear-gradient(135deg,#00d8da,#7572e9);color:white;
+                     font-size:15px;font-weight:700;font-family:'Outfit',Arial,sans-serif;
+                     transition:opacity 0.2s;box-shadow:0 0 28px rgba(0,216,218,0.3);"
+              onmouseover="this.style.opacity='0.88'"
+              onmouseout="this.style.opacity='1'">
+        Acceder al demo →
+      </button>
+
+    </div>
+
+    <p style="font-size:11px;color:rgba(255,255,255,0.15);margin-top:20px;">
+      © 2025 SELF SCI · Supply Chain Institute
+    </p>
+  </div>
+</div>
+
+<script>
+// SHA-256 hash de la contraseña (no se guarda en texto plano)
+// Hash corresponde a: SCI2025
+const GATE_HASH = '9df482492bcbc9aaba48f6f5c06e5b2629ad2149afee9a5c8fa5b1de34d9299b';
+
+async function sha256(msg) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+async function checkGatePassword() {
+  const val = document.getElementById('gate-input').value;
+  const hash = await sha256(val);
+  if (hash === GATE_HASH) {
+    sessionStorage.setItem('sci-demo-auth', '1');
+    const gate = document.getElementById('access-gate');
+    gate.style.opacity = '0';
+    gate.style.transition = 'opacity 0.4s';
+    setTimeout(() => gate.remove(), 400);
+  } else {
+    const err = document.getElementById('gate-error');
+    err.style.display = 'block';
+    const input = document.getElementById('gate-input');
+    input.style.borderColor = 'rgba(255,100,100,0.6)';
+    input.value = '';
+    setTimeout(() => { input.style.borderColor = 'rgba(255,255,255,0.12)'; }, 2000);
+  }
+}
+
+// Si ya autenticó en esta sesión, quitar el gate inmediatamente
+if (sessionStorage.getItem('sci-demo-auth') === '1') {
+  document.getElementById('access-gate').remove();
+}
+</script>
+
 <div class="hex-bg"></div>
 <div id="app">
 
