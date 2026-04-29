@@ -1249,7 +1249,36 @@ function renderRoleCards() {
   const container = document.getElementById('rol-cards');
   if (!container) return;
 
-  // ── Compute profileCaps from exploration form ──
+  // ════════════════════════════════════════════════════
+  //  LECTURA DEL PERFIL DEL USUARIO (formulario 01–04)
+  // ════════════════════════════════════════════════════
+
+  // 1. Área del formulario (sección 01, segundo select)
+  const areaSelects = document.querySelectorAll('#screen-exploracion select.form-select');
+  const userAreaRaw = areaSelects[0]?.value || '';
+
+  // 2. Años de experiencia (tercer select en sección 01)
+  const expRaw = areaSelects[1]?.value || '';
+  // Mapear experiencia → puntaje Dreyfus estimado del usuario (escala 0–3)
+  const EXP_TO_PUNTAJE = {
+    'Menos de 6 meses': 0.8,
+    '6 meses – 1 año':  1.1,
+    '1 – 3 años':       1.5,
+    '3 – 5 años':       2.0,
+    'Más de 5 años':    2.3
+  };
+  const userPuntaje = EXP_TO_PUNTAJE[expRaw] ?? 1.5; // default: Advanced Beginner
+
+  // 3. Puesto libre (sección 01, primer input de texto) — señales de nivel
+  const puestoTexto = (document.querySelector('#screen-exploracion .form-input')?.value || '').toLowerCase();
+  const puestoLevelBoost = /(gerente|director|jefe de|head of|vp |vp\b|manager senior|sr\.?)/.test(puestoTexto) ? 0.4
+                         : /(coordinador|líder|lider|lead|analista sr|especialista sr)/.test(puestoTexto)        ? 0.2
+                         : /(supervisor|analista|especialista|planner)/.test(puestoTexto)                       ? 0.0
+                         : /(aux|asistente|auxiliar|operador|becario)/.test(puestoTexto)                        ? -0.3
+                         : 0.0;
+  const userLevel = Math.min(2.8, Math.max(0.5, userPuntaje + puestoLevelBoost));
+
+  // 4. Capabilities del perfil (actividades + retos seleccionados)
   const profileCaps = new Set();
   document.querySelectorAll('#screen-exploracion .radio-card input:checked').forEach(cb => {
     const card = cb.closest('.radio-card');
@@ -1269,24 +1298,75 @@ function renderRoleCards() {
     if (label) (actividadCaps[label] || retoCaps[label] || []).forEach(c => profileCaps.add(c));
   });
 
-  // ── Compute match % for all 61 roles (always, to rank correctly) ──
+  // ════════════════════════════════════════════════════
+  //  TABLAS DE COMPATIBILIDAD
+  // ════════════════════════════════════════════════════
+
+  // Área del usuario → afinidad con áreas de roles (0–100)
+  const AREA_COMPAT = {
+    'Operaciones / Producción': { T2:55, T1:70, Planning:55, COMEX:20, PPM:100, Transformation:45 },
+    'Calidad':                  { T2:50, T1:75, Planning:45, COMEX:20, PPM:90,  Transformation:50 },
+    'Logística':                { T2:100,T1:85, Planning:70, COMEX:65, PPM:45,  Transformation:30 },
+    'Recursos Humanos':         { T2:30, T1:35, Planning:55, COMEX:30, PPM:45,  Transformation:100 },
+    'Seguridad Industrial':     { T2:45, T1:90, Planning:25, COMEX:15, PPM:85,  Transformation:45 },
+    'Mantenimiento':            { T2:35, T1:85, Planning:25, COMEX:15, PPM:90,  Transformation:40 },
+    'Administración':           { T2:40, T1:40, Planning:100,COMEX:90, PPM:30,  Transformation:60 }
+  };
+
+  function getAreaScore(userArea, roleArea) {
+    const map = AREA_COMPAT[userArea];
+    if (!map) return 55; // sin área definida → neutral
+    return map[roleArea] ?? 40;
+  }
+
+  // Nivel del usuario vs. nivel del rol (puntaje 0–3)
+  // La zona ideal es que el rol esté ligeramente por encima del usuario (reto alcanzable)
+  function getLevelScore(uLevel, rolPuntaje) {
+    const delta = rolPuntaje - uLevel; // positivo = rol más senior que usuario
+    if (delta >= -0.15 && delta <= 0.35) return 100; // mismo nivel o pequeño stretch
+    if (delta >  0.35  && delta <= 0.75) return 78;  // rol moderadamente superior (buen reto)
+    if (delta >  0.75  && delta <= 1.20) return 50;  // rol muy por encima
+    if (delta >  1.20)                   return 20;  // demasiado senior para el usuario
+    if (delta <  -0.15 && delta >= -0.6) return 70;  // usuario ya supera ligeramente el rol
+    return 35; // usuario muy por encima del rol
+  }
+
+  // Relevancia de las capabilities del usuario dentro del rol
+  // Usa tags (top-3 caps reales del Excel) y puntaje para ponderar
+  function getCapScore(pCaps, rol) {
+    if (pCaps.size === 0) return 55;
+    let total = 0;
+    pCaps.forEach(pc => {
+      const capData = rol.capabilities[pc];
+      const inTags  = rol.tags.some(t => t.toLowerCase().includes(pc.toLowerCase().substring(0, 8)));
+      if (inTags)                              total += 100; // cap es top-3 del rol
+      else if (capData?.puntaje >= 2.0)        total += 72;  // cap importante para el rol
+      else if (capData?.puntaje >= 1.5)        total += 45;  // cap moderadamente relevante
+      else                                     total += 12;  // cap apenas aparece en el rol
+    });
+    return Math.round(total / pCaps.size);
+  }
+
+  // ════════════════════════════════════════════════════
+  //  CÁLCULO DEL MATCH (3 factores ponderados)
+  // ════════════════════════════════════════════════════
+  //  40% Nivel     — ¿es el rol apropiado para la experiencia del usuario?
+  //  38% Área      — ¿coincide el área del usuario con el área del rol?
+  //  22% Capabilities — ¿ejercita el usuario las caps clave del rol?
+  // ════════════════════════════════════════════════════
+
   const matchScores = {};
   Object.entries(rolesData).forEach(([name, rol]) => {
-    let overlap = 0;
-    if (profileCaps.size > 0) {
-      profileCaps.forEach(pc => {
-        if (rol.capabilities[pc]) overlap++;
-        else if (rol.tags.some(t => t.toLowerCase().includes(pc.toLowerCase().substring(0,8)))) overlap += 0.5;
-      });
-    }
-    const base = profileCaps.size > 0
-      ? Math.round(48 + (overlap / Math.max(profileCaps.size, 1)) * 43)
-      : Math.round(52 + (rol.puntaje / 3) * 32);
-    const bump = Math.round(((rol.puntaje * 100) % 11));
-    matchScores[name] = Math.min(98, Math.max(50, base + bump));
+    const areaScore  = getAreaScore(userAreaRaw, rol.area);
+    const levelScore = getLevelScore(userLevel, rol.puntaje);
+    const capScore   = getCapScore(profileCaps, rol);
+
+    const raw = areaScore * 0.38 + levelScore * 0.40 + capScore * 0.22;
+    // Escalar al rango 52–96 para que los números sean informativos pero no extremos
+    matchScores[name] = Math.round(Math.min(96, Math.max(52, raw)));
   });
 
-  // ── All roles sorted by match ──
+  // ── Todos los roles ordenados por match ──
   const allSorted = Object.entries(rolesData)
     .sort((a, b) => matchScores[b[0]] - matchScores[a[0]]);
 
