@@ -516,28 +516,82 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
           <h3 class="section-title" style="margin-bottom:20px;">
             <span>04.</span> KPI's que impactas en tu rol
           </h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div>
-              <label class="form-label">KPI Principal</label>
+          <p style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:16px;line-height:1.6;">
+            Selecciona los indicadores que mides o impactas directamente en tu puesto actual.
+          </p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+            <div class="form-group" style="margin:0;">
+              <label class="form-label" style="margin-bottom:8px;">📌 KPI Principal</label>
               <select class="form-select" onchange="toggleOtroSelect(this)">
-                <option>OEE (Efectividad del equipo)</option>
-                <option selected>Productividad por turno</option>
-                <option>Nivel de calidad / defectos</option>
-                <option>Rotación de personal</option>
-                <option value="otro">Otro (especificar)</option>
+                <option value="" disabled selected>— Selecciona el KPI que más impactas —</option>
+                <optgroup label="Almacén e Inventarios">
+                  <option>Fill Rate — % surtimiento de pedidos</option>
+                  <option>Exactitud de inventario (%)</option>
+                  <option>Productividad de picking (uds./hora-hombre)</option>
+                  <option>Tiempo de ciclo de recepción (min)</option>
+                  <option>Rotación de inventario</option>
+                </optgroup>
+                <optgroup label="Distribución y Servicio">
+                  <option>OTIF — Entrega completa y a tiempo (%)</option>
+                  <option>Nivel de servicio al cliente (%)</option>
+                  <option>Entregas a tiempo — OTD (%)</option>
+                  <option>Costo por entrega</option>
+                  <option>Utilización de flota (%)</option>
+                </optgroup>
+                <optgroup label="Operaciones General">
+                  <option>OEE — Efectividad global del equipo</option>
+                  <option>Productividad operativa por turno</option>
+                  <option>Costo operativo por unidad</option>
+                  <option>Throughput (unidades procesadas/hora)</option>
+                </optgroup>
+                <optgroup label="Personas y Equipo">
+                  <option>Ausentismo del equipo (%)</option>
+                  <option>Rotación de personal (%)</option>
+                </optgroup>
+                <option value="otro">✏️ Otro (especificar)</option>
               </select>
-              <input type="text" class="form-input otro-select-input" style="display:none;margin-top:8px;" placeholder="Escribe tu KPI principal..."/>
+              <input type="text" class="form-input otro-select-input"
+                     style="display:none;margin-top:8px;"
+                     placeholder="Escribe tu KPI principal..."/>
             </div>
-            <div>
-              <label class="form-label">KPI Secundario</label>
+
+            <div class="form-group" style="margin:0;">
+              <label class="form-label" style="margin-bottom:8px;">📎 KPI Secundario</label>
               <select class="form-select" onchange="toggleOtroSelect(this)">
-                <option selected>Ausentismo del equipo</option>
-                <option>Satisfacción del cliente interno</option>
-                <option>Tiempo de respuesta</option>
-                <option value="otro">Otro (especificar)</option>
+                <option value="" disabled selected>— Selecciona un KPI de soporte —</option>
+                <optgroup label="Calidad y Servicio">
+                  <option>Tasa de daño de producto (%)</option>
+                  <option>Devoluciones y rechazos (%)</option>
+                  <option>Nivel de calidad / defectos (%)</option>
+                  <option>NPS interno / Satisfacción del cliente</option>
+                </optgroup>
+                <optgroup label="Almacén e Inventarios">
+                  <option>Tiempo de ciclo total (almacén → entrega)</option>
+                  <option>Costo por unidad almacenada</option>
+                  <option>% Pedidos perfectos</option>
+                </optgroup>
+                <optgroup label="Distribución y Rutas">
+                  <option>Eficiencia de ruta (%)</option>
+                  <option>Costo de flete por pedido</option>
+                  <option>Tiempo promedio de entrega (hrs)</option>
+                </optgroup>
+                <optgroup label="Personas y Equipo">
+                  <option>Ausentismo del equipo (%)</option>
+                  <option>Rotación de personal (%)</option>
+                  <option>Accidentes / incidentes de seguridad</option>
+                </optgroup>
+                <optgroup label="Finanzas y Eficiencia">
+                  <option>Costo operativo total</option>
+                  <option>Productividad por turno</option>
+                </optgroup>
+                <option value="otro">✏️ Otro (especificar)</option>
               </select>
-              <input type="text" class="form-input otro-select-input" style="display:none;margin-top:8px;" placeholder="Escribe tu KPI secundario..."/>
+              <input type="text" class="form-input otro-select-input"
+                     style="display:none;margin-top:8px;"
+                     placeholder="Escribe tu KPI secundario..."/>
             </div>
+
           </div>
         </div>
 
