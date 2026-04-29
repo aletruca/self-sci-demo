@@ -636,97 +636,20 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
         <div class="capi-container">
           <div class="capi-avatar"><img src="assets/CAPI%20Bienvenida.png" alt="Capi" style="width:90%;height:90%;object-fit:contain;"/></div>
           <div class="capi-bubble">
-            ¡Perfecto, Ana! Analicé tus respuestas y encontré <strong>3 perfiles</strong>
-            muy alineados contigo. Selecciona el que mejor describe tu rol actual
-            y comenzaremos tu diagnóstico personalizado. 🎯
+            ¡Perfecto, Ana! Analicé tus respuestas y encontré <strong>61 roles</strong>
+            de la base SCI. Los ordené por coincidencia con tu perfil.
+            Filtra por área o selecciona el que mejor te describa. 🎯
           </div>
         </div>
 
         <div class="page-title">Tu Perfil de Rol</div>
-        <p class="page-subtitle" style="margin-bottom:32px;">
-          Basado en tu exploración, estos roles tienen la mayor coincidencia con tus actividades y retos.
-          Selecciona uno para comenzar tu diagnóstico.
+        <p class="page-subtitle" style="margin-bottom:24px;">
+          61 roles de la base SCI ordenados por coincidencia con tu exploración.
+          Filtra por área y selecciona uno para iniciar tu diagnóstico.
         </p>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:32px;" id="rol-cards">
-
-          <!-- Rol 1 — Recomendado -->
-          <div class="card rol-card" data-rol="1" onclick="selectRol(1)" style="cursor:pointer;border-color:rgba(0,216,218,0.5);position:relative;">
-            <div style="position:absolute;top:14px;right:14px;">
-              <span class="badge badge-cyan">⭐ Recomendado</span>
-            </div>
-            <div style="font-size:48px;margin-bottom:12px;">👷</div>
-            <h3 style="font-size:18px;font-weight:700;color:var(--cyan);margin-bottom:8px;">
-              Supervisor de Producción
-            </h3>
-            <p style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:16px;">
-              Lidera equipos operativos, gestiona turnos, asegura el cumplimiento
-              de metas de productividad y calidad en planta.
-            </p>
-            <div style="margin-bottom:12px;">
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px;">
-                <span>Coincidencia con tu perfil</span><span style="color:var(--cyan);">92%</span>
-              </div>
-              <div class="progress-bar-wrap">
-                <div class="progress-bar-fill" style="width:92%"></div>
-              </div>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;">
-              <span class="badge badge-cyan">Liderazgo</span>
-              <span class="badge badge-purple">Operaciones</span>
-              <span class="badge badge-cyan">Gestión</span>
-            </div>
-          </div>
-
-          <!-- Rol 2 -->
-          <div class="card rol-card" data-rol="2" onclick="selectRol(2)" style="cursor:pointer;">
-            <div style="font-size:48px;margin-bottom:12px;">🎯</div>
-            <h3 style="font-size:18px;font-weight:700;color:var(--white);margin-bottom:8px;">
-              Líder de Mejora Continua
-            </h3>
-            <p style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:16px;">
-              Impulsa proyectos de optimización de procesos, aplica metodologías
-              Lean/Six Sigma y gestiona el cambio organizacional.
-            </p>
-            <div style="margin-bottom:12px;">
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px;">
-                <span>Coincidencia con tu perfil</span><span style="color:var(--purple);">78%</span>
-              </div>
-              <div class="progress-bar-wrap">
-                <div class="progress-bar-fill" style="width:78%;background:linear-gradient(90deg,var(--purple),var(--magenta))"></div>
-              </div>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;">
-              <span class="badge badge-purple">Lean</span>
-              <span class="badge badge-purple">Análisis</span>
-              <span class="badge badge-magenta">Cambio</span>
-            </div>
-          </div>
-
-          <!-- Rol 3 -->
-          <div class="card rol-card" data-rol="3" onclick="selectRol(3)" style="cursor:pointer;">
-            <div style="font-size:48px;margin-bottom:12px;">🔍</div>
-            <h3 style="font-size:18px;font-weight:700;color:var(--white);margin-bottom:8px;">
-              Coordinador de Calidad
-            </h3>
-            <p style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:16px;">
-              Asegura los estándares de calidad del producto, gestiona auditorías,
-              no conformidades y cultura de mejora en planta.
-            </p>
-            <div style="margin-bottom:12px;">
-              <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:6px;">
-                <span>Coincidencia con tu perfil</span><span style="color:var(--magenta);">65%</span>
-              </div>
-              <div class="progress-bar-wrap">
-                <div class="progress-bar-fill" style="width:65%;background:linear-gradient(90deg,var(--magenta),var(--purple))"></div>
-              </div>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;">
-              <span class="badge badge-magenta">ISO</span>
-              <span class="badge badge-cyan">Auditorías</span>
-              <span class="badge badge-purple">Calidad</span>
-            </div>
-          </div>
+        <div id="rol-cards" style="margin-bottom:32px;">
+          <!-- Populated by renderRoleCards() -->
         </div>
 
         <div style="display:flex;justify-content:space-between;align-items:center;">

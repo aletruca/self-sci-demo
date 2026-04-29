@@ -30,60 +30,985 @@ const CAPS = [
   'Mejora continua'
 ];
 
-// 3 roles T2 extraídos de "Base de datos Roles Capabilities SCI.xlsx"
+// 61 roles extraídos de "Base de datos Roles Capabillities SCI.xlsx"
 const rolesData = {
-  'Supervisor de Almacén': {
-    id: 1,
-    area: 'T2', nivel: 'Competent', puntaje: 1.89,
-    icono: '🏭', color: 'var(--cyan)',
-    descripcion: 'Planifica, coordina y estandariza las operaciones del almacén garantizando eficiencia, seguridad y precisión en el inventario.',
+  "MBL": {
+    id:1, area:"Transformation", nivel:"Proficient", puntaje:2.6,
+    icono:"🔄", color:"#7572e9",
+    descripcion:"Participiante del MBL es un ejeutivo inmerso directa o indirectamente en la cadena de suministro. Idealmente cuenta con experiencia multicultural y en otras compañías/industrias. S",
     capabilities: {
-      'MBWA':                        { puntaje: 2.0, nivel: 'Competent' },
-      'Gestión de Equipos':          { puntaje: 1.9, nivel: 'Competent' },
-      'Gestión por sistemas':        { puntaje: 2.0, nivel: 'Competent' },
-      'Toma de Decisiones':          { puntaje: 2.0, nivel: 'Competent' },
-      'Grit (resilencia + empuje)':  { puntaje: 1.8, nivel: 'Competent' },
-      'Orientación a datos':         { puntaje: 1.8, nivel: 'Competent' },
-      'Resolución de problemas':     { puntaje: 1.9, nivel: 'Competent' },
-      'Mejora continua':             { puntaje: 1.9, nivel: 'Competent' }
+      "MBWA": { puntaje:2.29, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.5, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.6, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2.29, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.5, nivel:"Proficient" },
+      "Orientación a datos": { puntaje:2.29, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:2.29, nivel:"Proficient" },
+      "Mejora continua": { puntaje:2.29, nivel:"Proficient" },
     },
-    tags: ['Inventarios', 'Almacén', 'Operaciones', 'WMS']
+    tags:["Finanzas","Gestión por sistemas","Grit (resilencia + empuje)"]
   },
-  'Supervisor de Distribución': {
-    id: 2,
-    area: 'T2', nivel: 'Competent', puntaje: 1.95,
-    icono: '🚛', color: 'var(--purple)',
-    descripcion: 'Garantiza el servicio y entrega de producto, gestionando operaciones de distribución, flota y cumplimiento de indicadores de servicio al cliente.',
+  "Supervisor de Almacén": {
+    id:2, area:"T2", nivel:"Competent", puntaje:1.89,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"Planificar, coordinar, estandarizar y medir las operaciones de los almacenes de los CDD (Centros de Distribución), a través del cumplimiento de las políticas y procedimientos estab",
     capabilities: {
-      'MBWA':                        { puntaje: 2.0, nivel: 'Competent' },
-      'Gestión de Equipos':          { puntaje: 2.0, nivel: 'Competent' },
-      'Gestión por sistemas':        { puntaje: 2.0, nivel: 'Competent' },
-      'Toma de Decisiones':          { puntaje: 2.1, nivel: 'Competent' },
-      'Grit (resilencia + empuje)':  { puntaje: 1.9, nivel: 'Competent' },
-      'Orientación a datos':         { puntaje: 1.9, nivel: 'Competent' },
-      'Resolución de problemas':     { puntaje: 2.0, nivel: 'Competent' },
-      'Mejora continua':             { puntaje: 1.9, nivel: 'Competent' }
+      "MBWA": { puntaje:2, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.9, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:2, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:2, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.8, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.8, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.66, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.66, nivel:"Competent" },
     },
-    tags: ['Distribución', 'Servicio al cliente', 'Last-mile', 'Flota']
+    tags:["Grit (resilencia + empuje)","Management by Walking Around (MBWA)","Gestión de equipos"]
   },
-  'Gerente de Operaciones de Distribución': {
-    id: 3,
-    area: 'T2', nivel: 'Proficient', puntaje: 2.33,
-    icono: '🎯', color: 'var(--magenta)',
-    descripcion: 'Lidera las operaciones de distribución, optimiza procesos, desarrolla equipos y garantiza niveles de servicio, eficiencia y rentabilidad operativa.',
+  "Supervisor de Distribución": {
+    id:3, area:"T2", nivel:"Competent", puntaje:1.95,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"Garantizar el buen servicio y entrega de los productos de la empresa a la totalidad de los clientes, al más bajo costo; con la mayor productividad posible. ",
     capabilities: {
-      'MBWA':                        { puntaje: 2.3, nivel: 'Proficient' },
-      'Gestión de Equipos':          { puntaje: 2.4, nivel: 'Proficient' },
-      'Gestión por sistemas':        { puntaje: 2.4, nivel: 'Proficient' },
-      'Toma de Decisiones':          { puntaje: 2.3, nivel: 'Proficient' },
-      'Grit (resilencia + empuje)':  { puntaje: 2.1, nivel: 'Competent' },
-      'Orientación a datos':         { puntaje: 2.2, nivel: 'Competent' },
-      'Resolución de problemas':     { puntaje: 2.3, nivel: 'Proficient' },
-      'Mejora continua':             { puntaje: 2.4, nivel: 'Proficient' }
+      "MBWA": { puntaje:2, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:2, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:2, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:2.1, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.9, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.9, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.72, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.72, nivel:"Competent" },
     },
-    tags: ['Liderazgo', 'Estrategia', 'Mejora operativa', 'Finanzas']
-  }
-};
+    tags:["Grit (resilencia + empuje)","Customer Centricity","Gestión por sistemas"]
+  },
+  "Gerente Flota T2": {
+    id:4, area:"T2", nivel:"Proficient", puntaje:2.28,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"Gestionar de forma efectiva el mantenimiento preventivo, predictivo y correctivo de la flota. Participar de forma activa en la elaboración de presupuestos de garantizar la ejecució",
+    capabilities: {
+      "MBWA": { puntaje:2.3, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.01, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.5, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2.01, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.01, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:2.01, nivel:"Proficient" },
+      "Mejora continua": { puntaje:2.01, nivel:"Proficient" },
+    },
+    tags:["Grit (resilencia + empuje)","Gestión de interesados","Gestión de flota"]
+  },
+  "Gerente de Ruteo": {
+    id:5, area:"T2", nivel:"Proficient", puntaje:2.38,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"Liderar y dirigir la implementación estándar de estrategias de planificación de territorios, rutas y monitoreo de flotas de acuerdo a las políticas definidas para cada región, aseg",
+    capabilities: {
+      "MBWA": { puntaje:2.4, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.4, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.4, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2.09, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.6, nivel:"Proficient" },
+      "Orientación a datos": { puntaje:2.09, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:2.09, nivel:"Proficient" },
+      "Mejora continua": { puntaje:2.09, nivel:"Proficient" },
+    },
+    tags:["Grit (resilencia + empuje)","Gestión de equipos","Gestión de interesados"]
+  },
+  "Especialista de Ruteo": {
+    id:6, area:"T2", nivel:"Competent", puntaje:2.13,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"Planificar las rutas diarias de entrega de los vehículos de distribución de la Región asignada, mediante el uso correcto de la herramienta de ruteo, garantizando el cumplimiento de",
+    capabilities: {
+      "MBWA": { puntaje:1.87, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.87, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:2.1, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.87, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2.1, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.1, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.87, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.87, nivel:"Competent" },
+    },
+    tags:["Grit (resilencia + empuje)","Data Driven / Analítico","Ruteo"]
+  },
+  "Gerente de Monitoreo": {
+    id:7, area:"T2", nivel:"Competent", puntaje:2.26,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"Garantizar la disponibilidad, confiabilidad y rendimiento óptimo de los sistemas y servicios críticos a través de una supervisión efectiva, coordinación de actividades, gestión de ",
+    capabilities: {
+      "MBWA": { puntaje:1.99, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:2.4, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.2, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.99, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2.6, nivel:"Proficient" },
+      "Orientación a datos": { puntaje:2.4, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:1.99, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.99, nivel:"Competent" },
+    },
+    tags:["Grit (resilencia + empuje)","Gestión de equipos","Operaciónes de Distribución de T2"]
+  },
+  "Coordinador de Monitoreo": {
+    id:8, area:"T2", nivel:"Competent", puntaje:2.06,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"Coordinar las actividades, entrenamientos del equipo de monitoristas safety, productividad, desarrollo; con el objetivo de garantizar los resultados esperados en cada pilar y para ",
+    capabilities: {
+      "MBWA": { puntaje:1.81, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:2.1, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.9, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:2, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2.2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.1, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.81, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.81, nivel:"Competent" },
+    },
+    tags:["Grit (resilencia + empuje)","Data Driven / Analítico","Operaciónes de Distribución de T2"]
+  },
+  "Especialista de Monitoreo": {
+    id:9, area:"T2", nivel:"Competent", puntaje:1.89,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"Gestionar alertas de safety y productividad de las unidades de T2 en tiempo real, asegurando la seguridad de los tripulantes; a partir de dar visibilidad de lo que sucede en la cal",
+    capabilities: {
+      "MBWA": { puntaje:1.66, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.66, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.9, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.7, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.9, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.66, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.66, nivel:"Competent" },
+    },
+    tags:["Grit (resilencia + empuje)","Data Driven / Analítico","Ruteo y monitoreo (digital control tower)"]
+  },
+  "Coordinador de Control T2": {
+    id:10, area:"T2", nivel:"Competent", puntaje:2.04,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"Controlar las operaciones para la prevención de Pérdidas y dar seguimiento a que se cumplan todos los procesos en el almacén de acuerdo con los establecidos en los padrones de la c",
+    capabilities: {
+      "MBWA": { puntaje:1.8, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.8, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:2.1, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.8, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.1, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.9, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.8, nivel:"Competent" },
+    },
+    tags:["Grit (resilencia + empuje)","Data Driven / Analítico","Pensamiento crítico"]
+  },
+  "Especialista DRP": {
+    id:11, area:"Planning", nivel:"Proficient", puntaje:2.27,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Mantener el plan de inventario frente a las realidades operativas para generar planes de reubicación que maximicen las ganancias.",
+    capabilities: {
+      "MBWA": { puntaje:2, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.5, nivel:"Proficient" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:2.5, nivel:"Proficient" },
+      "Mejora continua": { puntaje:2, nivel:"Proficient" },
+    },
+    tags:["DRP con O9","Orientación a datos","Colaboración"]
+  },
+  "Gerente - Logística inversa": {
+    id:12, area:"Planning", nivel:"Proficient", puntaje:2.37,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Optimiza los niveles de inventario de empaques para satisfacer la demanda de productos terminados mientras minimizas los costos logísticos, pérdidas e inversión.",
+    capabilities: {
+      "MBWA": { puntaje:2.09, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.09, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.3, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2.3, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.8, nivel:"Expert" },
+      "Orientación a datos": { puntaje:2.5, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:2.09, nivel:"Proficient" },
+      "Mejora continua": { puntaje:2.3, nivel:"Proficient" },
+    },
+    tags:["Orientación a datos","Colaboración","Gestión de inventarios"]
+  },
+  "Especialista - CONA": {
+    id:13, area:"Planning", nivel:"Competent", puntaje:2.12,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Calcula rutas de transferencia óptimas para suministrar producto terminado y mínimos costos teniendo en cuenta los requisitos de distribución y las limitaciones de capacidad al men",
+    capabilities: {
+      "MBWA": { puntaje:1.87, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.87, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.87, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.87, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.87, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:2, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.87, nivel:"Competent" },
+    },
+    tags:["Colaboración","Inglés","Orientación a datos"]
+  },
+  "Especialista - NPI": {
+    id:14, area:"Planning", nivel:"Proficient", puntaje:2.31,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Gestionar y coordinar el proceso de desarrollo y lanzamiento de nuevos productos al mercado de manera eficiente y efectiva,  optimizazando la integración de nuevos productos en la ",
+    capabilities: {
+      "MBWA": { puntaje:2.03, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.03, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.03, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2.03, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.03, nivel:"Proficient" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:2.03, nivel:"Proficient" },
+      "Mejora continua": { puntaje:2, nivel:"Competent" },
+    },
+    tags:["Colaboración","Inglés","Orientación a datos"]
+  },
+  "Especialista - MRP Táctico": {
+    id:15, area:"Planning", nivel:"Proficient", puntaje:2.19,
+    icono:"📊", color:"#00d8da",
+    descripcion:"\"Optimiza los niveles de inventario de materiales para cumplir con la  demanda de productos terminados,  Se centra en la estrategia y en la alineación de los recursos de la empresa",
+    capabilities: {
+      "MBWA": { puntaje:1.93, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:1.93, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:1.93, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:1.93, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.93, nivel:"Proficient" },
+      "Mejora continua": { puntaje:1.93, nivel:"Proficient" },
+    },
+    tags:["Colaboración","Inglés","Orientación a datos"]
+  },
+  "Especialista - WSNP": {
+    id:16, area:"Planning", nivel:"Proficient", puntaje:2.23,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Crea planes óptimos de producción y distribución para satisfacer la demanda, teniendo en cuenta los niveles de inventario objetivo, las asignaciones de DPG y las decisiones de S&OP",
+    capabilities: {
+      "MBWA": { puntaje:1.96, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:1.96, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:1.96, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:1.96, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:3, nivel:"Expert" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:3, nivel:"Expert" },
+      "Mejora continua": { puntaje:1.96, nivel:"Proficient" },
+    },
+    tags:["Colaboración","Inglés","Orientación a datos"]
+  },
+  "Especialista - Retpack": {
+    id:17, area:"Planning", nivel:"Competent", puntaje:2,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Analizar los niveles de inventario de envase/empaque para generar planes de compra, fabricación y distribución para mantener inventarios sanos para habilitar el plan de demanda, mi",
+    capabilities: {
+      "MBWA": { puntaje:1.76, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.76, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.76, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.76, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.76, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.5, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:1.5, nivel:"Advanced Beginner" },
+      "Mejora continua": { puntaje:1.76, nivel:"Competent" },
+    },
+    tags:["Colaboración","Inglés","Orientación a datos"]
+  },
+  "Especialista - DP Operativo": {
+    id:18, area:"Planning", nivel:"Competent", puntaje:2.08,
+    icono:"📊", color:"#00d8da",
+    descripcion:"La planeación de la demanda operativa se centra en la gestión a corto plazo de la demanda, asegurando que los productos estén disponibles para satisfacer las necesidades inmediatas",
+    capabilities: {
+      "MBWA": { puntaje:1.83, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.83, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.83, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.83, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.83, nivel:"Competent" },
+      "Orientación a datos": { puntaje:3, nivel:"Expert" },
+      "Resolución de problemas": { puntaje:1.83, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.83, nivel:"Competent" },
+    },
+    tags:["Excel","Inglés","Orientación a datos"]
+  },
+  "Gerente - CONA": {
+    id:19, area:"Planning", nivel:"Competent", puntaje:2.04,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Calcula rutas de transferencia óptimas para suministrar producto terminado y mínimos costos teniendo en cuenta los requisitos de distribución y las limitaciones de capacidad al men",
+    capabilities: {
+      "MBWA": { puntaje:1.8, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.8, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.8, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.8, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.8, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.8, nivel:"Competent" },
+      "Mejora continua": { puntaje:2, nivel:"Competent" },
+    },
+    tags:["Finanzas empresariales","Inglés","Orientación a datos"]
+  },
+  "Especialista DP Estadistico": {
+    id:20, area:"Planning", nivel:"Competent", puntaje:2.12,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Crear pronósticos de demanda confiables como la referencia para el acuerdo sobre planes de negocios conjuntos para equilibrar el nivel de servicio deseado al costo óptimo",
+    capabilities: {
+      "MBWA": { puntaje:1.87, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.87, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.87, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.87, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.87, nivel:"Competent" },
+      "Orientación a datos": { puntaje:3, nivel:"Expert" },
+      "Resolución de problemas": { puntaje:1.87, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.87, nivel:"Competent" },
+    },
+    tags:["Excel","Inglés","Orientación a datos"]
+  },
+  "Gerente DP Operativo": {
+    id:21, area:"Planning", nivel:"Expert", puntaje:2.73,
+    icono:"📊", color:"#00d8da",
+    descripcion:"La planeación de la demanda operativa se centra en la gestión a corto plazo de la demanda, asegurando que los productos estén disponibles para satisfacer las necesidades inmediatas",
+    capabilities: {
+      "MBWA": { puntaje:2.4, nivel:"Expert" },
+      "Gestión de Equipos": { puntaje:2.4, nivel:"Expert" },
+      "Gestión por sistemas": { puntaje:2.6, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2.4, nivel:"Expert" },
+      "Grit (resilencia + empuje)": { puntaje:2.4, nivel:"Expert" },
+      "Orientación a datos": { puntaje:3, nivel:"Expert" },
+      "Resolución de problemas": { puntaje:2.4, nivel:"Expert" },
+      "Mejora continua": { puntaje:2.5, nivel:"Proficient" },
+    },
+    tags:["Excel","Inglés","Orientación a datos"]
+  },
+  "Gerente - DRP": {
+    id:22, area:"Planning", nivel:"Expert", puntaje:2.56,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Mantener el plan de inventario frente a las realidades operativas para generar planes de reubicación que maximicen las ganancias.",
+    capabilities: {
+      "MBWA": { puntaje:2.25, nivel:"Expert" },
+      "Gestión de Equipos": { puntaje:2.25, nivel:"Expert" },
+      "Gestión por sistemas": { puntaje:2.25, nivel:"Expert" },
+      "Toma de Decisiones": { puntaje:2.5, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.5, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:2.25, nivel:"Expert" },
+      "Mejora continua": { puntaje:2.5, nivel:"Proficient" },
+    },
+    tags:["Inglés","Orientación a datos","Colaboración"]
+  },
+  "Gerente - WSNP": {
+    id:23, area:"Planning", nivel:"Competent", puntaje:2.04,
+    icono:"📊", color:"#00d8da",
+    descripcion:"El Gerente WSNP (Wholesale & Retail Network Planning) juega un papel crucial en la gestión de la cadena de suministro, liderando la creación de planes óptimos de producción y distr",
+    capabilities: {
+      "MBWA": { puntaje:1.8, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.8, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.8, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:2, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:2, nivel:"Competent" },
+      "Mejora continua": { puntaje:2, nivel:"Competent" },
+    },
+    tags:["Inglés","Orientación a datos","Colaboración"]
+  },
+  "Gerente - Retpack": {
+    id:24, area:"Planning", nivel:"Expert", puntaje:2.53,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Analizar los niveles de inventario de envase/empaque para generar planes de compra, fabricación y distribución para mantener inventarios sanos para habilitar el plan de demanda, mi",
+    capabilities: {
+      "MBWA": { puntaje:2.23, nivel:"Expert" },
+      "Gestión de Equipos": { puntaje:2.23, nivel:"Expert" },
+      "Gestión por sistemas": { puntaje:2, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:2.23, nivel:"Expert" },
+      "Grit (resilencia + empuje)": { puntaje:2.23, nivel:"Expert" },
+      "Orientación a datos": { puntaje:2.5, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:3, nivel:"Expert" },
+      "Mejora continua": { puntaje:2.6, nivel:"Proficient" },
+    },
+    tags:["Inglés","Orientación a datos","Colaboración"]
+  },
+  "Gerente - MRP Táctico": {
+    id:25, area:"Planning", nivel:"Expert", puntaje:2.83,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Optimiza los niveles de inventario de materiales para cumplir con la  demanda de productos terminados,  Se centra en la estrategia y en la alineación de los recursos de la empresa ",
+    capabilities: {
+      "MBWA": { puntaje:2.49, nivel:"Expert" },
+      "Gestión de Equipos": { puntaje:2.49, nivel:"Expert" },
+      "Gestión por sistemas": { puntaje:2.49, nivel:"Expert" },
+      "Toma de Decisiones": { puntaje:2.5, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:3, nivel:"Expert" },
+      "Orientación a datos": { puntaje:2.5, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:2.49, nivel:"Expert" },
+      "Mejora continua": { puntaje:2.5, nivel:"Proficient" },
+    },
+    tags:["Inglés","Orientación a datos","Colaboración"]
+  },
+  "Especialista - MRP Operativo": {
+    id:26, area:"Planning", nivel:"Proficient", puntaje:2.32,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Optimiza los niveles de inventario de materiales para cumplir con la  demanda de productos terminados minimizando costos, centrándose en la ejecución detallada del plan de producci",
+    capabilities: {
+      "MBWA": { puntaje:2.04, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.04, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.04, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2.04, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:2, nivel:"Competent" },
+      "Mejora continua": { puntaje:2.04, nivel:"Proficient" },
+    },
+    tags:["Inglés","Orientación a datos","Colaboración"]
+  },
+  "Gerente - MRP Operativo": {
+    id:27, area:"Planning", nivel:"Competent", puntaje:2.32,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Optimiza los niveles de inventario de materiales para cumplir con la  demanda de productos terminados minimizando costos, centrándose en la ejecución detallada del plan de producci",
+    capabilities: {
+      "MBWA": { puntaje:2.04, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:2.04, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:2.04, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:2.04, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2.2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:2, nivel:"Competent" },
+      "Mejora continua": { puntaje:2.04, nivel:"Competent" },
+    },
+    tags:["Inglés","Orientación a datos","Colaboración"]
+  },
+  "Especialista - Programación de la producción": {
+    id:28, area:"Planning", nivel:"Proficient", puntaje:2.27,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Desarrolla métodos, técnicas y herramientas para la planificación eficiente de planes y programaciones que sincronizan eficazmente la demanda con la capacidad de producción, consid",
+    capabilities: {
+      "MBWA": { puntaje:2, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.5, nivel:"Proficient" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:2, nivel:"Proficient" },
+      "Mejora continua": { puntaje:2, nivel:"Proficient" },
+    },
+    tags:["Inglés","Orientación a datos","Colaboración"]
+  },
+  "Gerente Regional de Operaciones - GRO": {
+    id:29, area:"T2", nivel:"Proficient", puntaje:2.6,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"\"Coordinar las actividades de Almacén y Rutas de Entrega del territorio en referencia optimizando los recursos apalancados en productividad  y enfocados en garantizar el mejor nive",
+    capabilities: {
+      "MBWA": { puntaje:2.29, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.8, nivel:"Expert" },
+      "Gestión por sistemas": { puntaje:2.6, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2.29, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.5, nivel:"Proficient" },
+      "Orientación a datos": { puntaje:2.29, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:2.29, nivel:"Proficient" },
+      "Mejora continua": { puntaje:2.29, nivel:"Proficient" },
+    },
+    tags:["Grit (resilencia + empuje)","Mentalidad de crecimiento","Gestión por sistemas"]
+  },
+  "Gerente Operaciones de Distribución (GOD)": {
+    id:30, area:"T2", nivel:"Competent", puntaje:2.33,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"Coordinar las actividades de almacén y rutas de entrega optimizando los recursos apalancados en productividad  y enfocados en garantizar el mejor nivel de servicio, desarrollando r",
+    capabilities: {
+      "MBWA": { puntaje:2.5, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.4, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.4, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2.05, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2.2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.05, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:2.05, nivel:"Competent" },
+      "Mejora continua": { puntaje:2.05, nivel:"Competent" },
+    },
+    tags:["Grit (resilencia + empuje)","Gestión por sistemas","Gestion de Interesados"]
+  },
+  "Gerente - DP Estadístico": {
+    id:31, area:"Planning", nivel:"Competent", puntaje:2.13,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Crear pronósticos de demanda confiables como la referencia para el acuerdo sobre planes de negocio conjuntos para equilibrar el nivel de servicio deseado al costo óptimo.",
+    capabilities: {
+      "MBWA": { puntaje:1.87, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.87, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:2.5, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:1.87, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.87, nivel:"Competent" },
+      "Orientación a datos": { puntaje:3, nivel:"Expert" },
+      "Resolución de problemas": { puntaje:1.87, nivel:"Competent" },
+      "Mejora continua": { puntaje:2, nivel:"Competent" },
+    },
+    tags:["Excel","Inglés","Orientación a datos"]
+  },
+  "Especialista - Logística inversa": {
+    id:32, area:"Planning", nivel:"Proficient", puntaje:2.25,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Optimiza los niveles de inventario de empaques para satisfacer la demanda de productos terminados mientras minimizas los costos logísticos, pérdidas e inversión.",
+    capabilities: {
+      "MBWA": { puntaje:1.98, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:1.98, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:1.98, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:1.98, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.5, nivel:"Proficient" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:2.5, nivel:"Proficient" },
+      "Mejora continua": { puntaje:1.98, nivel:"Proficient" },
+    },
+    tags:["Orientación a datos","Colaboración","Gestión de inventarios"]
+  },
+  "Gerente PPM": {
+    id:33, area:"PPM", nivel:"Proficient", puntaje:2.6,
+    icono:"🎯", color:"var(--magenta)",
+    descripcion:"Proporciona visibilidad y precisión del costo de SC mediante análisis de datos durante las rutinas en los niveles más altos de la organización. Es responsable de analizar las finan",
+    capabilities: {
+      "MBWA": { puntaje:2.29, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.5, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.29, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2.29, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.29, nivel:"Proficient" },
+      "Orientación a datos": { puntaje:2.29, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:2.29, nivel:"Proficient" },
+      "Mejora continua": { puntaje:2.29, nivel:"Proficient" },
+    },
+    tags:["Storytelling","Gestión de riesgo","Análisis de Costos"]
+  },
+  "Ana-Esp PPM": {
+    id:34, area:"PPM", nivel:"Competent", puntaje:2.16,
+    icono:"🎯", color:"var(--magenta)",
+    descripcion:"Lidera el apoyo clave para aumentar la visibilidad y la precisión de los proyectos mediante el aporte de información analítica. Es responsable del análisis financiero y otros indic",
+    capabilities: {
+      "MBWA": { puntaje:1.9, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.9, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.9, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.9, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.9, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.9, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.9, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.9, nivel:"Competent" },
+    },
+    tags:["Storytelling","Gestión de riesgo","Análisis de Costos"]
+  },
+  "Site PPM": {
+    id:35, area:"PPM", nivel:"Competent", puntaje:1.8,
+    icono:"🎯", color:"var(--magenta)",
+    descripcion:"Sus actividades incluyen (entre otras) la estrecha colaboración con el equipo local, la comunicación del calendario del plan anual, los hitos y los indicadores clave de rendimiento",
+    capabilities: {
+      "MBWA": { puntaje:1.58, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.58, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.58, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.58, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.58, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.58, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.58, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.58, nivel:"Competent" },
+    },
+    tags:["Storytelling","Gestión de riesgo","Análisis de Costos"]
+  },
+  "Gerente de Logística": {
+    id:36, area:"T1", nivel:"Competent", puntaje:2.01,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El objetivo del Gerente de Logística es validar los planos tácticos de producción y elaboración de cerveza, así como operación de la recepción y asegurar el almacenamiento y sumini",
+    capabilities: {
+      "MBWA": { puntaje:1.77, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:2.3, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.8, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.77, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.77, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.8, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.77, nivel:"Competent" },
+    },
+    tags:["Gestión de equipos","Gestion de Interesados","Gestión de la cadena de suministro"]
+  },
+  "Especialista de Simulación": {
+    id:37, area:"T1", nivel:"Competent", puntaje:2.2,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"Prepara modelos de simulación sobre FlexSim, apegándose a las mejores prácticas de simulación, metodologías y planes de trabajo establecidos; para comparar escenarios u optimizació",
+    capabilities: {
+      "MBWA": { puntaje:1.94, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.94, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.94, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.94, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.94, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.8, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.94, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.94, nivel:"Competent" },
+    },
+    tags:["Empuje / Orientación a resultados","Programación Estructurada","Data Driven / Analítico"]
+  },
+  "Gerente de Almacén BU": {
+    id:38, area:"T1", nivel:"Competent", puntaje:1.98,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El objetivo del Gerente de Almacén es asegurar la eficiencia operativa y vigilar el cumplimiento de los indicadores y metas estratégicas; acompañando en el diseño, evolución y eval",
+    capabilities: {
+      "MBWA": { puntaje:1.74, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:2.3, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:1.9, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:2, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2.2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.8, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:2.1, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.74, nivel:"Competent" },
+    },
+    tags:["Gestión de equipos","Gestion de Interesados","Grit (resilencia + empuje)"]
+  },
+  "Gerente de Transporte (TM) T1": {
+    id:39, area:"T1", nivel:"Proficient", puntaje:2.21,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El Gerente Nacional de Transporte T1 es responsable de liderar las operaciones de transporte a nivel nacional, y es responsable de la planificación, coordinación y supervisión de l",
+    capabilities: {
+      "MBWA": { puntaje:1.94, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.4, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.94, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.1, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.3, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:1.94, nivel:"Proficient" },
+      "Mejora continua": { puntaje:1.94, nivel:"Proficient" },
+    },
+    tags:["Gestion de Interesados","Gestión de equipos","Data Driven / Analítico"]
+  },
+  "Especialista de Transporte (TM) T1": {
+    id:40, area:"T1", nivel:"Competent", puntaje:1.77,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El Especialista de Transporte  es responsable de planificar, coordinar y optimizar el transporte de bienes y materiales. Este rol implica asegurar la eficiencia en las rutas, la pu",
+    capabilities: {
+      "MBWA": { puntaje:1.56, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.56, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.7, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.56, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.56, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.9, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.8, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.56, nivel:"Competent" },
+    },
+    tags:["Logística del Transporte","Data Driven / Analítico","Gestión de la cadena de suministro"]
+  },
+  "Gerente de Flota (TM) T1": {
+    id:41, area:"T1", nivel:"Competent", puntaje:2.02,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El Gerente Nacional de Flota T1 es responsable de la gestión integral de una flota de vehículos a nivel nacional. Este rol incluye la supervisión del mantenimiento de la flota, la ",
+    capabilities: {
+      "MBWA": { puntaje:1.9, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:2.3, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.78, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.8, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.78, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.8, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.78, nivel:"Competent" },
+    },
+    tags:["Gestión de flota","Gestion de Interesados","Gestión de equipos"]
+  },
+  "Especialista de Transport Scheduling": {
+    id:42, area:"T1", nivel:"Competent", puntaje:1.82,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"Brindar soporte continuo y eficiente a las operaciones diarias y rutinarias de TMS, generando información para el análisis de indicadores clave de desempeño que permitan monitorear",
+    capabilities: {
+      "MBWA": { puntaje:1.6, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.6, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.7, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.6, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.6, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.9, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.7, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.6, nivel:"Competent" },
+    },
+    tags:["Sistemas de gestión de transporte​","Comunicación","ITIL + COBIT"]
+  },
+  "Gerente de Transport Scheduling": {
+    id:43, area:"T1", nivel:"Proficient", puntaje:1.95,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El manager de Transport Management System lidera las actualizaciones y mejoras del Sistema de Gestión de Transporte, garantizando el soporte continuo y eficiente a las operaciones ",
+    capabilities: {
+      "MBWA": { puntaje:1.72, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.2, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.8, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.72, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:1.72, nivel:"Proficient" },
+      "Orientación a datos": { puntaje:2.2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:2, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.8, nivel:"Competent" },
+    },
+    tags:["Gestion de Interesados","Gestión de equipos","Data Driven / Analítico"]
+  },
+  "Gerente de Transport Execution": {
+    id:44, area:"T1", nivel:"Proficient", puntaje:2.05,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"Garantizar la eficiente y segura operación de la flota de transporte, optimizando la ejecución de las entregas y recogidas de mercancías, minimizando costos y mejorando la satisfac",
+    capabilities: {
+      "MBWA": { puntaje:1.8, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.4, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.1, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:2.1, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2.2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.8, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:1.8, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.8, nivel:"Proficient" },
+    },
+    tags:["Gestión de equipos","Gestion de Interesados","Grit (resilencia + empuje)"]
+  },
+  "Coordinador de Transport Execution": {
+    id:45, area:"T1", nivel:"Competent", puntaje:1.82,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"Este rol tiene como objetivo supervisar y coordinar las operaciones diarias de transporte, asegurando que las mercancías se entreguen de manera eficiente, segura y puntual.",
+    capabilities: {
+      "MBWA": { puntaje:1.6, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.6, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:2, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.6, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.8, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.9, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.7, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.6, nivel:"Competent" },
+    },
+    tags:["Gestión por sistemas","Gestion de Interesados","Gestión de crisis"]
+  },
+  "Gerente de Control Tower T1": {
+    id:46, area:"T1", nivel:"Competent", puntaje:2.01,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El Gerente de Control Tower se encarga de gestionar el seguimiento a las unidades de transporte de T1 para la prevención de accidentes y riesgos en las rutas de Transporte y el cum",
+    capabilities: {
+      "MBWA": { puntaje:1.77, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:2.3, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.2, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:2, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.9, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.77, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.8, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.77, nivel:"Competent" },
+    },
+    tags:["Gestión de equipos","Gestión de crisis","Gestión por sistemas"]
+  },
+  "Coordinador de Control Tower T1 ": {
+    id:47, area:"T1", nivel:"Competent", puntaje:1.81,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El coordinador de Control Tower de T1 tiene como objetivo supervisar y gestionar la ejecución de las operaciones diarias de las unidades de transporte, asegurando la eficiencia y l",
+    capabilities: {
+      "MBWA": { puntaje:1.59, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:2.2, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:2.2, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.7, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.59, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.8, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.6, nivel:"Advanced Beginner" },
+      "Mejora continua": { puntaje:1.59, nivel:"Competent" },
+    },
+    tags:["Gestión por sistemas","Gestión de equipos","Comunicación"]
+  },
+  "Responsable de Almacén Operación": {
+    id:48, area:"T1", nivel:"Competent", puntaje:1.77,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El objetivo del Responsable de Almacén es brindar seguimiento a la operación de acuerdo a los recursos que se tiene, asegurando se cumpla al 100% con la correcta operación de los p",
+    capabilities: {
+      "MBWA": { puntaje:2.1, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:2.1, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.8, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.5, nivel:"Advanced Beginner" },
+      "Grit (resilencia + empuje)": { puntaje:1.56, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.56, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.56, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.56, nivel:"Competent" },
+    },
+    tags:["Gestión de equipos","Management by Walking Around (MBWA)","Gestión de inventarios"]
+  },
+  "Responsable de Control Operación": {
+    id:49, area:"T1", nivel:"Competent", puntaje:1.86,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El objetivo del Responsable de Control Operación se encarga de inspeccionar los procesos de control de materiales en las operaciones, la implementación de rutinas de control con el",
+    capabilities: {
+      "MBWA": { puntaje:1.9, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.64, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.9, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:2.1, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.64, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.7, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.64, nivel:"Competent" },
+    },
+    tags:["Gestión de inventarios","Data Driven / Analítico","Toma de Decisiones"]
+  },
+  "Responsable de Planeación Operación": {
+    id:50, area:"T1", nivel:"Competent", puntaje:1.81,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El objetivo del Responsable de Planeación Operación directo en la operación de planta es ejecutar las actividades relacionadas a la planeación de producción detallada de producto t",
+    capabilities: {
+      "MBWA": { puntaje:1.59, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.59, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.5, nivel:"Advanced Beginner" },
+      "Toma de Decisiones": { puntaje:1.59, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.59, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.59, nivel:"Competent" },
+    },
+    tags:["Gestión de la cadena de suministro","Gestión de riesgos","Técnicas de programación"]
+  },
+  "Especialista de Almacenaje de BU T1": {
+    id:51, area:"T1", nivel:"Competent", puntaje:1.78,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El objetivo del Especialista de Almacén de BU es centralizar los resultados que arrojan las diferentes plantas en sus operaciones, para vigilar el cumplimiento de los indicadores y",
+    capabilities: {
+      "MBWA": { puntaje:1.6, nivel:"Advanced Beginner" },
+      "Gestión de Equipos": { puntaje:1.57, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.7, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.57, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.9, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.9, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.7, nivel:"Competent" },
+    },
+    tags:["Gestión de inventarios","Pensamiento crítico","Data Driven / Analítico"]
+  },
+  "Especialista de Control de BU T1": {
+    id:52, area:"T1", nivel:"Competent", puntaje:1.85,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El objetivo del Especialista de Control  en BU es inspeccionar los procesos de control de materiales en las operaciones, la implementación de rutinas de control con el objetivo de ",
+    capabilities: {
+      "MBWA": { puntaje:1.63, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.63, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.7, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.63, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.63, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.9, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.9, nivel:"Competent" },
+    },
+    tags:["Data Driven / Analítico","Gestión de inventarios","Gestion de Interesados"]
+  },
+  "Gerente de Control y Productividad": {
+    id:53, area:"T1", nivel:"Competent", puntaje:1.87,
+    icono:"🏭", color:"var(--purple)",
+    descripcion:"El Gerente de Control y Productividad en el área de Almacenaje tiene el objetivo de asegurar la eficiencia operativa y la maximización de recursos dentro de la planta, alineando lo",
+    capabilities: {
+      "MBWA": { puntaje:1.65, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.9, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.9, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.65, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.65, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.65, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.65, nivel:"Competent" },
+    },
+    tags:["Data Driven / Analítico","Gestion de Interesados","Gestión de inventarios"]
+  },
+  "Gerente Senior COMEX": {
+    id:54, area:"COMEX", nivel:"Competent", puntaje:2.2,
+    icono:"🌐", color:"#ffa500",
+    descripcion:"Asegurar el cumplimiento de los requerimientos de la BU y stakeholders, en el mejor tiempo posible, siempre cuidando los costos y evitando hacer extracostos.",
+    capabilities: {
+      "MBWA": { puntaje:1.94, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:2.1, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:2, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:2.1, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2.2, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.94, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.94, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.94, nivel:"Competent" },
+    },
+    tags:["Gestion de Interesados","Finanzas","Planificación de la estrategia"]
+  },
+  "Coordinador de COMEX": {
+    id:55, area:"COMEX", nivel:"Competent", puntaje:1.94,
+    icono:"🌐", color:"#ffa500",
+    descripcion:"Monitrear el flujo de información y datos de manera diaria, semanal y mensual que se generan en la torre de comercio exterior, informando sobre el comportamiento de los KPI`s del á",
+    capabilities: {
+      "MBWA": { puntaje:1.71, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.71, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.9, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.71, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.71, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.1, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.71, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.71, nivel:"Competent" },
+    },
+    tags:["Autonomía","Data Driven / Analítico","Pensamiento crítico"]
+  },
+  "Gerente Junior COMEX": {
+    id:56, area:"COMEX", nivel:"Competent", puntaje:1.97,
+    icono:"🌐", color:"#ffa500",
+    descripcion:"Supervisar las actividades de trabajo de los especialistas de importación y exportación; a fin de garantizar la coordinación de emabaques, la importación y exportación de materias ",
+    capabilities: {
+      "MBWA": { puntaje:1.73, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:2, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:2.1, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.9, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.9, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.73, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.9, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.73, nivel:"Competent" },
+    },
+    tags:["Finanzas","Gestión por sistemas","Gestion de Interesados"]
+  },
+  "Especialista Import-Export": {
+    id:57, area:"COMEX", nivel:"Competent", puntaje:1.77,
+    icono:"🌐", color:"#ffa500",
+    descripcion:"Coordianar las actividades para la importación de materia prima en tiempo, evitando la genracion de extra costos y cumpliendo con las necesidades de nuestros clientes.  ",
+    capabilities: {
+      "MBWA": { puntaje:1.56, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.56, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.8, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:1.56, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.8, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.6, nivel:"Advanced Beginner" },
+      "Resolución de problemas": { puntaje:1.8, nivel:"Competent" },
+      "Mejora continua": { puntaje:1.56, nivel:"Competent" },
+    },
+    tags:["Finanzas","Conocimiento de Comercio Exterior","Planificación y Organización"]
+  },
+  "Analista Import-Export": {
+    id:58, area:"COMEX", nivel:"Competent", puntaje:1.6,
+    icono:"🌐", color:"#ffa500",
+    descripcion:"Coordianar las actividades para la exportación de producto terminado en tiempo, evitando la genracion de extra costos y cumpliendo con las necesidades de nuestros clientes.  ",
+    capabilities: {
+      "MBWA": { puntaje:1.41, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.41, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:1.6, nivel:"Advanced Beginner" },
+      "Toma de Decisiones": { puntaje:1.41, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.41, nivel:"Competent" },
+      "Orientación a datos": { puntaje:1.5, nivel:"Advanced Beginner" },
+      "Resolución de problemas": { puntaje:1.5, nivel:"Advanced Beginner" },
+      "Mejora continua": { puntaje:1.41, nivel:"Competent" },
+    },
+    tags:["Finanzas","Conocimiento de Comercio Exterior","Planificación y Organización"]
+  },
+  "Gerente de Planning BU": {
+    id:59, area:"Planning", nivel:"Proficient", puntaje:2.38,
+    icono:"📊", color:"#00d8da",
+    descripcion:"Este rol es responsable de liderar, supervisar y optimizar los procesos de planificación en todas las áreas de una o más BUs, asegurando la alineación táctica y operativa con los o",
+    capabilities: {
+      "MBWA": { puntaje:2.09, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.6, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.09, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2.4, nivel:"Proficient" },
+      "Grit (resilencia + empuje)": { puntaje:2.3, nivel:"Proficient" },
+      "Orientación a datos": { puntaje:2.5, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:2.09, nivel:"Proficient" },
+      "Mejora continua": { puntaje:2.09, nivel:"Proficient" },
+    },
+    tags:["Gestión de la cadena de suministro","Gestión de equipos","Gestión de interesados"]
+  },
+  "Especialista DPO": {
+    id:60, area:"T2", nivel:"Competent", puntaje:2.13,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"Garantizar la correcta implementación y ejecución del programa de gestión DPO.",
+    capabilities: {
+      "MBWA": { puntaje:1.87, nivel:"Competent" },
+      "Gestión de Equipos": { puntaje:1.87, nivel:"Competent" },
+      "Gestión por sistemas": { puntaje:2.4, nivel:"Proficient" },
+      "Toma de Decisiones": { puntaje:2, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:1.87, nivel:"Competent" },
+      "Orientación a datos": { puntaje:2.2, nivel:"Competent" },
+      "Resolución de problemas": { puntaje:1.87, nivel:"Competent" },
+      "Mejora continua": { puntaje:2, nivel:"Competent" },
+    },
+    tags:["Empuje / Orientación a resultados","Gestión por sistemas","Comunicación"]
+  },
+  "Manager DPO- Safety": {
+    id:61, area:"T2", nivel:"Proficient", puntaje:2.3,
+    icono:"🚛", color:"var(--cyan)",
+    descripcion:"El Gerente DPO-Safety es el responsable de la implementación de estándares de gestión de DPO para T2, garantizando que su personal aplique los procedimientos, recomendaciones y pil",
+    capabilities: {
+      "MBWA": { puntaje:2.02, nivel:"Proficient" },
+      "Gestión de Equipos": { puntaje:2.4, nivel:"Proficient" },
+      "Gestión por sistemas": { puntaje:2.2, nivel:"Competent" },
+      "Toma de Decisiones": { puntaje:2.2, nivel:"Competent" },
+      "Grit (resilencia + empuje)": { puntaje:2.3, nivel:"Proficient" },
+      "Orientación a datos": { puntaje:2.5, nivel:"Proficient" },
+      "Resolución de problemas": { puntaje:2.02, nivel:"Proficient" },
+      "Mejora continua": { puntaje:2.02, nivel:"Proficient" },
+    },
+    tags:["Seguridad","Data Driven / Analítico","Gestión de riesgos"]
+  },
+};;
 
 // Mapa actividades exploración → capabilities relevantes
 const actividadCaps = {
@@ -304,93 +1229,128 @@ function toggleOtroSelect(sel) {
   if (isOtro) inp.focus();
 }
 
+// ── AREA FILTER STATE ──
+let activeAreaFilter = 'all';
+
+function filterRoleArea(area) {
+  activeAreaFilter = area;
+  renderRoleCards();
+}
+
 // ── RENDER ROLE CARDS ──
 function renderRoleCards() {
   const container = document.getElementById('rol-cards');
   if (!container) return;
 
-  // Compute profile match from exploration checkboxes
+  // ── Compute profileCaps from exploration form ──
   const profileCaps = new Set();
   document.querySelectorAll('#screen-exploracion .radio-card input:checked').forEach(cb => {
     const card = cb.closest('.radio-card');
     if (!card) return;
-
     if (card.dataset.otro === 'true') {
-      // Free-text Otro: keyword match against known capability names
       const customText = (card.querySelector('.otro-input')?.value || '').toLowerCase().trim();
       if (customText) {
         CAPS.forEach(cap => {
-          if (customText.split(/\s+/).some(word => word.length > 3 && cap.toLowerCase().includes(word))) {
-            profileCaps.add(cap);
-          }
+          if (customText.split(/\s+/).some(w => w.length > 3 && cap.toLowerCase().includes(w))) profileCaps.add(cap);
         });
-        // Also try known label maps
-        Object.keys(actividadCaps).forEach(key => {
-          if (customText.includes(key.toLowerCase().substring(0, 8))) actividadCaps[key].forEach(c => profileCaps.add(c));
-        });
-        Object.keys(retoCaps).forEach(key => {
-          if (customText.includes(key.toLowerCase().substring(0, 8))) retoCaps[key].forEach(c => profileCaps.add(c));
-        });
+        Object.keys(actividadCaps).forEach(k => { if (customText.includes(k.toLowerCase().substring(0,8))) actividadCaps[k].forEach(c => profileCaps.add(c)); });
+        Object.keys(retoCaps).forEach(k => { if (customText.includes(k.toLowerCase().substring(0,8))) retoCaps[k].forEach(c => profileCaps.add(c)); });
       }
       return;
     }
-
     const label = card.querySelector('.radio-card-label')?.textContent?.trim();
-    if (label) {
-      (actividadCaps[label] || retoCaps[label] || []).forEach(c => profileCaps.add(c));
-    }
+    if (label) (actividadCaps[label] || retoCaps[label] || []).forEach(c => profileCaps.add(c));
   });
 
+  // ── Compute match % for all 61 roles ──
   const matchScores = {};
   Object.entries(rolesData).forEach(([name, rol]) => {
-    const rolCapNames = Object.keys(rol.capabilities);
-    const overlap = [...profileCaps].filter(pc =>
-      rolCapNames.some(rc => rc.toLowerCase().includes(pc.toLowerCase().substring(0, 10)))
-    ).length;
-    const base = profileCaps.size > 0 ? Math.round(55 + (overlap / Math.max(profileCaps.size, 1)) * 38) : 72;
-    matchScores[name] = Math.min(98, base + rol.id * 3);
+    let overlap = 0;
+    if (profileCaps.size > 0) {
+      profileCaps.forEach(pc => {
+        if (rol.capabilities[pc]) overlap++;
+        else if (rol.tags.some(t => t.toLowerCase().includes(pc.toLowerCase().substring(0,8)))) overlap += 0.5;
+      });
+    }
+    const base = profileCaps.size > 0
+      ? Math.round(48 + (overlap / Math.max(profileCaps.size, 1)) * 43)
+      : Math.round(52 + (rol.puntaje / 3) * 32);
+    const bump = Math.round(((rol.puntaje * 100) % 11));
+    matchScores[name] = Math.min(98, Math.max(50, base + bump));
   });
-  // Ensure role 1 > role 2 > role 3 for "recommendation" feel
-  const names = Object.keys(rolesData);
-  const sorted = [...Object.values(matchScores)].sort((a, b) => b - a);
-  names.forEach((n, i) => { matchScores[n] = sorted[i]; });
 
-  container.innerHTML = Object.entries(rolesData).map(([name, rol], i) => {
-    const match = matchScores[name];
-    const isTop = i === 0;
-    const capEntries = Object.entries(rol.capabilities).slice(0, 4);
-    const colorVar = rol.color;
-    return `
-    <div class="card rol-card" data-rol="${rol.id}" onclick="selectRol(${rol.id})"
-         style="cursor:pointer;position:relative;border-color:${isTop ? colorVar : 'rgba(255,255,255,0.08)'};">
-      ${isTop ? `<div style="position:absolute;top:14px;right:14px;"><span class="badge badge-cyan">⭐ Recomendado</span></div>` : ''}
-      <div style="font-size:44px;margin-bottom:10px;">${rol.icono}</div>
-      <h3 style="font-size:16px;font-weight:700;color:${colorVar};margin-bottom:6px;padding-right:${isTop?'90px':'0'}">${name}</h3>
-      <p style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5;margin-bottom:14px;">${rol.descripcion}</p>
+  // ── Area metadata ──
+  const AREA_LABELS = { all:'Todos', T2:'T2 · Distribución', T1:'T1 · Logística', Planning:'Planning', COMEX:'COMEX', PPM:'PPM', Transformation:'Transformation' };
+  const AREA_COLORS = { T2:'var(--cyan)', T1:'var(--purple)', Planning:'#00d8da', COMEX:'#ffa500', PPM:'var(--magenta)', Transformation:'#7572e9' };
+  const areaCounts = { all: Object.keys(rolesData).length };
+  Object.values(rolesData).forEach(r => { areaCounts[r.area] = (areaCounts[r.area] || 0) + 1; });
 
-      <div style="margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,0.5);margin-bottom:5px;">
-          <span>Coincidencia con tu perfil</span>
-          <span style="color:${colorVar};font-weight:700;">${match}%</span>
+  // ── Filter + sort by match score ──
+  const filtered = Object.entries(rolesData)
+    .filter(([, r]) => activeAreaFilter === 'all' || r.area === activeAreaFilter)
+    .sort((a, b) => matchScores[b[0]] - matchScores[a[0]]);
+
+  const topMatchName = filtered[0]?.[0];
+
+  // ── Filter buttons ──
+  const areas = ['all', 'T2', 'T1', 'Planning', 'COMEX', 'PPM', 'Transformation'];
+  const filtersHtml = `
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+      ${areas.map(area => {
+        const isActive = area === activeAreaFilter;
+        const count = areaCounts[area] || 0;
+        if (count === 0 && area !== 'all') return '';
+        return `<button onclick="filterRoleArea('${area}')"
+          style="padding:6px 14px;border-radius:20px;border:1.5px solid ${isActive ? 'rgba(0,216,218,0.6)' : 'rgba(255,255,255,0.1)'};
+                 background:${isActive ? 'rgba(0,216,218,0.12)' : 'rgba(255,255,255,0.03)'};
+                 color:${isActive ? 'var(--cyan)' : 'rgba(255,255,255,0.45)'};
+                 font-size:12px;font-weight:${isActive?'700':'400'};font-family:'Outfit',sans-serif;cursor:pointer;transition:all 0.2s;">
+          ${AREA_LABELS[area] || area}
+          <span style="opacity:0.55;margin-left:4px;">${count}</span>
+        </button>`;
+      }).join('')}
+    </div>
+    <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:16px;">
+      Mostrando <strong style="color:rgba(255,255,255,0.6);">${filtered.length}</strong> roles · Ordenados por coincidencia con tu perfil
+    </p>`;
+
+  // ── Cards grid ──
+  const cardsHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;">` +
+    filtered.map(([name, rol]) => {
+      const match   = matchScores[name];
+      const isTop   = name === topMatchName;
+      const color   = rol.color;
+      const barGrad = `linear-gradient(90deg,${color},rgba(117,114,233,0.7))`;
+      return `
+      <div class="card rol-card" data-rol="${rol.id}" onclick="selectRol(${rol.id})"
+           style="cursor:pointer;position:relative;border-color:${isTop ? color : 'rgba(255,255,255,0.08)'};transition:border-color 0.2s;">
+        ${isTop ? `<div style="position:absolute;top:12px;right:12px;z-index:1;"><span class="badge badge-cyan">⭐ Recomendado</span></div>` : ''}
+        <div style="font-size:36px;margin-bottom:8px;">${rol.icono}</div>
+        <h3 style="font-size:14px;font-weight:700;color:${color};margin-bottom:4px;padding-right:${isTop?'90px':'0'};line-height:1.4;">${name}</h3>
+        <p style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${rol.descripcion}</p>
+
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:4px;">
+            <span>Coincidencia con tu perfil</span>
+            <span style="color:${color};font-weight:700;">${match}%</span>
+          </div>
+          <div class="progress-bar-wrap" style="height:5px;">
+            <div class="progress-bar-fill" style="width:${match}%;background:${barGrad};"></div>
+          </div>
         </div>
-        <div class="progress-bar-wrap" style="height:6px;">
-          <div class="progress-bar-fill" style="width:${match}%;background:${colorVar === 'var(--cyan)' ? 'linear-gradient(90deg,var(--cyan),var(--purple))' : colorVar === 'var(--purple)' ? 'linear-gradient(90deg,var(--purple),var(--magenta))' : 'linear-gradient(90deg,var(--magenta),var(--purple))'}"></div>
-        </div>
-      </div>
 
-      <div style="margin-bottom:12px;">
-        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.8px;">Capabilities clave</div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px;">
-          ${capEntries.map(([cap]) => `<span style="font-size:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:5px;padding:3px 7px;color:rgba(255,255,255,0.55);">${cap}</span>`).join('')}
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
+          ${rol.tags.slice(0,3).map(t => `<span style="font-size:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:5px;padding:2px 6px;color:rgba(255,255,255,0.5);">${t}</span>`).join('')}
         </div>
-      </div>
 
-      <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.35);">
-        <span>Área ${rol.area} · Score ${rol.puntaje}</span>
-        <span style="color:${colorVar};font-weight:600;">${rol.nivel}</span>
-      </div>
-    </div>`;
-  }).join('');
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.3);">
+          <span>${rol.area} · ${rol.puntaje.toFixed(2)}</span>
+          <span style="color:${color};font-weight:600;">${rol.nivel}</span>
+        </div>
+      </div>`;
+    }).join('') + `</div>`;
+
+  container.innerHTML = filtersHtml + cardsHtml;
 }
 
 // ── ASSESSMENT: RENDER PREGUNTA ──
