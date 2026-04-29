@@ -1229,11 +1229,18 @@ function toggleOtroSelect(sel) {
   if (isOtro) inp.focus();
 }
 
-// ── AREA FILTER STATE ──
+// ── ROLE SELECTION STATE ──
 let activeAreaFilter = 'all';
+let showFullCatalog  = false;
 
 function filterRoleArea(area) {
   activeAreaFilter = area;
+  renderRoleCards();
+}
+
+function toggleFullCatalog(show) {
+  showFullCatalog  = show;
+  activeAreaFilter = 'all';
   renderRoleCards();
 }
 
@@ -1262,7 +1269,7 @@ function renderRoleCards() {
     if (label) (actividadCaps[label] || retoCaps[label] || []).forEach(c => profileCaps.add(c));
   });
 
-  // ── Compute match % for all 61 roles ──
+  // ── Compute match % for all 61 roles (always, to rank correctly) ──
   const matchScores = {};
   Object.entries(rolesData).forEach(([name, rol]) => {
     let overlap = 0;
@@ -1279,78 +1286,106 @@ function renderRoleCards() {
     matchScores[name] = Math.min(98, Math.max(50, base + bump));
   });
 
-  // ── Area metadata ──
-  const AREA_LABELS = { all:'Todos', T2:'T2 · Distribución', T1:'T1 · Logística', Planning:'Planning', COMEX:'COMEX', PPM:'PPM', Transformation:'Transformation' };
-  const AREA_COLORS = { T2:'var(--cyan)', T1:'var(--purple)', Planning:'#00d8da', COMEX:'#ffa500', PPM:'var(--magenta)', Transformation:'#7572e9' };
-  const areaCounts = { all: Object.keys(rolesData).length };
-  Object.values(rolesData).forEach(r => { areaCounts[r.area] = (areaCounts[r.area] || 0) + 1; });
-
-  // ── Filter + sort by match score ──
-  const filtered = Object.entries(rolesData)
-    .filter(([, r]) => activeAreaFilter === 'all' || r.area === activeAreaFilter)
+  // ── All roles sorted by match ──
+  const allSorted = Object.entries(rolesData)
     .sort((a, b) => matchScores[b[0]] - matchScores[a[0]]);
 
+  // ── Render helper: one card ──
+  function cardHtml(name, rol, isTop) {
+    const match   = matchScores[name];
+    const color   = rol.color;
+    const barGrad = `linear-gradient(90deg,${color},rgba(117,114,233,0.7))`;
+    return `
+    <div class="card rol-card" data-rol="${rol.id}" onclick="selectRol(${rol.id})"
+         style="cursor:pointer;position:relative;border-color:${isTop ? color : 'rgba(255,255,255,0.08)'};transition:border-color 0.2s;">
+      ${isTop ? `<div style="position:absolute;top:12px;right:12px;z-index:1;"><span class="badge badge-cyan">⭐ Recomendado</span></div>` : ''}
+      <div style="font-size:36px;margin-bottom:8px;">${rol.icono}</div>
+      <h3 style="font-size:14px;font-weight:700;color:${color};margin-bottom:4px;padding-right:${isTop?'90px':'0'};line-height:1.4;">${name}</h3>
+      <p style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${rol.descripcion}</p>
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:4px;">
+          <span>Coincidencia con tu perfil</span>
+          <span style="color:${color};font-weight:700;">${match}%</span>
+        </div>
+        <div class="progress-bar-wrap" style="height:5px;">
+          <div class="progress-bar-fill" style="width:${match}%;background:${barGrad};"></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
+        ${rol.tags.slice(0,3).map(t => `<span style="font-size:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:5px;padding:2px 6px;color:rgba(255,255,255,0.5);">${t}</span>`).join('')}
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.3);">
+        <span>${rol.area} · ${rol.puntaje.toFixed(2)}</span>
+        <span style="color:${color};font-weight:600;">${rol.nivel}</span>
+      </div>
+    </div>`;
+  }
+
+  // ════════════════════════════════
+  //  MODO SUGERENCIA — top 3
+  // ════════════════════════════════
+  if (!showFullCatalog) {
+    const top3 = allSorted.slice(0, 3);
+    container.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-bottom:24px;">
+        ${top3.map(([name, rol], i) => cardHtml(name, rol, i === 0)).join('')}
+      </div>
+      <div style="text-align:center;padding:20px;border:1px dashed rgba(255,255,255,0.1);border-radius:16px;background:rgba(255,255,255,0.02);">
+        <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:12px;">
+          ¿No encuentras tu rol? Tenemos <strong style="color:rgba(255,255,255,0.65);">61 roles</strong> en la base SCI.
+        </p>
+        <button onclick="toggleFullCatalog(true)"
+                style="padding:9px 22px;border-radius:10px;border:1.5px solid rgba(0,216,218,0.4);
+                       background:rgba(0,216,218,0.07);color:var(--cyan);font-size:13px;font-weight:600;
+                       font-family:'Outfit',sans-serif;cursor:pointer;">
+          Explorar catálogo completo →
+        </button>
+      </div>`;
+    return;
+  }
+
+  // ════════════════════════════════
+  //  MODO CATÁLOGO — todos con filtros
+  // ════════════════════════════════
+  const AREA_LABELS = { all:'Todos', T2:'T2 · Distribución', T1:'T1 · Logística', Planning:'Planning', COMEX:'COMEX', PPM:'PPM', Transformation:'Transformation' };
+  const areaCounts  = { all: Object.keys(rolesData).length };
+  Object.values(rolesData).forEach(r => { areaCounts[r.area] = (areaCounts[r.area] || 0) + 1; });
+
+  const filtered     = allSorted.filter(([, r]) => activeAreaFilter === 'all' || r.area === activeAreaFilter);
   const topMatchName = filtered[0]?.[0];
 
-  // ── Filter buttons ──
-  const areas = ['all', 'T2', 'T1', 'Planning', 'COMEX', 'PPM', 'Transformation'];
   const filtersHtml = `
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-      ${areas.map(area => {
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+      <button onclick="toggleFullCatalog(false)"
+              style="padding:6px 14px;border-radius:20px;border:1.5px solid rgba(0,216,218,0.4);
+                     background:rgba(0,216,218,0.07);color:var(--cyan);font-size:12px;font-weight:600;
+                     font-family:'Outfit',sans-serif;cursor:pointer;">
+        ← Ver sugeridos
+      </button>
+      <span style="font-size:12px;color:rgba(255,255,255,0.3);">Catálogo completo · ${Object.keys(rolesData).length} roles</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+      ${['all','T2','T1','Planning','COMEX','PPM','Transformation'].map(area => {
         const isActive = area === activeAreaFilter;
         const count = areaCounts[area] || 0;
-        if (count === 0 && area !== 'all') return '';
+        if (!count && area !== 'all') return '';
         return `<button onclick="filterRoleArea('${area}')"
-          style="padding:6px 14px;border-radius:20px;border:1.5px solid ${isActive ? 'rgba(0,216,218,0.6)' : 'rgba(255,255,255,0.1)'};
-                 background:${isActive ? 'rgba(0,216,218,0.12)' : 'rgba(255,255,255,0.03)'};
-                 color:${isActive ? 'var(--cyan)' : 'rgba(255,255,255,0.45)'};
-                 font-size:12px;font-weight:${isActive?'700':'400'};font-family:'Outfit',sans-serif;cursor:pointer;transition:all 0.2s;">
-          ${AREA_LABELS[area] || area}
-          <span style="opacity:0.55;margin-left:4px;">${count}</span>
+          style="padding:5px 12px;border-radius:20px;border:1.5px solid ${isActive?'rgba(0,216,218,0.6)':'rgba(255,255,255,0.1)'};
+                 background:${isActive?'rgba(0,216,218,0.12)':'rgba(255,255,255,0.03)'};
+                 color:${isActive?'var(--cyan)':'rgba(255,255,255,0.45)'};
+                 font-size:11px;font-weight:${isActive?'700':'400'};font-family:'Outfit',sans-serif;cursor:pointer;">
+          ${AREA_LABELS[area]||area} <span style="opacity:0.55;">${count}</span>
         </button>`;
       }).join('')}
     </div>
-    <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:16px;">
-      Mostrando <strong style="color:rgba(255,255,255,0.6);">${filtered.length}</strong> roles · Ordenados por coincidencia con tu perfil
+    <p style="font-size:11px;color:rgba(255,255,255,0.25);margin-bottom:16px;">
+      ${filtered.length} roles · ordenados por coincidencia
     </p>`;
 
-  // ── Cards grid ──
-  const cardsHtml = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;">` +
-    filtered.map(([name, rol]) => {
-      const match   = matchScores[name];
-      const isTop   = name === topMatchName;
-      const color   = rol.color;
-      const barGrad = `linear-gradient(90deg,${color},rgba(117,114,233,0.7))`;
-      return `
-      <div class="card rol-card" data-rol="${rol.id}" onclick="selectRol(${rol.id})"
-           style="cursor:pointer;position:relative;border-color:${isTop ? color : 'rgba(255,255,255,0.08)'};transition:border-color 0.2s;">
-        ${isTop ? `<div style="position:absolute;top:12px;right:12px;z-index:1;"><span class="badge badge-cyan">⭐ Recomendado</span></div>` : ''}
-        <div style="font-size:36px;margin-bottom:8px;">${rol.icono}</div>
-        <h3 style="font-size:14px;font-weight:700;color:${color};margin-bottom:4px;padding-right:${isTop?'90px':'0'};line-height:1.4;">${name}</h3>
-        <p style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">${rol.descripcion}</p>
-
-        <div style="margin-bottom:12px;">
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:4px;">
-            <span>Coincidencia con tu perfil</span>
-            <span style="color:${color};font-weight:700;">${match}%</span>
-          </div>
-          <div class="progress-bar-wrap" style="height:5px;">
-            <div class="progress-bar-fill" style="width:${match}%;background:${barGrad};"></div>
-          </div>
-        </div>
-
-        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
-          ${rol.tags.slice(0,3).map(t => `<span style="font-size:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:5px;padding:2px 6px;color:rgba(255,255,255,0.5);">${t}</span>`).join('')}
-        </div>
-
-        <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.3);">
-          <span>${rol.area} · ${rol.puntaje.toFixed(2)}</span>
-          <span style="color:${color};font-weight:600;">${rol.nivel}</span>
-        </div>
-      </div>`;
-    }).join('') + `</div>`;
-
-  container.innerHTML = filtersHtml + cardsHtml;
+  container.innerHTML = filtersHtml +
+    `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;">` +
+    filtered.map(([name, rol]) => cardHtml(name, rol, name === topMatchName)).join('') +
+    `</div>`;
 }
 
 // ── ASSESSMENT: RENDER PREGUNTA ──
