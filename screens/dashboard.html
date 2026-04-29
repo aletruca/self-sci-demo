@@ -28,7 +28,7 @@
           <button class="btn btn-outline btn-sm" onclick="shareReport()">
             <i class="fas fa-share-alt"></i> Compartir reporte
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="showToast('📄 Generando PDF...','info')">
+          <button class="btn btn-secondary btn-sm" onclick="printReporte()">
             <i class="fas fa-file-pdf"></i> Descargar PDF
           </button>
         </div>
@@ -284,13 +284,13 @@
 
       <!-- Acciones del diploma -->
       <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:40px;">
-        <button class="btn btn-primary btn-lg" onclick="showToast('📥 Generando tu diploma en PDF...','success')">
-          <i class="fas fa-download"></i> Descargar PDF
+        <button class="btn btn-primary btn-lg" onclick="printDiploma()">
+          <i class="fas fa-download"></i> Descargar / Imprimir
         </button>
         <button class="btn btn-lg" style="background:linear-gradient(135deg,#0077b5,#005885);color:white;" onclick="shareLinkedIn()">
           <i class="fab fa-linkedin"></i> Compartir en LinkedIn
         </button>
-        <button class="btn btn-secondary btn-lg" onclick="showToast('🔗 Enlace copiado al portapapeles','info')">
+        <button class="btn btn-secondary btn-lg" onclick="copiarAlPortapapeles('https://selfsci.app/diploma/SCI-2025-4821','🔗 Enlace del diploma copiado')">
           <i class="fas fa-link"></i> Copiar enlace
         </button>
       </div>

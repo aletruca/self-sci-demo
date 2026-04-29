@@ -2053,7 +2053,7 @@ const mockPermisos = [
 function renderTablaParticipantes() {
   const tbody = document.getElementById('tabla-participantes');
   if (!tbody) return;
-  tbody.innerHTML = mockParticipantes.map(p => {
+  tbody.innerHTML = mockParticipantes.map((p, idx) => {
     const colorAvance = p.avance >= 80 ? 'var(--cyan)' : p.avance >= 50 ? 'var(--purple)' : 'orange';
     return `
     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -2073,9 +2073,9 @@ function renderTablaParticipantes() {
       </td>
       <td style="text-align:center;padding:12px 16px;">
         <div style="display:flex;gap:6px;justify-content:center;">
-          <button class="btn btn-sm btn-outline" style="padding:4px 10px;font-size:11px;" onclick="showToast('✏️ Editando a ${p.nombre.split(' ')[0]}','info')"><i class="fas fa-pen"></i></button>
-          <button class="btn btn-sm" style="padding:4px 10px;font-size:11px;background:rgba(0,216,218,0.1);border:1px solid rgba(0,216,218,0.3);color:var(--cyan);" onclick="showToast('📧 Invitación enviada a ${p.nombre.split(' ')[0]}','success')"><i class="fas fa-envelope"></i></button>
-          <button class="btn btn-sm" style="padding:4px 10px;font-size:11px;background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.25);color:var(--magenta);" onclick="showToast('🗑️ Participante eliminado','info')"><i class="fas fa-trash"></i></button>
+          <button class="btn btn-sm btn-outline" style="padding:4px 10px;font-size:11px;" title="Editar" onclick="editarParticipanteInline(${idx})"><i class="fas fa-pen"></i></button>
+          <button class="btn btn-sm" style="padding:4px 10px;font-size:11px;background:rgba(0,216,218,0.1);border:1px solid rgba(0,216,218,0.3);color:var(--cyan);" title="Enviar invitación" onclick="enviarInvitacion(${idx})"><i class="fas fa-envelope"></i></button>
+          <button class="btn btn-sm" style="padding:4px 10px;font-size:11px;background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.25);color:var(--magenta);" title="Eliminar" onclick="eliminarParticipante(${idx})"><i class="fas fa-trash"></i></button>
         </div>
       </td>
     </tr>`;
@@ -2116,7 +2116,7 @@ function renderSesionesSync() {
   const container = document.getElementById('sesiones-sync-list');
   if (!container) return;
   const iconoTipo = { 'Zoom':'🎥', 'Teams':'💼', 'Presencial':'🏢' };
-  container.innerHTML = mockSesiones.map(s => `
+  container.innerHTML = mockSesiones.map((s, idx) => `
     <div class="card" style="padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-color:rgba(0,216,218,0.12);">
       <div style="width:48px;height:48px;border-radius:12px;background:rgba(0,216,218,0.09);border:1px solid rgba(0,216,218,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${iconoTipo[s.tipo] || '📅'}</div>
       <div style="flex:1;min-width:160px;">
@@ -2132,19 +2132,26 @@ function renderSesionesSync() {
         <div style="font-size:11px;color:rgba(255,255,255,0.4);">inscritos</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;">
-        <button class="btn btn-outline btn-sm" style="font-size:12px;padding:6px 10px;" onclick="showToast('🔗 Liga copiada al portapapeles','success')" title="Copiar liga"><i class="fas fa-link"></i></button>
-        <button class="btn btn-outline btn-sm" style="font-size:12px;padding:6px 10px;" onclick="showToast('✏️ Editando sesión','info')" title="Editar"><i class="fas fa-pen"></i></button>
-        <button class="btn btn-sm" style="font-size:12px;padding:6px 10px;background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.25);color:var(--magenta);" onclick="showToast('🗑️ Sesión eliminada','info')" title="Eliminar"><i class="fas fa-trash"></i></button>
+        <button class="btn btn-outline btn-sm" style="font-size:12px;padding:6px 10px;" onclick="copiarLigaSesion(${idx})" title="Copiar liga"><i class="fas fa-link"></i></button>
+        <button class="btn btn-outline btn-sm" style="font-size:12px;padding:6px 10px;" onclick="editarSesionInline(${idx})" title="Editar"><i class="fas fa-pen"></i></button>
+        <button class="btn btn-sm" style="font-size:12px;padding:6px 10px;background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.25);color:var(--magenta);" onclick="eliminarSesion(${idx})" title="Eliminar"><i class="fas fa-trash"></i></button>
       </div>
     </div>
   `).join('');
 }
 
 // ── Render: Grid de módulos (biblioteca) ──
+let modulosFiltro = 'todos';
+
 function renderModulosGrid() {
   const container = document.getElementById('modulos-grid');
   if (!container) return;
-  container.innerHTML = mockModulosGrid.map(m => `
+  const visible = modulosFiltro === 'todos'
+    ? mockModulosGrid
+    : mockModulosGrid.filter(m => m.nivel.toLowerCase().includes(modulosFiltro.toLowerCase()));
+  container.innerHTML = visible.map(m => {
+    const realIdx = mockModulosGrid.indexOf(m);
+    return `
     <div class="card" style="border-color:rgba(0,216,218,0.14);">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
         <div style="width:46px;height:46px;border-radius:11px;background:rgba(0,216,218,0.09);border:1px solid rgba(0,216,218,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;">${m.icono}</div>
@@ -2159,11 +2166,20 @@ function renderModulosGrid() {
         <span><i class="fas fa-building" style="color:var(--purple);margin-right:4px;"></i>${m.activos} empresa${m.activos !== 1 ? 's' : ''}</span>
       </div>
       <div style="display:flex;gap:8px;">
-        <button class="btn btn-outline btn-sm" style="flex:1;font-size:12px;" onclick="showToast('✏️ Editando: ${m.nombre}','info')"><i class="fas fa-pen"></i> Editar</button>
-        <button class="btn btn-primary btn-sm" style="flex:1;font-size:12px;" onclick="showToast('📋 Módulo duplicado','success')"><i class="fas fa-copy"></i> Duplicar</button>
+        <button class="btn btn-outline btn-sm" style="flex:1;font-size:12px;" onclick="editarModulo(${realIdx})"><i class="fas fa-pen"></i> Editar</button>
+        <button class="btn btn-primary btn-sm" style="flex:1;font-size:12px;" onclick="duplicarModulo(${realIdx})"><i class="fas fa-copy"></i> Duplicar</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
+}
+
+function filterModulos(btn, nivel) {
+  modulosFiltro = nivel;
+  document.querySelectorAll('.btn-filter-modulo').forEach(b => {
+    b.className = 'btn btn-secondary btn-sm btn-filter-modulo';
+  });
+  if (btn) btn.className = 'btn btn-primary btn-sm btn-filter-modulo';
+  renderModulosGrid();
 }
 
 // ── Render: Matriz de permisos ──
@@ -2185,6 +2201,585 @@ function renderPermisosTabla() {
       `).join('')}
     </tr>
   `).join('');
+}
+
+// ══════════════════════════════════════════════════
+//  ACCIONES REALES — Descargas, Modales, Edición
+// ══════════════════════════════════════════════════
+
+// ── Descarga genérica de blob ──
+function downloadBlobFile(content, filename, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── Copiar al portapapeles ──
+function copiarAlPortapapeles(text, mensaje) {
+  navigator.clipboard?.writeText(text).then(() => {
+    showToast('✅ ' + (mensaje || 'Copiado al portapapeles'), 'success');
+  }).catch(() => {
+    showToast('📋 ' + text.substring(0, 60), 'info');
+  });
+}
+
+// ── Descargar evento .ics (calendario) ──
+function downloadICS(titulo, fechaISO, horaStr, duracionMin) {
+  // fechaISO: "20250418", horaStr: "100000", duracionMin: number
+  const pad = n => String(n).padStart(2, '0');
+  const h = parseInt(horaStr.slice(0, 2));
+  const m = parseInt(horaStr.slice(2, 4));
+  const totalEnd = h * 60 + m + parseInt(duracionMin);
+  const endHora = `${pad(Math.floor(totalEnd / 60))}${pad(totalEnd % 60)}00`;
+  const ics = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SELF SCI//Demo//ES',
+    'BEGIN:VEVENT',
+    `DTSTART:${fechaISO}T${horaStr}`,
+    `DTEND:${fechaISO}T${endHora}`,
+    `SUMMARY:${titulo}`,
+    'DESCRIPTION:Sesión grupal SELF SCI — Programa de Desarrollo',
+    'ORGANIZER;CN=SELF SCI:mailto:noreply@selfsci.app',
+    'END:VEVENT', 'END:VCALENDAR'
+  ].join('\r\n');
+  downloadBlobFile(ics, titulo.replace(/[^a-zA-Z0-9]/g, '_') + '.ics', 'text/calendar');
+  showToast('📅 Evento guardado en tu calendario', 'success');
+}
+
+// ── Imprimir diploma ──
+function printDiploma() {
+  const style = document.createElement('style');
+  style.id = 'print-diploma-style';
+  style.textContent = `
+    @media print {
+      body > *:not(#app) { display:none!important; }
+      .screen { display:none!important; }
+      #screen-diploma { display:flex!important; }
+      nav.navbar, .capi-container, [style*="gap:16px"][style*="justify-content:center"],
+      .capi-avatar, .card:last-child { display:none!important; }
+      #diploma { box-shadow:none!important; border:2px solid #ccc!important; }
+    }`;
+  document.head.appendChild(style);
+  window.print();
+  setTimeout(() => document.getElementById('print-diploma-style')?.remove(), 1500);
+  showToast('🖨️ Abriendo vista de impresión...', 'info');
+}
+
+// ── Imprimir reporte (dashboard) ──
+function printReporte() {
+  window.print();
+  showToast('🖨️ Abriendo vista de impresión...', 'info');
+}
+
+// ── Modal de sesión (Unirse) ──
+function abrirModalSesion(titulo, fechaHora, link) {
+  let modal = document.getElementById('modal-sesion');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-sesion';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.78);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(6px);';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+  }
+  modal.innerHTML = `
+    <div style="background:#0d0d1a;border:1.5px solid rgba(0,216,218,0.3);border-radius:20px;padding:36px;max-width:440px;width:100%;position:relative;">
+      <button onclick="document.getElementById('modal-sesion').style.display='none'"
+              style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.07);border:none;color:rgba(255,255,255,0.5);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:15px;">✕</button>
+      <div style="font-size:40px;margin-bottom:16px;">📹</div>
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:6px;color:white;">${titulo}</h3>
+      <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:24px;"><i class="fas fa-calendar" style="color:var(--cyan);margin-right:6px;"></i>${fechaHora}</p>
+      <div style="background:rgba(0,216,218,0.07);border:1px solid rgba(0,216,218,0.2);border-radius:12px;padding:14px 16px;margin-bottom:20px;">
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:5px;text-transform:uppercase;letter-spacing:1px;">Liga de acceso</div>
+        <div style="font-size:13px;color:var(--cyan);word-break:break-all;">${link}</div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" style="flex:1;"
+                onclick="window.open('${link}','_blank');document.getElementById('modal-sesion').style.display='none'">
+          <i class="fas fa-video"></i> Unirse ahora
+        </button>
+        <button class="btn btn-secondary"
+                onclick="copiarAlPortapapeles('${link}','Liga de sesión copiada')">
+          <i class="fas fa-link"></i> Copiar
+        </button>
+      </div>
+    </div>`;
+  modal.style.display = 'flex';
+}
+
+// ── Modal de video (reproductor) ──
+function abrirVideoPlayer() {
+  let modal = document.getElementById('modal-video');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-video';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(8px);';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+  }
+  modal.innerHTML = `
+    <div style="background:#0d0d1a;border:1.5px solid rgba(0,216,218,0.2);border-radius:20px;max-width:700px;width:100%;overflow:hidden;position:relative;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:2px;">MÓDULO 1 · Lección 2</div>
+          <div style="font-weight:700;font-size:15px;">Estilos de Liderazgo Situacional — 8:32 min</div>
+        </div>
+        <button onclick="document.getElementById('modal-video').style.display='none'"
+                style="background:rgba(255,255,255,0.07);border:none;color:rgba(255,255,255,0.5);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:15px;">✕</button>
+      </div>
+      <div style="position:relative;padding-top:56.25%;background:#000;">
+        <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
+          src="https://www.youtube.com/embed/qp0HIF3SfI4?autoplay=1&rel=0&modestbranding=1"
+          allow="autoplay; encrypted-media" allowfullscreen></iframe>
+      </div>
+      <div style="padding:14px 20px;background:rgba(255,255,255,0.02);display:flex;align-items:center;gap:10px;">
+        <span class="badge badge-magenta">🔥 En curso — Lección 2</span>
+        <span style="font-size:12px;color:rgba(255,255,255,0.4);margin-left:auto;">Fuente: TED · Simon Sinek</span>
+      </div>
+    </div>`;
+  modal.style.display = 'flex';
+}
+
+// ── Descargar recursos de lección ──
+function descargarRecurso(tipo) {
+  const recursos = {
+    'guia': {
+      nombre: 'Guía_Liderazgo_Situacional.txt',
+      contenido: `SELF SCI — Guía de Liderazgo Situacional\n${'═'.repeat(50)}\n\nModelo de Hersey y Blanchard\n\nS1 · DIRIGIR\n  Alta tarea / baja relación.\n  Para colaboradores nuevos o sin experiencia.\n\nS2 · ENTRENAR\n  Alta tarea + alta relación.\n  Explica el porqué y da soporte emocional.\n\nS3 · APOYAR\n  Baja tarea / alta relación.\n  El colaborador decide; tú das soporte.\n\nS4 · DELEGAR\n  Baja tarea + baja relación.\n  Colaborador experto y autónomo.\n\n${'─'.repeat(50)}\n© 2025 SELF SCI · Supply Chain Institute`
+    },
+    'autoevaluacion': {
+      nombre: 'Autoevaluación_Estilo_Liderazgo.txt',
+      contenido: `SELF SCI — Autoevaluación de Estilo de Liderazgo\n${'═'.repeat(50)}\n\nResponde del 1 (nunca) al 5 (siempre):\n\n[ ] 1. Doy instrucciones detalladas para cada tarea.\n[ ] 2. Explico el razonamiento detrás de mis decisiones.\n[ ] 3. Involucro al equipo en la toma de decisiones.\n[ ] 4. Delego proyectos completos con confianza.\n[ ] 5. Adapto mi estilo según la persona y situación.\n\nInterpretación:\n  5–8  → Estilo S1 Directivo\n  9–14 → Estilo S2 Entrenador\n  15–20→ Estilo S3 Apoyo\n  21–25→ Estilo S4 Delegador\n\n${'─'.repeat(50)}\n© 2025 SELF SCI · Supply Chain Institute`
+    }
+  };
+  const r = recursos[tipo];
+  if (!r) return;
+  downloadBlobFile(r.contenido, r.nombre, 'text/plain;charset=utf-8');
+  showToast(`📥 Descargando: ${r.nombre}`, 'success');
+}
+
+// ── Plantilla CSV de participantes ──
+function descargarPlantilla() {
+  const csv = [
+    'Nombre completo,Correo,Contraseña inicial,Rol,Área',
+    'Juan Pérez García,juan.perez@empresa.com,Temp2025!,Participante,Operaciones',
+    'María López Torres,m.lopez@empresa.com,Temp2025!,Líder / Manager,Logística',
+    'Carlos Hernández Ruiz,c.hernandez@empresa.com,Temp2025!,RH,Recursos Humanos'
+  ].join('\n');
+  downloadBlobFile(csv, 'plantilla-participantes.csv', 'text/csv;charset=utf-8');
+  showToast('📥 Plantilla descargada: plantilla-participantes.csv', 'success');
+}
+
+// ── Importar participantes (file input real) ──
+function importarParticipantes() {
+  let fi = document.getElementById('__import-fi');
+  if (!fi) {
+    fi = document.createElement('input');
+    fi.type = 'file'; fi.id = '__import-fi'; fi.accept = '.csv,.xlsx';
+    fi.style.display = 'none';
+    document.body.appendChild(fi);
+    fi.addEventListener('change', e => {
+      const f = e.target.files[0];
+      if (!f) return;
+      showToast(`📤 Procesando: ${f.name}...`, 'info');
+      setTimeout(() => {
+        showToast(`✅ ${f.name} importado — 8 participantes agregados`, 'success');
+        fi.value = '';
+        renderTablaParticipantes();
+      }, 1200);
+    });
+  }
+  fi.click();
+}
+
+// ── Subir logo (file input real + actualiza preview) ──
+function subirLogo() {
+  let fi = document.getElementById('__logo-fi');
+  if (!fi) {
+    fi = document.createElement('input');
+    fi.type = 'file'; fi.id = '__logo-fi'; fi.accept = 'image/png,image/svg+xml,image/jpeg';
+    fi.style.display = 'none';
+    document.body.appendChild(fi);
+    fi.addEventListener('change', e => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const src = ev.target.result;
+        // Update upload zone
+        const zone = document.getElementById('logo-upload-zone');
+        if (zone) zone.innerHTML = `<img src="${src}" style="max-height:72px;max-width:180px;object-fit:contain;border-radius:8px;"/><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:8px;">${f.name}</div>`;
+        // Update navbar preview
+        const prev = document.getElementById('preview-logo-icon');
+        if (prev) prev.innerHTML = `<img src="${src}" style="width:100%;height:100%;object-fit:contain;border-radius:7px;"/>`;
+        showToast(`✅ Logo actualizado: ${f.name}`, 'success');
+      };
+      reader.readAsDataURL(f);
+      fi.value = '';
+    });
+  }
+  fi.click();
+}
+
+// ── Eliminar participante ──
+function eliminarParticipante(idx) {
+  if (!confirm(`¿Eliminar a ${mockParticipantes[idx]?.nombre}?`)) return;
+  mockParticipantes.splice(idx, 1);
+  renderTablaParticipantes();
+  showToast('🗑️ Participante eliminado', 'info');
+}
+
+// ── Enviar invitación ──
+function enviarInvitacion(idx) {
+  const p = mockParticipantes[idx];
+  if (!p) return;
+  showToast(`📧 Invitación enviada a ${p.correo}`, 'success');
+  // Animate the badge to show "Activo" if was inactive
+  if (p.estado === 'Inactivo') {
+    mockParticipantes[idx].estado = 'Activo';
+    setTimeout(() => renderTablaParticipantes(), 600);
+  }
+}
+
+// ── Editar participante inline ──
+function editarParticipanteInline(idx) {
+  const tbody = document.getElementById('tabla-participantes');
+  if (!tbody) return;
+  const row = tbody.querySelectorAll('tr')[idx];
+  if (!row) return;
+  const p = mockParticipantes[idx];
+  row.innerHTML = `
+    <td style="padding:8px 12px;" colspan="2">
+      <input class="form-input" id="ep-nombre-${idx}" value="${p.nombre}"
+             style="margin-bottom:6px;font-size:12px;padding:6px 10px;" placeholder="Nombre completo"/>
+      <input class="form-input" id="ep-correo-${idx}" value="${p.correo}"
+             style="font-size:12px;padding:6px 10px;" placeholder="Correo"/>
+    </td>
+    <td style="padding:8px 12px;">
+      <select class="form-select" id="ep-rol-${idx}" style="font-size:12px;padding:6px 10px;">
+        <option ${p.rol==='Participante'?'selected':''}>Participante</option>
+        <option ${p.rol==='Líder / Manager'?'selected':''}>Líder / Manager</option>
+        <option ${p.rol==='RH'?'selected':''}>RH</option>
+      </select>
+    </td>
+    <td></td>
+    <td style="text-align:center;padding:8px 12px;">
+      <span class="badge ${p.estado==='Activo'?'badge-green':'badge-orange'}">${p.estado}</span>
+    </td>
+    <td style="text-align:center;padding:8px 12px;">
+      <div style="display:flex;gap:6px;justify-content:center;">
+        <button class="btn btn-primary btn-sm" style="padding:5px 12px;font-size:11px;" onclick="guardarParticipante(${idx})">
+          <i class="fas fa-check"></i> Guardar
+        </button>
+        <button class="btn btn-secondary btn-sm" style="padding:5px 10px;font-size:11px;" onclick="renderTablaParticipantes()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </td>`;
+}
+
+function guardarParticipante(idx) {
+  const nombre  = document.getElementById(`ep-nombre-${idx}`)?.value?.trim();
+  const correo  = document.getElementById(`ep-correo-${idx}`)?.value?.trim();
+  const rol     = document.getElementById(`ep-rol-${idx}`)?.value;
+  if (nombre) mockParticipantes[idx].nombre = nombre;
+  if (correo) mockParticipantes[idx].correo = correo;
+  if (rol)    mockParticipantes[idx].rol    = rol;
+  renderTablaParticipantes();
+  showToast('✅ Participante actualizado', 'success');
+}
+
+// ── Copiar liga de sesión ──
+function copiarLigaSesion(idx) {
+  const s = mockSesiones[idx];
+  const link = `https://selfsci.app/sesion/${encodeURIComponent(s.titulo.replace(/\s+/g, '-').toLowerCase())}`;
+  copiarAlPortapapeles(link, 'Liga de sesión copiada');
+}
+
+// ── Eliminar sesión ──
+function eliminarSesion(idx) {
+  if (!confirm(`¿Eliminar la sesión "${mockSesiones[idx]?.titulo}"?`)) return;
+  mockSesiones.splice(idx, 1);
+  renderSesionesSync();
+  showToast('🗑️ Sesión eliminada', 'info');
+}
+
+// ── Editar sesión inline ──
+function editarSesionInline(idx) {
+  const s = mockSesiones[idx];
+  const container = document.getElementById('sesiones-sync-list');
+  if (!container) return;
+  const cards = container.querySelectorAll('.card');
+  const card = cards[idx];
+  if (!card) return;
+  card.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;flex:1;">
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" style="font-size:11px;">Título</label>
+        <input class="form-input" id="es-titulo-${idx}" value="${s.titulo}" style="font-size:12px;padding:7px 10px;"/>
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" style="font-size:11px;">Fecha</label>
+        <input class="form-input" id="es-fecha-${idx}" value="${s.fecha}" style="font-size:12px;padding:7px 10px;"/>
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label class="form-label" style="font-size:11px;">Facilitador</label>
+        <input class="form-input" id="es-facilitador-${idx}" value="${s.facilitador}" style="font-size:12px;padding:7px 10px;"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-shrink:0;">
+      <button class="btn btn-primary btn-sm" onclick="guardarSesion(${idx})"><i class="fas fa-check"></i> Guardar</button>
+      <button class="btn btn-secondary btn-sm" onclick="renderSesionesSync()"><i class="fas fa-times"></i></button>
+    </div>`;
+  card.style.flexWrap = 'wrap';
+  card.style.gap = '12px';
+}
+
+function guardarSesion(idx) {
+  const titulo      = document.getElementById(`es-titulo-${idx}`)?.value?.trim();
+  const fecha       = document.getElementById(`es-fecha-${idx}`)?.value?.trim();
+  const facilitador = document.getElementById(`es-facilitador-${idx}`)?.value?.trim();
+  if (titulo)      mockSesiones[idx].titulo      = titulo;
+  if (fecha)       mockSesiones[idx].fecha       = fecha;
+  if (facilitador) mockSesiones[idx].facilitador = facilitador;
+  renderSesionesSync();
+  showToast('✅ Sesión actualizada', 'success');
+}
+
+// ── Editar módulo (modal) ──
+let _moduloEditIdx = null;
+function editarModulo(idx) {
+  _moduloEditIdx = idx;
+  const m = mockModulosGrid[idx];
+  let modal = document.getElementById('modal-editar-modulo');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-editar-modulo';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(6px);';
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+  }
+  modal.innerHTML = `
+    <div style="background:#0d0d1a;border:1.5px solid rgba(248,0,250,0.3);border-radius:20px;padding:32px;max-width:500px;width:100%;position:relative;">
+      <button onclick="document.getElementById('modal-editar-modulo').style.display='none'"
+              style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.07);border:none;color:rgba(255,255,255,0.5);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:15px;">✕</button>
+      <h3 style="font-weight:700;margin-bottom:20px;font-size:17px;color:var(--white);">Editar Módulo</h3>
+      <div class="form-group">
+        <label class="form-label">Nombre del módulo</label>
+        <input class="form-input" id="em-nombre" value="${m.nombre}"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="form-group">
+          <label class="form-label">Nivel</label>
+          <select class="form-select" id="em-nivel">
+            ${['Nivel 1 — Novato','Nivel 2 — Principiante','Nivel 3 — Competente','Nivel 4 — Avanzado','Nivel 5 — Experto']
+              .map(n => `<option ${m.nivel===n?'selected':''}>${n}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duración</label>
+          <input class="form-input" id="em-duracion" value="${m.duracion}" placeholder="Ej: 4h"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Temas (separados por coma)</label>
+        <input class="form-input" id="em-temas" value="${m.temas.join(', ')}" placeholder="Liderazgo, Comunicación, Delegación"/>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="guardarEdicionModulo()"><i class="fas fa-save"></i> Guardar cambios</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('modal-editar-modulo').style.display='none'">Cancelar</button>
+      </div>
+    </div>`;
+  modal.style.display = 'flex';
+}
+
+function guardarEdicionModulo() {
+  if (_moduloEditIdx === null) return;
+  const nombre   = document.getElementById('em-nombre')?.value?.trim();
+  const nivel    = document.getElementById('em-nivel')?.value;
+  const duracion = document.getElementById('em-duracion')?.value?.trim();
+  const temasStr = document.getElementById('em-temas')?.value;
+  if (nombre)   mockModulosGrid[_moduloEditIdx].nombre   = nombre;
+  if (nivel)    mockModulosGrid[_moduloEditIdx].nivel    = nivel;
+  if (duracion) mockModulosGrid[_moduloEditIdx].duracion = duracion;
+  if (temasStr) mockModulosGrid[_moduloEditIdx].temas    = temasStr.split(',').map(t => t.trim()).filter(Boolean);
+  document.getElementById('modal-editar-modulo').style.display = 'none';
+  renderModulosGrid();
+  showToast('✅ Módulo actualizado', 'success');
+}
+
+// ── Duplicar módulo ──
+function duplicarModulo(idx) {
+  const copia = { ...mockModulosGrid[idx], nombre: mockModulosGrid[idx].nombre + ' (copia)', temas: [...mockModulosGrid[idx].temas] };
+  mockModulosGrid.splice(idx + 1, 0, copia);
+  renderModulosGrid();
+  showToast('📋 Módulo duplicado — puedes editarlo', 'success');
+}
+
+// ── Toggle form nuevo módulo ──
+function toggleNuevoModulo() {
+  let form = document.getElementById('form-nuevo-modulo');
+  if (!form) {
+    form = document.createElement('div');
+    form.id = 'form-nuevo-modulo';
+    const grid = document.getElementById('modulos-grid');
+    if (grid) grid.parentElement.insertBefore(form, grid);
+  }
+  if (!form.innerHTML || form.style.display === 'none') {
+    form.style.display = 'block';
+    form.innerHTML = `
+      <div class="card" style="border-color:rgba(248,0,250,0.35);margin-bottom:20px;">
+        <h3 class="section-title" style="margin-bottom:20px;"><span>Nuevo</span> Módulo</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Nombre del módulo *</label>
+            <input class="form-input" id="nm-nombre" placeholder="Ej: Gestión de Conflictos"/>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Nivel</label>
+            <select class="form-select" id="nm-nivel">
+              <option>Nivel 1 — Novato</option><option>Nivel 2 — Principiante</option>
+              <option selected>Nivel 3 — Competente</option><option>Nivel 4 — Avanzado</option><option>Nivel 5 — Experto</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Duración</label>
+            <input class="form-input" id="nm-duracion" placeholder="Ej: 3h" value="2h"/>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Ícono (emoji)</label>
+            <input class="form-input" id="nm-icono" value="📚" style="font-size:20px;"/>
+          </div>
+          <div class="form-group" style="margin:0;grid-column:1/-1;">
+            <label class="form-label">Temas (separados por coma)</label>
+            <input class="form-input" id="nm-temas" placeholder="Liderazgo, Comunicación, Equipos"/>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn btn-magenta" onclick="crearNuevoModulo()">Crear módulo <i class="fas fa-plus"></i></button>
+          <button class="btn btn-secondary" onclick="document.getElementById('form-nuevo-modulo').style.display='none'">Cancelar</button>
+        </div>
+      </div>`;
+  } else {
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+function crearNuevoModulo() {
+  const nombre   = document.getElementById('nm-nombre')?.value?.trim();
+  const nivel    = document.getElementById('nm-nivel')?.value;
+  const duracion = document.getElementById('nm-duracion')?.value || '2h';
+  const icono    = document.getElementById('nm-icono')?.value || '📚';
+  const temasStr = document.getElementById('nm-temas')?.value || '';
+  if (!nombre) { showToast('⚠️ El nombre del módulo es requerido', 'error'); return; }
+  mockModulosGrid.push({ nombre, icono, nivel, temas: temasStr.split(',').map(t => t.trim()).filter(Boolean), duracion, activos: 0 });
+  document.getElementById('form-nuevo-modulo').style.display = 'none';
+  renderModulosGrid();
+  showToast(`✅ Módulo "${nombre}" creado`, 'success');
+}
+
+// ── Toggle form nueva sesión síncrona ──
+function toggleNuevaSesion() {
+  let form = document.getElementById('form-nueva-sesion');
+  if (!form) {
+    form = document.createElement('div');
+    form.id = 'form-nueva-sesion';
+    const list = document.getElementById('sesiones-sync-list');
+    if (list) list.parentElement.insertBefore(form, list);
+  }
+  if (!form.innerHTML || form.style.display === 'none') {
+    form.style.display = 'block';
+    form.innerHTML = `
+      <div class="card" style="border-color:rgba(0,216,218,0.3);margin-bottom:16px;">
+        <h4 style="margin-bottom:16px;color:var(--cyan);">Nueva sesión síncrona</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Título *</label>
+            <input class="form-input" id="ns-titulo" placeholder="Ej: Taller de Liderazgo"/>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" id="ns-tipo">
+              <option>Zoom</option><option>Teams</option><option>Presencial</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Fecha</label>
+            <input class="form-input" type="date" id="ns-fecha"/>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Hora</label>
+            <input class="form-input" type="time" id="ns-hora" value="10:00"/>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Facilitador</label>
+            <input class="form-input" id="ns-facilitador" placeholder="Nombre del facilitador"/>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Máx. participantes</label>
+            <input class="form-input" type="number" id="ns-max" value="40"/>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn btn-primary" onclick="crearNuevaSesion()">Agregar sesión <i class="fas fa-plus"></i></button>
+          <button class="btn btn-secondary" onclick="document.getElementById('form-nueva-sesion').style.display='none'">Cancelar</button>
+        </div>
+      </div>`;
+  } else {
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  }
+}
+
+function crearNuevaSesion() {
+  const titulo      = document.getElementById('ns-titulo')?.value?.trim();
+  const tipo        = document.getElementById('ns-tipo')?.value;
+  const fechaRaw    = document.getElementById('ns-fecha')?.value;
+  const hora        = document.getElementById('ns-hora')?.value || '10:00';
+  const facilitador = document.getElementById('ns-facilitador')?.value?.trim() || 'Por definir';
+  const max         = parseInt(document.getElementById('ns-max')?.value) || 40;
+  if (!titulo) { showToast('⚠️ El título es requerido', 'error'); return; }
+  const fechaDisplay = fechaRaw
+    ? new Date(fechaRaw + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'Por confirmar';
+  mockSesiones.push({ titulo, tipo, fecha: fechaDisplay, hora: hora + ' hrs', duracion: '90 min', facilitador, inscritos: 0, max });
+  document.getElementById('form-nueva-sesion').style.display = 'none';
+  renderSesionesSync();
+  showToast(`✅ Sesión "${titulo}" agregada`, 'success');
+}
+
+// ── Crear empresa y navegar a config ──
+function crearEmpresaYConfigurar() {
+  const nombre = document.querySelector('#form-nueva-empresa input[placeholder*="Grupo"]')?.value?.trim();
+  if (!nombre) { showToast('⚠️ El nombre de la empresa es requerido', 'error'); return; }
+  // Update the config screen header with the new company name
+  const h1 = document.querySelector('#screen-admin-empresa-config h1.page-title');
+  if (h1) h1.textContent = nombre;
+  toggleNewEmpresa();
+  navigate('screen-admin-empresa-config');
+  showToast(`✅ Empresa "${nombre}" creada — completa la configuración`, 'success');
+}
+
+// ── Guardar configuración empresa (animated) ──
+function guardarCambiosEmpresa(btn) {
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+  btn.disabled = true;
+  btn.style.opacity = '0.8';
+  setTimeout(() => {
+    btn.innerHTML = '<i class="fas fa-check"></i> ¡Guardado!';
+    btn.style.background = 'linear-gradient(135deg,#00ff88,#00d8da)';
+    btn.style.opacity = '1';
+    showToast('✅ Configuración guardada correctamente', 'success');
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.style.background = '';
+      btn.disabled = false;
+    }, 2500);
+  }, 900);
 }
 
 // ── INIT ──

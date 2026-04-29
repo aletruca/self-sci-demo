@@ -105,7 +105,7 @@
                   <div style="color:rgba(255,255,255,0.4);">
                     <i class="fas fa-clock" style="color:var(--magenta);"></i> Cierra en <strong style="color:var(--magenta);">5 días</strong>
                   </div>
-                  <button class="btn btn-magenta btn-sm">Continuar →</button>
+                  <button class="btn btn-magenta btn-sm" onclick="navigate('screen-modulo')">Continuar →</button>
                 </div>
               </div>
             </div>
@@ -231,7 +231,8 @@
                     <div style="font-weight:600;font-size:14px;">Taller: Liderazgo Situacional</div>
                     <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;">Vie 18 Abr · 10:00 - 12:00 am</div>
                   </div>
-                  <button class="btn btn-sm" style="background:rgba(248,0,250,0.2);color:var(--magenta);border:none;">Unirse</button>
+                  <button class="btn btn-sm" style="background:rgba(248,0,250,0.2);color:var(--magenta);border:none;"
+                          onclick="abrirModalSesion('Taller: Liderazgo Situacional','Vie 18 Abr · 10:00 am','https://zoom.us/j/94823751092?pwd=SELFSCI2025')">Unirse</button>
                 </div>
               </div>
               <div style="background:rgba(0,216,218,0.06);border:1px solid rgba(0,216,218,0.15);border-radius:var(--radius-md);padding:12px;">
@@ -328,7 +329,7 @@
           </p>
 
           <!-- Video placeholder -->
-          <div class="video-placeholder" style="margin-bottom:20px;" onclick="showToast('▶ Reproduciendo: Estilos de Liderazgo Situacional','info')">
+          <div class="video-placeholder" style="margin-bottom:20px;" onclick="abrirVideoPlayer()">
             <div class="play-btn">▶</div>
             <p style="color:rgba(255,255,255,0.5);font-size:14px;">Estilos de Liderazgo Situacional — 8:32 min</p>
           </div>
@@ -368,13 +369,13 @@
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);">
                 <span style="font-size:14px;">📄 Guía de Liderazgo Situacional.pdf</span>
-                <button class="btn btn-outline btn-sm" onclick="showToast('📥 Descargando guía...','info')">
+                <button class="btn btn-outline btn-sm" onclick="descargarRecurso('guia')">
                   <i class="fas fa-download"></i> Descargar
                 </button>
               </div>
               <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);">
                 <span style="font-size:14px;">📊 Autoevaluación de Estilo.pptx</span>
-                <button class="btn btn-outline btn-sm" onclick="showToast('📥 Descargando presentación...','info')">
+                <button class="btn btn-outline btn-sm" onclick="descargarRecurso('autoevaluacion')">
                   <i class="fas fa-download"></i> Descargar
                 </button>
               </div>
@@ -466,8 +467,9 @@
             <div style="font-size:12px;color:var(--magenta);font-weight:600;margin-bottom:6px;">📹 PRÓXIMA SESIÓN GRUPAL</div>
             <div style="font-weight:700;margin-bottom:4px;">Taller en Zoom: Liderazgo Situacional</div>
             <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:12px;">Vie 18 Abr · 10:00 am</div>
-            <button class="btn btn-magenta btn-sm" style="width:100%;" onclick="showToast('📅 Evento en tu calendario','success')">
-              <i class="fas fa-video"></i> Agregar a calendario
+            <button class="btn btn-magenta btn-sm" style="width:100%;"
+                    onclick="downloadICS('Taller Liderazgo Situacional — SELF SCI','20250418','100000',120)">
+              <i class="fas fa-calendar-plus"></i> Agregar a calendario
             </button>
           </div>
 
