@@ -2066,6 +2066,7 @@ function showConfigTab(tabId, btn) {
   if (tabId === 'participantes')  renderTablaParticipantes();
   if (tabId === 'modulos-config') renderModulosConfig();
   if (tabId === 'sesiones-sync')  renderSesionesSync();
+  if (tabId === 'calendario')     renderCalendario();
 }
 
 // ── Toggle forms ──
@@ -2870,3 +2871,117 @@ document.addEventListener('DOMContentLoaded', () => {
   const landing = document.getElementById('screen-landing');
   if (landing) landing.classList.add('active');
 });
+
+// ══════════════════════════════════════
+//  CALENDARIO DINÁMICO
+// ══════════════════════════════════════
+
+const calState = { year: 2025, month: 3 }; // 0-indexed: 3 = Abril
+
+const PROGRAM_START = new Date(2025, 3, 16); // 16 Abr 2025
+
+const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                  'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+const MESES_ABBR = { 'Ene':0,'Feb':1,'Mar':2,'Abr':3,'May':4,'Jun':5,
+                     'Jul':6,'Ago':7,'Sep':8,'Oct':9,'Nov':10,'Dic':11 };
+
+function getModuleCalEvents() {
+  return mockModulosConfig
+    .filter(m => m.activo)
+    .map(m => {
+      const match = m.semana.match(/Semana (\d+)/);
+      if (!match) return null;
+      const weekNum = parseInt(match[1]);
+      const date = new Date(PROGRAM_START);
+      date.setDate(date.getDate() + (weekNum - 1) * 7);
+      return { date, label: m.icono + ' ' + m.nombre, type: 'modulo' };
+    })
+    .filter(Boolean);
+}
+
+function getSessionCalEvents() {
+  return mockSesiones.map(s => {
+    const parts = s.fecha.split(' ');
+    const month = MESES_ABBR[parts[1]];
+    if (month === undefined) return null;
+    const date = new Date(parseInt(parts[2]), month, parseInt(parts[0]));
+    return { date, label: s.titulo, hora: s.hora, type: 'sesion' };
+  }).filter(Boolean);
+}
+
+function renderCalendario() {
+  const label = document.getElementById('cal-mes-label');
+  const grid  = document.getElementById('calendario-grid');
+  if (!label || !grid) return;
+
+  const { year, month } = calState;
+  label.textContent = MESES_ES[month] + ' ' + year;
+
+  const modEvents = getModuleCalEvents();
+  const sesEvents = getSessionCalEvents();
+
+  const firstDay  = new Date(year, month, 1);
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const DIAS = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+
+  // Lunes=0 ... Domingo=6
+  let startDow = (firstDay.getDay() + 6) % 7;
+
+  function eventsForDay(d) {
+    const events = [];
+    modEvents.forEach(e => {
+      if (e.date.getFullYear()===year && e.date.getMonth()===month && e.date.getDate()===d)
+        events.push({ label: e.label, color:'var(--cyan)', bg:'rgba(0,216,218,0.15)' });
+    });
+    sesEvents.forEach(e => {
+      if (e.date.getFullYear()===year && e.date.getMonth()===month && e.date.getDate()===d)
+        events.push({ label: e.label + (e.hora ? ' · ' + e.hora : ''), color:'var(--magenta)', bg:'rgba(248,0,250,0.15)' });
+    });
+    return events;
+  }
+
+  // Construir celdas
+  let cells = [];
+  for (let i = 0; i < startDow; i++) cells.push(null);
+  for (let d = 1; d <= totalDays; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const headerHtml = `
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid rgba(255,255,255,0.08);">
+      ${DIAS.map((d,i) => `<div style="padding:10px;text-align:center;font-size:12px;font-weight:700;color:${i>=5?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.4)'};">${d}</div>`).join('')}
+    </div>`;
+
+  const bodyHtml = `
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);">
+      ${cells.map((day, idx) => {
+        const isLastRow  = idx >= cells.length - 7;
+        const isLastCol  = (idx + 1) % 7 === 0;
+        const isWeekend  = idx % 7 >= 5;
+        const borderB = isLastRow ? '' : 'border-bottom:1px solid rgba(255,255,255,0.05);';
+        const borderR = isLastCol ? '' : 'border-right:1px solid rgba(255,255,255,0.05);';
+        if (!day) return `<div style="padding:10px;min-height:80px;${borderR}${borderB}"></div>`;
+        const evHtml = eventsForDay(day).map(e =>
+          `<div style="margin-top:4px;padding:3px 6px;background:${e.bg};border-left:2px solid ${e.color};border-radius:4px;font-size:11px;color:${e.color};line-height:1.3;">${e.label}</div>`
+        ).join('');
+        return `<div style="padding:10px;min-height:80px;${borderR}${borderB}">
+          <div style="font-size:13px;color:${isWeekend?'rgba(255,255,255,0.25)':'inherit'};">${day}</div>
+          ${evHtml}
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  grid.innerHTML = `<div class="card" style="padding:0;overflow:hidden;">${headerHtml}${bodyHtml}</div>`;
+}
+
+function calendarPrev() {
+  calState.month--;
+  if (calState.month < 0) { calState.month = 11; calState.year--; }
+  renderCalendario();
+}
+
+function calendarNext() {
+  calState.month++;
+  if (calState.month > 11) { calState.month = 0; calState.year++; }
+  renderCalendario();
+}

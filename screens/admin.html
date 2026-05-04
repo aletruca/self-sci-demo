@@ -381,6 +381,9 @@
         <button class="config-tab" onclick="showConfigTab('sesiones-sync',this)" style="flex:1;padding:10px 16px;border-radius:9px;border:none;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:transparent;color:rgba(255,255,255,0.5);transition:all 0.3s;">
           <i class="fas fa-video"></i> Sesiones Síncronas
         </button>
+        <button class="config-tab" onclick="showConfigTab('calendario',this)" style="flex:1;padding:10px 16px;border-radius:9px;border:none;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;background:transparent;color:rgba(255,255,255,0.5);transition:all 0.3s;">
+          <i class="fas fa-calendar-days"></i> Calendario
+        </button>
       </div>
 
       <!-- TAB: PARTICIPANTES -->
@@ -519,6 +522,29 @@
           </div>
 
         </div>
+      </div>
+
+      <!-- TAB: CALENDARIO -->
+      <div id="tab-calendario" class="config-tab-content" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h3 class="section-title" style="margin:0;"><span>Calendario</span> del Programa</h3>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline btn-sm" onclick="calendarPrev()"><i class="fas fa-chevron-left"></i></button>
+            <span id="cal-mes-label" style="padding:8px 16px;background:rgba(255,255,255,0.05);border-radius:8px;font-size:14px;font-weight:600;">Mayo 2025</span>
+            <button class="btn btn-outline btn-sm" onclick="calendarNext()"><i class="fas fa-chevron-right"></i></button>
+          </div>
+        </div>
+
+        <!-- Leyenda -->
+        <div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;"><span style="width:12px;height:12px;border-radius:3px;background:var(--cyan);display:inline-block;"></span> Inicio de módulo</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;"><span style="width:12px;height:12px;border-radius:3px;background:var(--magenta);display:inline-block;"></span> Sesión síncrona</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;"><span style="width:12px;height:12px;border-radius:3px;background:var(--purple);display:inline-block;"></span> Evaluación</div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:13px;"><span style="width:12px;height:12px;border-radius:3px;background:#00ff88;display:inline-block;"></span> Entrega / Cierre</div>
+        </div>
+
+        <!-- Grilla dinámica del calendario -->
+        <div id="calendario-grid"></div>
       </div>
 
       <!-- TAB: SESIONES SÍNCRONAS -->
