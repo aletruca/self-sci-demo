@@ -267,69 +267,9 @@
         </div>
       </div>
 
-      <!-- Cards de empresas -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
-
-        <!-- Empresa 1 -->
-        <div class="card" style="border-color:rgba(0,216,218,0.25);">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
-            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,rgba(0,216,218,0.2),rgba(117,114,233,0.2));border:1px solid rgba(0,216,218,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;">🏭</div>
-            <span class="badge badge-green">Activa</span>
-          </div>
-          <h3 style="font-weight:700;margin-bottom:4px;">Manufactura Avanzada</h3>
-          <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:16px;">manufactura@empresa.com</p>
-          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:13px;">
-            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Participantes</span><strong>48</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Módulos activos</span><strong>6/6</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Inicio programa</span><strong>16 Abr 2025</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Avance global</span><strong style="color:var(--cyan);">72%</strong></div>
-          </div>
-          <div class="progress-bar-wrap" style="margin-bottom:16px;"><div class="progress-bar-fill" style="width:72%"></div></div>
-          <button class="btn btn-outline btn-sm" style="width:100%;" onclick="navigate('screen-admin-empresa-config')">
-            <i class="fas fa-gear"></i> Configurar
-          </button>
-        </div>
-
-        <!-- Empresa 2 -->
-        <div class="card" style="border-color:rgba(117,114,233,0.25);">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
-            <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,rgba(117,114,233,0.2),rgba(248,0,250,0.2));border:1px solid rgba(117,114,233,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;">🏥</div>
-            <span class="badge badge-green">Activa</span>
-          </div>
-          <h3 style="font-weight:700;margin-bottom:4px;">Grupo Salud Integral</h3>
-          <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:16px;">admin@saludintegral.com</p>
-          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:13px;">
-            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Participantes</span><strong>36</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Módulos activos</span><strong>4/6</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Inicio programa</span><strong>1 May 2025</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Avance global</span><strong style="color:var(--purple);">58%</strong></div>
-          </div>
-          <div class="progress-bar-wrap" style="margin-bottom:16px;"><div class="progress-bar-fill" style="width:58%;background:linear-gradient(90deg,var(--purple),var(--magenta));"></div></div>
-          <button class="btn btn-outline btn-sm" style="width:100%;" onclick="navigate('screen-admin-empresa-config')">
-            <i class="fas fa-gear"></i> Configurar
-          </button>
-        </div>
-
-        <!-- Empresa 3 — pendiente -->
-        <div class="card" style="border-color:rgba(255,165,0,0.2);">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
-            <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;">🛒</div>
-            <span class="badge badge-orange">Pendiente config.</span>
-          </div>
-          <h3 style="font-weight:700;margin-bottom:4px;">Retail Express MX</h3>
-          <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:16px;">hr@retailexpress.mx</p>
-          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;font-size:13px;">
-            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Participantes</span><strong>40</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Módulos activos</span><strong style="color:orange;">0/6</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Inicio programa</span><strong style="color:rgba(255,255,255,0.3);">Sin configurar</strong></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Avance global</span><strong style="color:rgba(255,255,255,0.3);">—</strong></div>
-          </div>
-          <div class="progress-bar-wrap" style="margin-bottom:16px;"><div style="width:0%;height:100%;"></div></div>
-          <button class="btn btn-magenta btn-sm" style="width:100%;" onclick="navigate('screen-admin-empresa-config')">
-            <i class="fas fa-rocket"></i> Configurar ahora
-          </button>
-        </div>
-
+      <!-- Cards de empresas — renderizado por JS -->
+      <div id="empresas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;">
+        <!-- Poblado por renderEmpresasGrid() -->
       </div>
     </div>
   </div>
@@ -403,20 +343,20 @@
             <h4 style="margin-bottom:16px;color:var(--cyan);">Nuevo participante</h4>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
               <div class="form-group" style="margin:0;">
-                <label class="form-label">Nombre completo</label>
-                <input class="form-input" placeholder="Ana García"/>
+                <label class="form-label">Nombre completo *</label>
+                <input id="nu-nombre" class="form-input" placeholder="Ana García"/>
               </div>
               <div class="form-group" style="margin:0;">
-                <label class="form-label">Correo / Usuario</label>
-                <input class="form-input" placeholder="ana@empresa.com"/>
+                <label class="form-label">Correo / Usuario *</label>
+                <input id="nu-correo" class="form-input" placeholder="ana@empresa.com"/>
               </div>
               <div class="form-group" style="margin:0;">
                 <label class="form-label">Contraseña inicial</label>
-                <input class="form-input" type="password" placeholder="••••••••"/>
+                <input id="nu-password" class="form-input" type="password" placeholder="••••••••"/>
               </div>
               <div class="form-group" style="margin:0;">
                 <label class="form-label">Rol</label>
-                <select class="form-select">
+                <select id="nu-rol" class="form-select">
                   <option>Participante</option>
                   <option>Líder / Manager</option>
                   <option>RH</option>
@@ -424,10 +364,12 @@
               </div>
               <div class="form-group" style="margin:0;">
                 <label class="form-label">Área</label>
-                <input class="form-input" placeholder="Operaciones"/>
+                <input id="nu-area" class="form-input" placeholder="Operaciones"/>
               </div>
               <div class="form-group" style="margin:0;display:flex;align-items:flex-end;gap:8px;">
-                <button class="btn btn-primary btn-sm" onclick="showToast('✅ Participante agregado','success');toggleNuevoUsuario()">Guardar</button>
+                <button class="btn btn-primary btn-sm" onclick="guardarNuevoParticipante()">
+                  <i class="fas fa-check"></i> Guardar
+                </button>
                 <button class="btn btn-secondary btn-sm" onclick="toggleNuevoUsuario()">Cancelar</button>
               </div>
             </div>

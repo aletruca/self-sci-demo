@@ -1193,6 +1193,12 @@ function navigate(screenId) {
   if (screenId === 'screen-admin-permisos') {
     setTimeout(renderPermisosTabla, 80);
   }
+  if (screenId === 'screen-admin-empresas') {
+    setTimeout(renderEmpresasGrid, 80);
+  }
+  if (screenId === 'screen-admin-dashboard') {
+    setTimeout(renderEmpresasGrid, 80);
+  }
 }
 
 // ── SELECCIÓN DE ROL ──
@@ -1394,10 +1400,18 @@ function renderRoleCards() {
       <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
         ${rol.tags.slice(0,3).map(t => `<span style="font-size:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:5px;padding:2px 6px;color:rgba(255,255,255,0.5);">${t}</span>`).join('')}
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.3);">
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:14px;">
         <span>${rol.area} · ${rol.puntaje.toFixed(2)}</span>
         <span style="color:${color};font-weight:600;">${rol.nivel}</span>
       </div>
+      <button onclick="event.stopPropagation();abrirModalRol(${rol.id})"
+              style="width:100%;padding:8px;border-radius:9px;border:1.5px solid ${color};background:transparent;
+                     color:${color};font-size:12px;font-weight:600;font-family:'Outfit',sans-serif;cursor:pointer;
+                     transition:background 0.18s;"
+              onmouseover="this.style.background='rgba(0,216,218,0.09)'"
+              onmouseout="this.style.background='transparent'">
+        Ver ficha completa →
+      </button>
     </div>`;
   }
 
@@ -2834,14 +2848,160 @@ function crearNuevaSesion() {
 
 // ── Crear empresa y navegar a config ──
 function crearEmpresaYConfigurar() {
-  const nombre = document.querySelector('#form-nueva-empresa input[placeholder*="Grupo"]')?.value?.trim();
+  const nombre    = document.querySelector('#form-nueva-empresa input[placeholder*="Grupo"]')?.value?.trim();
+  const industria = document.querySelector('#form-nueva-empresa select')?.value?.trim() || 'Otra';
   if (!nombre) { showToast('⚠️ El nombre de la empresa es requerido', 'error'); return; }
-  // Update the config screen header with the new company name
+  const iconoMap = { 'Manufactura':'🏭', 'Logística':'🚛', 'Retail':'🛒', 'Salud':'🏥', 'Tecnología':'💻', 'Alimentaria':'🍽️' };
+  const icono = iconoMap[industria] || '🏢';
+  mockEmpresas.push({ nombre, industria, participantes: 0, icono, activa: true });
+  renderEmpresasGrid();
   const h1 = document.querySelector('#screen-admin-empresa-config h1.page-title');
   if (h1) h1.textContent = nombre;
   toggleNewEmpresa();
   navigate('screen-admin-empresa-config');
   showToast(`✅ Empresa "${nombre}" creada — completa la configuración`, 'success');
+}
+
+// ── Modal ficha completa de rol ──
+function abrirModalRol(rolId) {
+  const entry = Object.entries(rolesData).find(([, r]) => r.id === rolId);
+  if (!entry) return;
+  const [name, rol] = entry;
+
+  const NIVEL_META = {
+    'Novice':            { color:'rgba(255,255,255,0.4)', desc:'Sigue instrucciones paso a paso. Requiere supervisión constante.' },
+    'Advanced Beginner': { color:'#ffa03c',              desc:'Reconoce situaciones recurrentes con guía de un experto.' },
+    'Competent':         { color:'var(--cyan)',           desc:'Toma decisiones con criterio propio. Planea a mediano plazo.' },
+    'Proficient':        { color:'var(--purple)',         desc:'Visión sistémica. Adapta la estrategia con agilidad.' },
+    'Expert':            { color:'var(--magenta)',        desc:'Opera por intuición. Es referente de excelencia en su campo.' }
+  };
+  const nivelMeta = NIVEL_META[rol.nivel] || { color:'var(--cyan)', desc:'' };
+
+  const AREA_FULL = {
+    T2:'T2 · Distribución', T1:'T1 · Logística Interna',
+    Planning:'Supply Chain Planning', COMEX:'Comercio Exterior',
+    PPM:'Producción / Mantenimiento', Transformation:'Transformación Organizacional'
+  };
+
+  const capsHtml = CAPS.map(cap => {
+    const capData  = rol.capabilities[cap];
+    if (!capData) return '';
+    const pct      = Math.round((capData.puntaje / 3) * 100);
+    const isTag    = rol.tags.some(t => t.toLowerCase().includes(cap.toLowerCase().substring(0, 8)));
+    const capColor = isTag ? 'var(--cyan)' : 'var(--purple)';
+    const tagBadge = isTag
+      ? `<span style="font-size:9px;background:rgba(0,216,218,0.12);border:1px solid rgba(0,216,218,0.3);
+                      color:var(--cyan);border-radius:20px;padding:1px 7px;margin-left:6px;">Top cap</span>`
+      : '';
+    return `
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.85);">${cap}${tagBadge}</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;color:${capColor};font-weight:700;">${capData.nivel}</span>
+            <span style="font-size:11px;color:rgba(255,255,255,0.3);">${capData.puntaje.toFixed(2)}</span>
+          </div>
+        </div>
+        <div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.07);overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${capColor},rgba(117,114,233,0.6));border-radius:3px;transition:width 0.4s;"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  let modal = document.getElementById('modal-rol-ficha');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-rol-ficha';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.innerHTML = `
+      <div id="modal-rol-ficha-backdrop" onclick="cerrarModalRol()"
+           style="position:absolute;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);"></div>
+      <div id="modal-rol-ficha-content"
+           style="position:relative;z-index:1;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;
+                  background:var(--bg-card,#141428);border:1px solid rgba(255,255,255,0.1);
+                  border-radius:20px;padding:0;box-shadow:0 32px 80px rgba(0,0,0,0.6);">
+      </div>`;
+    document.body.appendChild(modal);
+  }
+
+  document.getElementById('modal-rol-ficha-content').innerHTML = `
+    <!-- Header -->
+    <div style="padding:24px 24px 20px;border-bottom:1px solid rgba(255,255,255,0.07);position:relative;">
+      <button onclick="cerrarModalRol()"
+              style="position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;
+                     border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);
+                     color:rgba(255,255,255,0.6);font-size:16px;cursor:pointer;display:flex;
+                     align-items:center;justify-content:center;font-family:'Outfit',sans-serif;
+                     line-height:1;transition:background 0.15s;"
+              onmouseover="this.style.background='rgba(255,255,255,0.12)'"
+              onmouseout="this.style.background='rgba(255,255,255,0.06)'">✕</button>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:56px;height:56px;border-radius:14px;background:rgba(0,216,218,0.08);
+                    border:1px solid rgba(0,216,218,0.2);display:flex;align-items:center;
+                    justify-content:center;font-size:28px;flex-shrink:0;">${rol.icono}</div>
+        <div>
+          <h2 style="font-size:18px;font-weight:800;color:${rol.color};margin:0 0 4px;">${name}</h2>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+            <span style="font-size:11px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+                         border-radius:20px;padding:2px 10px;color:rgba(255,255,255,0.5);">
+              ${AREA_FULL[rol.area] || rol.area}
+            </span>
+            <span style="font-size:11px;background:rgba(0,0,0,0.2);border:1px solid ${nivelMeta.color};
+                         border-radius:20px;padding:2px 10px;color:${nivelMeta.color};font-weight:600;">
+              ${rol.nivel}
+            </span>
+            <span style="font-size:11px;color:rgba(255,255,255,0.3);">Puntaje Dreyfus: ${rol.puntaje.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:22px 24px 28px;">
+
+      <!-- Objetivo general -->
+      <div style="margin-bottom:22px;">
+        <h4 style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.35);text-transform:uppercase;
+                   letter-spacing:0.08em;margin:0 0 8px;">Objetivo general</h4>
+        <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.65;margin:0;">${rol.descripcion}</p>
+      </div>
+
+      <!-- Nivel de dominio esperado -->
+      <div style="margin-bottom:22px;padding:14px 16px;border-radius:12px;
+                  background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);">
+        <h4 style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.35);text-transform:uppercase;
+                   letter-spacing:0.08em;margin:0 0 6px;">Nivel de dominio esperado</h4>
+        <div style="display:flex;align-items:baseline;gap:10px;">
+          <span style="font-size:16px;font-weight:800;color:${nivelMeta.color};">${rol.nivel}</span>
+          <span style="font-size:12px;color:rgba(255,255,255,0.5);">${nivelMeta.desc}</span>
+        </div>
+      </div>
+
+      <!-- Capabilities -->
+      <div>
+        <h4 style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.35);text-transform:uppercase;
+                   letter-spacing:0.08em;margin:0 0 14px;">Capabilities evaluadas</h4>
+        ${capsHtml}
+      </div>
+
+      <!-- CTA -->
+      <button onclick="cerrarModalRol();selectRol(${rol.id})"
+              style="margin-top:20px;width:100%;padding:13px;border-radius:12px;
+                     border:none;background:linear-gradient(135deg,${rol.color},var(--purple));
+                     color:#fff;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;
+                     cursor:pointer;letter-spacing:0.02em;">
+        Seleccionar este rol y continuar →
+      </button>
+    </div>`;
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarModalRol() {
+  const modal = document.getElementById('modal-rol-ficha');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 // ── Guardar configuración empresa (animated) ──
@@ -2861,6 +3021,89 @@ function guardarCambiosEmpresa(btn) {
       btn.disabled = false;
     }, 2500);
   }, 900);
+}
+
+// ── Mock empresas ──
+const mockEmpresas = [
+  { nombre:'Manufactura Avanzada S.A.', industria:'Manufactura', participantes:48, icono:'🏭', activa:true },
+  { nombre:'Grupo Salud Integral',      industria:'Salud',        participantes:32, icono:'🏥', activa:true },
+  { nombre:'Retail Express MX',         industria:'Retail',       participantes:15, icono:'🛒', activa:false },
+];
+
+// ── Render grid de empresas ──
+function renderEmpresasGrid() {
+  const container = document.getElementById('empresas-grid');
+  if (!container) return;
+  if (mockEmpresas.length === 0) {
+    container.innerHTML = '<p style="color:rgba(255,255,255,0.4);grid-column:1/-1;text-align:center;padding:40px 0;">Sin empresas registradas. Haz clic en "+ Nueva empresa" para agregar una.</p>';
+    return;
+  }
+  container.innerHTML = mockEmpresas.map((e, idx) => `
+    <div class="card" style="border-color:rgba(0,216,218,0.15);padding:22px;">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+        <div style="width:48px;height:48px;border-radius:12px;background:rgba(0,216,218,0.09);border:1px solid rgba(0,216,218,0.2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${e.icono}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.nombre}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px;">${e.industria}</div>
+        </div>
+        <span style="background:${e.activa ? 'rgba(0,255,136,0.12)' : 'rgba(255,160,60,0.12)'};color:${e.activa ? '#00ff88' : '#ffa03c'};border:1px solid ${e.activa ? 'rgba(0,255,136,0.3)' : 'rgba(255,160,60,0.3)'};border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;white-space:nowrap;">${e.activa ? 'Activa' : 'Inactiva'}</span>
+      </div>
+      <div style="display:flex;gap:16px;margin-bottom:18px;">
+        <div style="text-align:center;flex:1;background:rgba(255,255,255,0.04);border-radius:10px;padding:10px 6px;">
+          <div style="font-size:20px;font-weight:700;color:var(--cyan);">${e.participantes}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px;">Participantes</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="navigate('screen-admin-empresa-config')">
+          <i class="fas fa-cog"></i> Configurar
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="toggleActivaEmpresa(${idx})" title="${e.activa ? 'Desactivar' : 'Activar'}">
+          <i class="fas fa-${e.activa ? 'pause' : 'play'}"></i>
+        </button>
+        <button class="btn btn-secondary btn-sm" style="color:#ff6b6b;" onclick="eliminarEmpresa(${idx})" title="Eliminar">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleActivaEmpresa(idx) {
+  mockEmpresas[idx].activa = !mockEmpresas[idx].activa;
+  renderEmpresasGrid();
+  showToast(mockEmpresas[idx].activa ? '✅ Empresa activada' : '⏸️ Empresa desactivada', 'info');
+}
+
+function eliminarEmpresa(idx) {
+  if (!confirm(`¿Eliminar "${mockEmpresas[idx]?.nombre}"? Esta acción no se puede deshacer.`)) return;
+  mockEmpresas.splice(idx, 1);
+  renderEmpresasGrid();
+  showToast('🗑️ Empresa eliminada', 'info');
+}
+
+// ── Guardar nuevo participante ──
+function guardarNuevoParticipante() {
+  const nombre   = document.getElementById('nu-nombre')?.value?.trim();
+  const correo   = document.getElementById('nu-correo')?.value?.trim();
+  const password = document.getElementById('nu-password')?.value?.trim();
+  const rol      = document.getElementById('nu-rol')?.value;
+  const area     = document.getElementById('nu-area')?.value?.trim();
+  if (!nombre || !correo) {
+    showToast('⚠️ Nombre y correo son requeridos', 'error');
+    return;
+  }
+  mockParticipantes.push({ nombre, correo, rol: rol || 'Participante', avance: 0, estado: 'Activo' });
+  renderTablaParticipantes();
+  // Clear inputs
+  ['nu-nombre','nu-correo','nu-password','nu-area'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  // Hide form
+  const form = document.getElementById('form-nuevo-usuario');
+  if (form) form.style.display = 'none';
+  showToast(`✅ Participante "${nombre}" agregado`, 'success');
 }
 
 // ── INIT ──
