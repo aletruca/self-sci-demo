@@ -2883,10 +2883,17 @@ function abrirModalRol(rolId) {
     PPM:'Producción / Mantenimiento', Transformation:'Transformación Organizacional'
   };
 
-  const capsHtml = CAPS.map(cap => {
-    const capData  = rol.capabilities[cap];
-    if (!capData) return '';
-    const pct      = Math.round((capData.puntaje / 3) * 100);
+  // Use full capability list from rolesExtraData when available, fall back to 8 CAPS
+  const extra     = (typeof rolesExtraData !== 'undefined') ? rolesExtraData[name] : null;
+  const descFull  = extra?.descFull || rol.descripcion;
+  const capsList  = extra?.allCaps  || CAPS.map(c => {
+    const d = rol.capabilities[c];
+    return d ? { cap:c, puntaje:d.puntaje, nivel:d.nivel } : null;
+  }).filter(Boolean);
+
+  const capsHtml = capsList.map(capItem => {
+    const { cap, puntaje, nivel } = capItem;
+    const pct      = Math.round((Number(puntaje) / 3) * 100);
     const isTag    = rol.tags.some(t => t.toLowerCase().includes(cap.toLowerCase().substring(0, 8)));
     const capColor = isTag ? 'var(--cyan)' : 'var(--purple)';
     const tagBadge = isTag
@@ -2898,8 +2905,8 @@ function abrirModalRol(rolId) {
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
           <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.85);">${cap}${tagBadge}</span>
           <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-size:11px;color:${capColor};font-weight:700;">${capData.nivel}</span>
-            <span style="font-size:11px;color:rgba(255,255,255,0.3);">${capData.puntaje.toFixed(2)}</span>
+            <span style="font-size:11px;color:${capColor};font-weight:700;">${nivel}</span>
+            <span style="font-size:11px;color:rgba(255,255,255,0.3);">${Number(puntaje).toFixed(2)}</span>
           </div>
         </div>
         <div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.07);overflow:hidden;">
@@ -2963,7 +2970,7 @@ function abrirModalRol(rolId) {
       <div style="margin-bottom:22px;">
         <h4 style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.35);text-transform:uppercase;
                    letter-spacing:0.08em;margin:0 0 8px;">Objetivo general</h4>
-        <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.65;margin:0;">${rol.descripcion}</p>
+        <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.65;margin:0;">${descFull}</p>
       </div>
 
       <!-- Nivel de dominio esperado -->
