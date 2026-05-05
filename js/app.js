@@ -11,7 +11,10 @@ const state = {
   assessmentPts: 0,
   currentQuestion: 0,
   answers: [],
-  npsValue: null
+  npsValue: null,
+  userName: '',
+  userAvatar: '🦁',
+  userAvatarColor: '#ffa03c'
 };
 
 // ══════════════════════════════════════════════════
@@ -1644,10 +1647,11 @@ function getRequiredScores() {
 }
 
 function getDreyfusLabel(score) {
-  if (score >= 2.5) return { label: 'Proficiente', color: '#00d8da' };
-  if (score >= 2.0) return { label: 'Competente', color: '#00ff88' };
-  if (score >= 1.5) return { label: 'Avanzado Principiante', color: 'orange' };
-  return { label: 'Novato', color: 'var(--magenta)' };
+  if (score >= 2.5) return { label: 'Expert',            color: 'var(--magenta)' };
+  if (score >= 2.0) return { label: 'Proficient',        color: 'var(--purple)'  };
+  if (score >= 1.5) return { label: 'Competent',         color: 'var(--cyan)'    };
+  if (score >= 1.0) return { label: 'Advanced Beginner', color: '#ffa03c'        };
+  return                    { label: 'Novice',            color: 'rgba(255,255,255,0.45)' };
 }
 
 const capIcons = {
@@ -1660,6 +1664,138 @@ const capIcons = {
   'Resolución de problemas': '🔍',
   'Mejora continua': '🔄'
 };
+
+const CAP_DEFINITIONS = {
+  'MBWA': {
+    definicion: 'Management by Walking Around — presencia activa del líder en el piso de operaciones para observar, escuchar y detectar oportunidades de mejora en tiempo real, fortaleciendo la confianza y el compromiso del equipo.',
+    niveles: {
+      'Novice':            'Gestiona desde su escritorio. Pocas visitas al piso, sin rutina establecida.',
+      'Advanced Beginner': 'Realiza rondas ocasionales cuando hay un problema visible. Sin agenda ni metodología.',
+      'Competent':         'Programa rondas regulares, hace preguntas relevantes y documenta lo observado.',
+      'Proficient':        'Su presencia genera cambios de comportamiento positivos en el equipo.',
+      'Expert':            'El MBWA es su identidad de liderazgo. Detecta problemas sistémicos con solo una observación.'
+    }
+  },
+  'Gestión de Equipos': {
+    definicion: 'Capacidad para liderar, motivar y desarrollar equipos: asignar responsabilidades, gestionar conflictos, dar retroalimentación oportuna y crear un ambiente de alto desempeño sostenido.',
+    niveles: {
+      'Novice':            'Asigna tareas con poca habilidad para motivar o gestionar conflictos.',
+      'Advanced Beginner': 'Reconoce conflictos y baja motivación, pero interviene de forma reactiva.',
+      'Competent':         'Estructura roles, da retroalimentación regular y gestiona conflictos con proceso claro.',
+      'Proficient':        'Desarrolla las capacidades individuales y crea una cultura de accountability.',
+      'Expert':            'Transforma la cultura del área. Sus equipos replican su estilo de liderazgo.'
+    }
+  },
+  'Gestión por sistemas': {
+    definicion: 'Comprensión y uso de herramientas, procesos y sistemas de gestión (DPO, VPO, ERP) para asegurar el cumplimiento de estándares, la trazabilidad de resultados y la estandarización de operaciones.',
+    niveles: {
+      'Novice':            'Conoce los sistemas pero los usa de forma básica, con guía constante.',
+      'Advanced Beginner': 'Opera los sistemas en situaciones rutinarias. Necesita ayuda ante configuraciones nuevas.',
+      'Competent':         'Usa los sistemas de forma autónoma para reportar, analizar y decidir.',
+      'Proficient':        'Optimiza el uso de los sistemas y propone mejoras a los procesos estándar.',
+      'Expert':            'Diseña e implementa nuevos sistemas o metodologías para toda la operación.'
+    }
+  },
+  'Toma de Decisiones': {
+    definicion: 'Capacidad para analizar situaciones, evaluar opciones y elegir el curso de acción más adecuado con la información disponible, asumiendo responsabilidad por el resultado, incluso bajo presión o incertidumbre.',
+    niveles: {
+      'Novice':            'Requiere validación frecuente antes de decidir. Evita decisiones sin instrucción previa.',
+      'Advanced Beginner': 'Decide en situaciones conocidas, pero busca confirmación ante escenarios nuevos.',
+      'Competent':         'Toma decisiones sólidas en su ámbito con criterio propio y asume las consecuencias.',
+      'Proficient':        'Decide con agilidad integrando datos, contexto e intuición. Anticipa consecuencias de segundo orden.',
+      'Expert':            'Sus decisiones son referencia. Define marcos de decisión que otros replican en la organización.'
+    }
+  },
+  'Grit (resilencia + empuje)': {
+    definicion: 'Perseverancia ante la adversidad, capacidad de recuperarse de fallos y obstáculos, manteniendo el esfuerzo constante hacia metas de largo plazo sin perder motivación ni dirección.',
+    niveles: {
+      'Novice':            'Los obstáculos inesperados generan desánimo. Necesita apoyo externo para recuperarse.',
+      'Advanced Beginner': 'Se recupera de contratiempos pequeños, pero los grandes desafíos afectan su consistencia.',
+      'Competent':         'Mantiene el ritmo ante presión. Usa los fracasos como información y sigue adelante.',
+      'Proficient':        'Los retos difíciles aumentan su enfoque. Su actitud frente a la adversidad inspira al equipo.',
+      'Expert':            'Opera con energía sostenida en crisis prolongadas. Es fuente de resiliencia para su organización.'
+    }
+  },
+  'Orientación a datos': {
+    definicion: 'Habilidad para recopilar, interpretar y utilizar datos como base principal para la toma de decisiones, identificando tendencias, midiendo impacto y comunicando hallazgos con claridad.',
+    niveles: {
+      'Novice':            'Recopila datos cuando se le pide, pero tiene dificultad interpretándolos sin ayuda.',
+      'Advanced Beginner': 'Usa datos básicos de sus indicadores sin integrarlos en su proceso de decisión habitual.',
+      'Competent':         'Monitorea sus KPIs regularmente y usa esa información para ajustar su operación.',
+      'Proficient':        'Construye análisis propios, identifica patrones no evidentes y los convierte en acciones concretas.',
+      'Expert':            'Los datos son su lenguaje natural. Diseña sistemas de medición para toda el área.'
+    }
+  },
+  'Resolución de problemas': {
+    definicion: 'Capacidad para identificar causas raíz de problemas operativos (5 Porqués, Ishikawa), generar soluciones viables e implementarlas de forma sistemática, sostenible y colaborativa.',
+    niveles: {
+      'Novice':            'Resuelve síntomas visibles. Raramente llega a la causa raíz.',
+      'Advanced Beginner': 'Aplica soluciones que funcionaron antes, sin análisis profundo del contexto actual.',
+      'Competent':         'Usa metodologías básicas (5 Porqués) para diagnosticar y resolver con su equipo.',
+      'Proficient':        'Estructura el análisis de causa raíz de forma rigurosa. Sus soluciones tienen impacto duradero.',
+      'Expert':            'Anticipa problemas antes de que ocurran. Diseña sistemas que hacen los problemas recurrentes imposibles.'
+    }
+  },
+  'Mejora continua': {
+    definicion: 'Disposición y habilidad para identificar oportunidades de optimización en procesos existentes, aplicar metodologías Lean/Kaizen y sostener ciclos de mejora con métricas de impacto claras.',
+    niveles: {
+      'Novice':            'Mantiene los procesos como están. Las mejoras ocurren solo con instrucción externa.',
+      'Advanced Beginner': 'Identifica ineficiencias pero tiene dificultad estructurando e implementando mejoras.',
+      'Competent':         'Lidera mejoras de proceso en su área, las mide y comparte los resultados.',
+      'Proficient':        'Crea una cultura de mejora en su equipo. Las ideas fluyen de abajo hacia arriba.',
+      'Expert':            'La mejora continua es un sistema vivo en su área. Exporta sus metodologías a otras áreas.'
+    }
+  }
+};
+
+const BEHAVIOR_BY_LEVEL = {
+  'Novice': (rol, pct) => ({
+    emoji:'🌱', titulo:'Perfil en desarrollo',
+    color:'#ffa03c', bgColor:'rgba(255,160,60,0.07)', borderColor:'rgba(255,160,60,0.25)',
+    descripcion:`Con un apego del <strong>${pct}%</strong> al perfil de <strong>${rol}</strong>, tu diagnóstico refleja un nivel de dominio inicial. En este punto te apoyas en instrucciones claras y supervisión continua. Tu fortaleza está en la ejecución consistente de rutinas y en la disposición genuina para aprender. El programa te dará los marcos de referencia necesarios para tomar decisiones con criterio propio.`,
+    fortalezas:['Ejecución disciplinada de instrucciones','Alta disposición para aprender','Sin vicios operativos que corregir'],
+    oportunidades:['Toma de decisiones autónoma','Gestión ante situaciones no estándar','Visión sistémica del proceso']
+  }),
+  'Advanced Beginner': (rol, pct) => ({
+    emoji:'📈', titulo:'Perfil en ascenso',
+    color:'#ffa03c', bgColor:'rgba(255,160,60,0.07)', borderColor:'rgba(255,160,60,0.25)',
+    descripcion:`Con un apego del <strong>${pct}%</strong> al perfil de <strong>${rol}</strong>, tu diagnóstico muestra un perfil de Principiante Avanzado. Ya reconoces patrones y situaciones recurrentes, y actúas con confianza en contextos conocidos. El desafío siguiente es desarrollar criterio propio para situaciones nuevas y liderar con mayor autonomía.`,
+    fortalezas:['Reconocimiento de patrones operativos comunes','Autonomía en situaciones rutinarias','Aprendizaje acelerado'],
+    oportunidades:['Decisiones ante escenarios atípicos','Criterio propio bajo presión','Liderazgo en situaciones complejas']
+  }),
+  'Competent': (rol, pct) => ({
+    emoji:'⚡', titulo:'Perfil competente',
+    color:'var(--cyan)', bgColor:'rgba(0,216,218,0.07)', borderColor:'rgba(0,216,218,0.25)',
+    descripcion:`Con un apego del <strong>${pct}%</strong> al perfil de <strong>${rol}</strong>, tu diagnóstico refleja el nivel esperado para este rol. Tomas decisiones con criterio propio, planeas a mediano plazo y gestionas tu operación con metodología. El siguiente paso es desarrollar visión sistémica: conectar tu área con la organización y anticipar problemas antes de que ocurran.`,
+    fortalezas:['Toma de decisiones autónoma y responsable','Planificación con metodología','Ejecución orientada a resultados'],
+    oportunidades:['Visión sistémica e interdepartamental','Gestión proactiva de riesgos','Desarrollo de otros en el equipo']
+  }),
+  'Proficient': (rol, pct) => ({
+    emoji:'🚀', titulo:'Perfil avanzado',
+    color:'var(--purple)', bgColor:'rgba(117,114,233,0.08)', borderColor:'rgba(117,114,233,0.3)',
+    descripcion:`Con un apego del <strong>${pct}%</strong> al perfil de <strong>${rol}</strong>, tu diagnóstico indica un nivel por encima del estándar. Tienes visión sistémica, adaptas tu estrategia con agilidad y tu liderazgo impacta directamente en los resultados del equipo. El programa perfeccionará los últimos ángulos y desarrollará la intuición que caracteriza a los expertos.`,
+    fortalezas:['Visión sistémica e integrada','Adaptabilidad estratégica ante cambios','Impacto claro en el rendimiento del equipo'],
+    oportunidades:['Desarrollo de intuición experta','Liderazgo de transformación','Formación y mentoría de talento interno']
+  }),
+  'Expert': (rol, pct) => ({
+    emoji:'🏆', titulo:'Perfil experto',
+    color:'var(--magenta)', bgColor:'rgba(248,0,250,0.07)', borderColor:'rgba(248,0,250,0.25)',
+    descripcion:`Con un apego del <strong>${pct}%</strong> al perfil de <strong>${rol}</strong>, tu diagnóstico refleja un nivel Experto. Operas por intuición construida sobre experiencia profunda, anticipas problemas que otros no ven y tu liderazgo transforma la cultura. El programa te ofrecerá perspectivas externas y frameworks de alto nivel para seguir creciendo como referente.`,
+    fortalezas:['Intuición operativa de alto nivel','Liderazgo transformacional','Diseño de sistemas que escalan'],
+    oportunidades:['Expansión de impacto estratégico','Mentoría de líderes de siguiente generación','Benchmarks globales de la industria']
+  })
+};
+
+function selectAvatar(emoji, color, el) {
+  state.userAvatar = emoji;
+  state.userAvatarColor = color;
+  document.querySelectorAll('.avatar-option').forEach(a => {
+    a.style.border = '2px solid rgba(255,255,255,0.12)';
+    a.style.transform = 'scale(1)';
+  });
+  el.style.border = `2px solid var(--cyan)`;
+  el.style.transform = 'scale(1.15)';
+}
 
 // ── GRÁFICAS: RESULTADOS ──
 function initResultadosCharts() {
@@ -1763,23 +1899,99 @@ function initResultadosCharts() {
 
   // Update dynamic elements in results screen
   const overlay = document.getElementById('donut-overlay');
-  if (overlay) overlay.innerHTML = `<span style="font-size:36px;font-weight:900;color:var(--cyan);">${pct}%</span><span style="font-size:11px;color:rgba(255,255,255,0.4);">Puntaje Global</span>`;
+  if (overlay) overlay.innerHTML = `<span style="font-size:36px;font-weight:900;color:var(--cyan);">${pct}%</span><span style="font-size:11px;color:rgba(255,255,255,0.4);">Apego al perfil</span>`;
   const dreyfusBadge = document.getElementById('dreyfus-badge');
-  if (dreyfusBadge) dreyfusBadge.innerHTML = `🔶 ${dreyfusLabel}`;
+  if (dreyfusBadge) {
+    const { color } = getDreyfusLabel(avgScore);
+    dreyfusBadge.innerHTML = dreyfusLabel;
+    dreyfusBadge.style.background = `rgba(0,0,0,0.2)`;
+    dreyfusBadge.style.border = `1px solid ${color}`;
+    dreyfusBadge.style.color = color;
+  }
 
+  // Navbar avatar + pts
+  const navAvatar = document.getElementById('results-navbar-avatar');
+  if (navAvatar) navAvatar.textContent = state.userAvatar || '🎯';
+  const navPts = document.getElementById('resultados-pts');
+  if (navPts) navPts.textContent = state.assessmentPts;
+
+  renderResultsHeader(pct, dreyfusLabel);
+  renderBehaviorCard(pct, dreyfusLabel);
   renderDesglose();
 }
 
-// ── DESGLOSE POR CAPABILITY ──
+// ── RESULTADOS: HEADER PERSONALIZADO ──
+function renderResultsHeader(pct, dreyfusLabel) {
+  const el = document.getElementById('results-personal-header');
+  if (!el) return;
+  const name    = state.userName || 'Participante';
+  const avatar  = state.userAvatar || '🎯';
+  const aColor  = state.userAvatarColor || 'var(--cyan)';
+  const rol     = state.roleName || 'el rol seleccionado';
+  const rolEntry = state.roleName ? Object.entries(rolesData).find(([n]) => n === state.roleName) : null;
+  const rolIcon  = rolEntry ? rolEntry[1].icono : '🎯';
+  el.innerHTML = `
+    <div class="card" style="background:linear-gradient(135deg,rgba(0,216,218,0.07),rgba(117,114,233,0.07));
+                              border-color:rgba(0,216,218,0.25);padding:24px 28px;">
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+        <div style="width:68px;height:68px;border-radius:50%;background:rgba(0,0,0,0.25);
+                    border:3px solid ${aColor};display:flex;align-items:center;justify-content:center;
+                    font-size:32px;flex-shrink:0;">${avatar}</div>
+        <div style="flex:1;min-width:180px;">
+          <div style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:2px;text-transform:uppercase;letter-spacing:0.08em;">Informe de Diagnóstico SCI</div>
+          <h2 style="font-size:22px;font-weight:800;margin:0 0 6px;color:#fff;">${name}</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:13px;">${rolIcon}</span>
+            <span style="font-size:13px;color:rgba(255,255,255,0.6);">${rol}</span>
+            <span style="width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,0.25);display:inline-block;"></span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.4);">${new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'})}</span>
+          </div>
+        </div>
+        <div style="text-align:center;padding:16px 24px;background:rgba(0,0,0,0.2);border-radius:14px;border:1px solid rgba(255,255,255,0.07);">
+          <div style="font-size:32px;font-weight:900;color:var(--cyan);line-height:1;">${pct}%</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px;">Apego al perfil</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── RESULTADOS: DESCRIPCIÓN DE COMPORTAMIENTO ──
+function renderBehaviorCard(pct, dreyfusLabel) {
+  const el = document.getElementById('resultados-behavior');
+  if (!el) return;
+  const fn   = BEHAVIOR_BY_LEVEL[dreyfusLabel] || BEHAVIOR_BY_LEVEL['Competent'];
+  const data = fn(state.roleName || 'el rol seleccionado', pct);
+  el.innerHTML = `
+    <div class="card" style="border-color:${data.borderColor};background:${data.bgColor};">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <span style="font-size:28px;">${data.emoji}</span>
+        <div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:2px;">Tu nivel de dominio · ${dreyfusLabel}</div>
+          <h3 style="font-size:17px;font-weight:800;color:${data.color};margin:0;">${data.titulo}</h3>
+        </div>
+      </div>
+      <p style="font-size:14px;line-height:1.75;color:rgba(255,255,255,0.78);margin:0 0 18px;">${data.descripcion}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.2);border-radius:12px;padding:14px;">
+          <div style="font-size:11px;font-weight:700;color:#00ff88;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em;">✓ Fortalezas</div>
+          ${data.fortalezas.map(f => `<div style="font-size:12px;color:rgba(255,255,255,0.65);margin-bottom:5px;display:flex;gap:6px;"><span style="color:#00ff88;flex-shrink:0;">›</span>${f}</div>`).join('')}
+        </div>
+        <div style="background:rgba(248,0,250,0.06);border:1px solid rgba(248,0,250,0.2);border-radius:12px;padding:14px;">
+          <div style="font-size:11px;font-weight:700;color:var(--magenta);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em;">⊕ Áreas de desarrollo</div>
+          ${data.oportunidades.map(o => `<div style="font-size:12px;color:rgba(255,255,255,0.65);margin-bottom:5px;display:flex;gap:6px;"><span style="color:var(--magenta);flex-shrink:0;">›</span>${o}</div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── DESGLOSE POR CAPABILITY — Opción B ──
 function renderDesglose() {
   const container = document.getElementById('desglose-items');
   if (!container) return;
 
   const userScores = getCapabilityScores();
   const reqScores  = getRequiredScores();
-  const rolNombre  = state.roleName || 'el rol seleccionado';
 
-  // Sort: biggest gap first
   const items = CAPS.map(cap => {
     const user = userScores[cap];
     const req  = reqScores[cap];
@@ -1787,35 +1999,177 @@ function renderDesglose() {
     return { cap, user, req, gap };
   }).sort((a, b) => b.gap - a.gap);
 
-  container.innerHTML = items.map(({ cap, user, req, gap }) => {
-    const { label, color } = getDreyfusLabel(user);
+  container.innerHTML = items.map(({ cap, user, req, gap }, rowIdx) => {
+    const { label: userLabel, color: userColor } = getDreyfusLabel(user);
+    const { label: reqLabel }  = getDreyfusLabel(req);
     const reqPct  = Math.round((req / 3) * 100);
     const userPct = Math.round((user / 3) * 100);
-    const hasGap  = gap > 0;
+
+    const tlColor  = gap <= 0 ? '#00ff88' : gap <= 0.5 ? '#ffa03c' : 'var(--magenta)';
+    const tlGlow   = gap <= 0 ? 'rgba(0,255,136,0.4)' : gap <= 0.5 ? 'rgba(255,160,60,0.4)' : 'rgba(248,0,250,0.4)';
+    const statusTxt = gap <= 0
+      ? `<span style="color:#00ff88;font-weight:700;font-size:11px;">✓ Cumple${gap < -0.1 ? ' · Supera' : ''}</span>`
+      : `<span style="color:${tlColor};font-weight:700;font-size:11px;">−${gap.toFixed(1)} brecha</span>`;
+
+    const gapInterpret = gap <= 0
+      ? `Estás en nivel <strong style="color:#00ff88;">${userLabel}</strong> — ${gap < -0.2 ? 'superas' : 'alcanzas'} el nivel requerido (<strong>${reqLabel}</strong>). Esta es una fortaleza clara en tu perfil.`
+      : gap <= 0.5
+        ? `Estás en nivel <strong style="color:#ffa03c;">${userLabel}</strong>. El rol requiere <strong>${reqLabel}</strong>. Brecha pequeña que el programa abordará en los primeros módulos.`
+        : `Estás en nivel <strong style="color:var(--magenta);">${userLabel}</strong>. El rol requiere <strong>${reqLabel}</strong>. Área de desarrollo prioritario — el programa tiene módulos específicos para cerrar esta brecha.`;
+
     return `
-    <div style="margin-bottom:20px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:18px;">${capIcons[cap] || '⚡'}</span>
-          <span style="font-size:14px;font-weight:600;">${cap}</span>
-          <span class="badge" style="font-size:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:${color};">${label}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
-          <span style="color:${color};font-weight:700;">${user.toFixed(1)}</span>
-          <span style="color:rgba(255,255,255,0.3);">vs</span>
-          <span style="color:rgba(117,114,233,0.8);font-weight:600;">${req.toFixed(1)} req.</span>
-          ${hasGap ? `<span style="color:var(--magenta);font-size:11px;font-weight:700;">−${gap.toFixed(1)} brecha</span>` : `<span style="color:#00ff88;font-size:11px;font-weight:700;">✓ Cumple</span>`}
-        </div>
+    <div class="desglose-row" onclick="toggleDesgloseRow(this)"
+         style="margin-bottom:8px;padding:14px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.07);
+                background:rgba(255,255,255,0.02);cursor:pointer;transition:border-color 0.2s,background 0.2s;"
+         onmouseover="this.style.background='rgba(255,255,255,0.04)'"
+         onmouseout="if(!this.classList.contains('open'))this.style.background='rgba(255,255,255,0.02)'">
+
+      <!-- Row header -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="width:11px;height:11px;border-radius:50%;background:${tlColor};flex-shrink:0;
+                    box-shadow:0 0 7px ${tlGlow};"></div>
+        <span style="font-size:18px;flex-shrink:0;">${capIcons[cap] || '⚡'}</span>
+        <span style="font-size:14px;font-weight:600;flex:1;color:#fff;">${cap}</span>
+        <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:rgba(255,255,255,0.05);
+                     border:1px solid ${userColor};color:${userColor};font-weight:600;white-space:nowrap;">${userLabel}</span>
+        <button onclick="event.stopPropagation();abrirModalCapability('${cap}')"
+                style="width:26px;height:26px;border-radius:50%;border:1px solid rgba(0,216,218,0.35);
+                       background:rgba(0,216,218,0.07);color:var(--cyan);font-size:13px;font-weight:700;
+                       cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+                       font-family:'Outfit',sans-serif;line-height:1;"
+                title="Ver definición">ⓘ</button>
+        <span class="desglose-chevron" style="font-size:16px;color:rgba(255,255,255,0.25);transition:transform 0.2s;flex-shrink:0;">›</span>
       </div>
-      <div style="position:relative;height:10px;background:rgba(255,255,255,0.06);border-radius:10px;overflow:hidden;">
-        <div style="position:absolute;left:0;top:0;height:100%;width:${reqPct}%;background:rgba(117,114,233,0.2);border-radius:10px;"></div>
-        <div style="position:absolute;left:0;top:0;height:100%;width:${userPct}%;background:${hasGap ? 'linear-gradient(90deg,'+color+',rgba(117,114,233,0.5))' : 'linear-gradient(90deg,#00ff88,var(--cyan))'};border-radius:10px;transition:width 1s ease;"></div>
+
+      <!-- Progress bars -->
+      <div style="position:relative;height:7px;background:rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;margin-bottom:6px;">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${reqPct}%;
+                    background:rgba(117,114,233,0.22);border-radius:4px;"></div>
+        <div style="position:absolute;left:0;top:0;height:100%;width:${userPct}%;
+                    background:linear-gradient(90deg,${userColor},rgba(117,114,233,0.5));
+                    border-radius:4px;transition:width 0.9s ease;"></div>
       </div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:4px;text-align:right;">
-        Requerido para ${rolNombre.split(' ').slice(0,3).join(' ')}: ${req.toFixed(1)}
+
+      <!-- Score line -->
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.35);">
+        <span>Tu nivel: <strong style="color:${userColor};">${user.toFixed(1)}</strong></span>
+        ${statusTxt}
+        <span>Req: <strong style="color:rgba(117,114,233,0.7);">${req.toFixed(1)}</strong></span>
+      </div>
+
+      <!-- Expandable detail -->
+      <div class="desglose-expanded" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.07);">
+        <p style="font-size:13px;color:rgba(255,255,255,0.7);line-height:1.7;margin:0 0 10px;">${gapInterpret}</p>
+        <div style="display:flex;gap:16px;font-size:12px;">
+          <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:8px;padding:10px 12px;border:1px solid rgba(255,255,255,0.07);">
+            <div style="color:rgba(255,255,255,0.35);margin-bottom:3px;">Tu nivel actual</div>
+            <div style="font-size:15px;font-weight:800;color:${userColor};">${user.toFixed(1)} <span style="font-size:11px;font-weight:400;">${userLabel}</span></div>
+          </div>
+          <div style="flex:1;background:rgba(117,114,233,0.05);border-radius:8px;padding:10px 12px;border:1px solid rgba(117,114,233,0.15);">
+            <div style="color:rgba(255,255,255,0.35);margin-bottom:3px;">Nivel requerido</div>
+            <div style="font-size:15px;font-weight:800;color:rgba(117,114,233,0.8);">${req.toFixed(1)} <span style="font-size:11px;font-weight:400;">${reqLabel}</span></div>
+          </div>
+        </div>
       </div>
     </div>`;
   }).join('');
+}
+
+function toggleDesgloseRow(el) {
+  const expanded = el.querySelector('.desglose-expanded');
+  const chevron  = el.querySelector('.desglose-chevron');
+  if (!expanded) return;
+  const isOpen = el.classList.contains('open');
+  el.classList.toggle('open', !isOpen);
+  expanded.style.display  = isOpen ? 'none' : 'block';
+  if (chevron) {
+    chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+  }
+  el.style.borderColor   = isOpen ? 'rgba(255,255,255,0.07)' : 'rgba(0,216,218,0.3)';
+  el.style.background    = isOpen ? 'rgba(255,255,255,0.02)' : 'rgba(0,216,218,0.04)';
+}
+
+// ── Modal definición de capability ──
+function abrirModalCapability(capName) {
+  const data = CAP_DEFINITIONS[capName];
+  if (!data) return;
+  const userScores = getCapabilityScores();
+  const userScore  = userScores[capName] || 1.0;
+  const { label: userLevel } = getDreyfusLabel(userScore);
+
+  const NIVEL_ORDER = ['Novice','Advanced Beginner','Competent','Proficient','Expert'];
+  const NIVEL_COLOR = {
+    'Novice':'rgba(255,255,255,0.4)', 'Advanced Beginner':'#ffa03c',
+    'Competent':'var(--cyan)', 'Proficient':'var(--purple)', 'Expert':'var(--magenta)'
+  };
+
+  let modal = document.getElementById('modal-cap-def');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-cap-def';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9100;display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.innerHTML = `
+      <div onclick="cerrarModalCapability()"
+           style="position:absolute;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);"></div>
+      <div id="modal-cap-def-content"
+           style="position:relative;z-index:1;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;
+                  background:var(--bg-card,#141428);border:1px solid rgba(255,255,255,0.1);
+                  border-radius:20px;padding:0;box-shadow:0 32px 80px rgba(0,0,0,0.6);"></div>`;
+    document.body.appendChild(modal);
+  }
+
+  document.getElementById('modal-cap-def-content').innerHTML = `
+    <div style="padding:22px 24px 18px;border-bottom:1px solid rgba(255,255,255,0.07);position:relative;">
+      <button onclick="cerrarModalCapability()"
+              style="position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;
+                     border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);
+                     color:rgba(255,255,255,0.6);font-size:15px;cursor:pointer;display:flex;
+                     align-items:center;justify-content:center;font-family:'Outfit',sans-serif;
+                     transition:background 0.15s;"
+              onmouseover="this.style.background='rgba(255,255,255,0.12)'"
+              onmouseout="this.style.background='rgba(255,255,255,0.06)'">✕</button>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:28px;">${capIcons[capName] || '⚡'}</span>
+        <div>
+          <h3 style="font-size:17px;font-weight:800;color:#fff;margin:0 0 3px;">${capName}</h3>
+          <span style="font-size:10px;background:rgba(0,216,218,0.1);border:1px solid rgba(0,216,218,0.25);
+                       color:var(--cyan);border-radius:20px;padding:2px 8px;">Capability SCI</span>
+        </div>
+      </div>
+    </div>
+    <div style="padding:20px 24px 26px;">
+      <h4 style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.35);text-transform:uppercase;
+                 letter-spacing:0.08em;margin:0 0 8px;">Definición</h4>
+      <p style="font-size:13px;color:rgba(255,255,255,0.78);line-height:1.7;margin:0 0 22px;">${data.definicion}</p>
+
+      <h4 style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.35);text-transform:uppercase;
+                 letter-spacing:0.08em;margin:0 0 12px;">Comportamiento por nivel de dominio</h4>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${NIVEL_ORDER.map(nivel => {
+          const isUser = nivel === userLevel;
+          const c = NIVEL_COLOR[nivel];
+          return `
+          <div style="padding:10px 14px;border-radius:10px;border:1px solid ${isUser ? c : 'rgba(255,255,255,0.06)'};
+                      background:${isUser ? `rgba(0,0,0,0.15)` : 'rgba(255,255,255,0.02)'};">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <div style="width:9px;height:9px;border-radius:50%;background:${c};flex-shrink:0;"></div>
+              <span style="font-size:12px;font-weight:700;color:${c};">${nivel}</span>
+              ${isUser ? `<span style="font-size:10px;background:${c}22;border:1px solid ${c}55;color:${c};border-radius:20px;padding:1px 7px;margin-left:4px;">Tu nivel actual</span>` : ''}
+            </div>
+            <p style="font-size:12px;color:rgba(255,255,255,${isUser?'0.72':'0.45'});margin:0;line-height:1.55;">${data.niveles[nivel]}</p>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarModalCapability() {
+  const modal = document.getElementById('modal-cap-def');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 // ── GRÁFICAS: DASHBOARD ──

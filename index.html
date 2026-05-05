@@ -386,6 +386,47 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
           Cuéntanos sobre tus actividades diarias para identificar el perfil más alineado a ti.
         </p>
 
+        <!-- Perfil: nombre + avatar -->
+        <div class="card" style="margin-bottom:20px;border-color:rgba(0,216,218,0.2);">
+          <h3 class="section-title" style="margin-bottom:18px;"><span>00.</span> Tu perfil</h3>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start;flex-wrap:wrap;">
+            <div class="form-group" style="margin:0;">
+              <label class="form-label">¿Cómo te llamas?</label>
+              <input id="user-nombre" class="form-input" placeholder="Tu nombre completo"
+                     oninput="state.userName=this.value.trim()"/>
+            </div>
+            <div>
+              <label class="form-label" style="display:block;margin-bottom:10px;">Avatar</label>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                <div class="avatar-option" onclick="selectAvatar('🦁','#ffa03c',this)"
+                     style="width:44px;height:44px;border-radius:50%;background:rgba(255,160,60,0.15);border:2px solid var(--cyan);
+                            display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all 0.2s;transform:scale(1.1);">🦁</div>
+                <div class="avatar-option" onclick="selectAvatar('🦅','#00d8da',this)"
+                     style="width:44px;height:44px;border-radius:50%;background:rgba(0,216,218,0.1);border:2px solid rgba(255,255,255,0.12);
+                            display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all 0.2s;">🦅</div>
+                <div class="avatar-option" onclick="selectAvatar('🐺','#7572e9',this)"
+                     style="width:44px;height:44px;border-radius:50%;background:rgba(117,114,233,0.1);border:2px solid rgba(255,255,255,0.12);
+                            display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all 0.2s;">🐺</div>
+                <div class="avatar-option" onclick="selectAvatar('🔥','#ff6b6b',this)"
+                     style="width:44px;height:44px;border-radius:50%;background:rgba(255,107,107,0.1);border:2px solid rgba(255,255,255,0.12);
+                            display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all 0.2s;">🔥</div>
+                <div class="avatar-option" onclick="selectAvatar('⚡','#ffe66d',this)"
+                     style="width:44px;height:44px;border-radius:50%;background:rgba(255,230,109,0.1);border:2px solid rgba(255,255,255,0.12);
+                            display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all 0.2s;">⚡</div>
+                <div class="avatar-option" onclick="selectAvatar('🚀','#00ff88',this)"
+                     style="width:44px;height:44px;border-radius:50%;background:rgba(0,255,136,0.1);border:2px solid rgba(255,255,255,0.12);
+                            display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all 0.2s;">🚀</div>
+                <div class="avatar-option" onclick="selectAvatar('💎','#f800fa',this)"
+                     style="width:44px;height:44px;border-radius:50%;background:rgba(248,0,250,0.1);border:2px solid rgba(255,255,255,0.12);
+                            display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all 0.2s;">💎</div>
+                <div class="avatar-option" onclick="selectAvatar('🏆','#ffcc00',this)"
+                     style="width:44px;height:44px;border-radius:50%;background:rgba(255,204,0,0.1);border:2px solid rgba(255,255,255,0.12);
+                            display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all 0.2s;">🏆</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="card" style="margin-bottom:20px;">
           <h3 class="section-title" style="margin-bottom:20px;">
             <span>01.</span> ¿Cuál es tu puesto actual?
@@ -767,16 +808,15 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
         <img src="assets/logo-self.svg" alt="SELF" style="height:32px;width:auto;filter:brightness(1.1);"/>
         <img src="assets/sci-logo.png" alt="SCI" style="height:24px;width:auto;opacity:0.75;"/>
       </div>
-      <div class="navbar-right"><div class="navbar-points"><i class="fas fa-star"></i> 340 pts</div><div class="navbar-avatar">AG</div></div>
+      <div class="navbar-right">
+        <div class="navbar-points"><i class="fas fa-star"></i> <span id="resultados-pts">0</span> pts</div>
+        <div class="navbar-avatar" id="results-navbar-avatar" style="font-size:18px;background:transparent;border:2px solid rgba(0,216,218,0.4);">🦁</div>
+      </div>
     </nav>
     <div style="padding:40px 20px;flex:1;"><div class="container">
-      <div style="text-align:center;margin-bottom:40px;" class="slide-up">
-        <div class="capi-container" style="justify-content:center;flex-direction:column;align-items:center;">
-          <div class="capi-avatar" style="width:80px;height:80px;margin-bottom:12px;"><img src="assets/CAPI%20Bienvenida.png" alt="Capi" style="width:90%;height:90%;object-fit:contain;"/></div>
-          <div class="capi-bubble" style="max-width:600px;text-align:left;">¡Excelente trabajo, <strong>Ana</strong>! Completaste tu diagnóstico inicial. Tu resultado nos da una <strong>radiografía clara</strong> de dónde estás hoy y hacia dónde podemos llevarte. Recuerda: esto es solo el <em>punto de partida</em>. 🎯</div>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 2fr;gap:24px;margin-bottom:32px;">
+      <!-- Header personalizado (poblado por JS) -->
+      <div id="results-personal-header" style="margin-bottom:28px;"></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:24px;margin-bottom:24px;">
         <div class="card" style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;">
           <div style="position:relative;width:140px;height:140px;margin-bottom:16px;">
             <canvas id="donut-score" width="140" height="140"></canvas>
@@ -793,8 +833,12 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
           <canvas id="radar-competencias" height="200"></canvas>
         </div>
       </div>
+      <!-- Descripción de comportamiento (poblada por JS) -->
+      <div id="resultados-behavior" style="margin-bottom:24px;"></div>
+
       <div class="card" style="margin-bottom:24px;">
-        <h3 class="section-title" style="margin-bottom:20px;"><span>Análisis</span> Detallado</h3>
+        <h3 class="section-title" style="margin-bottom:20px;"><span>Análisis</span> Detallado por Capability</h3>
+        <p style="font-size:12px;color:rgba(255,255,255,0.35);margin-bottom:18px;">Haz clic en una fila para ver el detalle · <span style="color:var(--cyan);">ⓘ</span> para conocer la definición</p>
         <div id="desglose-items"></div>
       </div>
       <div class="card" style="margin-bottom:24px;border-color:rgba(248,0,250,0.3);">
