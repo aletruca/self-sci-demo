@@ -2327,6 +2327,114 @@ function cerrarModalCapability() {
   document.body.style.overflow = '';
 }
 
+// ══════════════════════════════════════════════════
+//  ENVIAR INFORME POR CORREO (PDF)
+// ══════════════════════════════════════════════════
+
+function abrirModalEnvio() {
+  const modal = document.getElementById('modal-envio-informe');
+  if (!modal) return;
+
+  // Populate preview
+  document.getElementById('modal-envio-avatar').textContent  = state.userAvatar  || '🎯';
+  document.getElementById('modal-envio-nombre').textContent  = state.userName    || 'Candidato';
+  document.getElementById('modal-envio-rol').textContent     = state.roleName    || 'Rol seleccionado';
+
+  // Reset to form state
+  _modalEnvioSetState('form');
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('modal-envio-email')?.focus(), 80);
+}
+
+function cerrarModalEnvio() {
+  const modal = document.getElementById('modal-envio-informe');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function _modalEnvioSetState(state) {
+  document.getElementById('modal-envio-form').style.display    = state === 'form'    ? 'block' : 'none';
+  document.getElementById('modal-envio-loading').style.display = state === 'loading' ? 'block' : 'none';
+  document.getElementById('modal-envio-success').style.display = state === 'success' ? 'block' : 'none';
+}
+
+async function enviarInforme() {
+  const emailEl = document.getElementById('modal-envio-email');
+  const email   = emailEl?.value?.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    emailEl.style.border = '1px solid rgba(248,0,250,0.6)';
+    emailEl.focus();
+    return;
+  }
+
+  _modalEnvioSetState('loading');
+  try {
+    await generarPDF();
+    document.getElementById('modal-envio-success-email').textContent = email;
+    _modalEnvioSetState('success');
+  } catch (err) {
+    console.error('PDF error:', err);
+    _modalEnvioSetState('form');
+    document.getElementById('modal-envio-loading-txt').textContent = 'Generando PDF…';
+    alert('No se pudo generar el PDF. Por favor usa el botón "Descargar PDF".');
+  }
+}
+
+async function descargarPDF() {
+  try {
+    await generarPDF();
+  } catch (err) {
+    console.error('PDF error:', err);
+    alert('No se pudo generar el PDF.');
+  }
+}
+
+async function generarPDF() {
+  // Target: the scrollable content container inside the results screen
+  const container = document.querySelector('#screen-resultados > div > .container');
+  if (!container) throw new Error('Container not found');
+
+  document.getElementById('modal-envio-loading-txt').textContent = 'Capturando contenido…';
+
+  const canvas = await html2canvas(container, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: '#0d0d1f',
+    logging: false,
+    // Capture full scroll height
+    windowWidth: container.scrollWidth,
+    scrollX: 0,
+    scrollY: 0
+  });
+
+  document.getElementById('modal-envio-loading-txt').textContent = 'Generando PDF…';
+
+  const { jsPDF } = window.jspdf;
+  const pdf    = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pageW  = pdf.internal.pageSize.getWidth();   // 210 mm
+  const pageH  = pdf.internal.pageSize.getHeight();  // 297 mm
+
+  // Convert canvas pixels → mm (account for scale:2)
+  const pxToMm = pageW / (canvas.width / 2);
+  const totalH = (canvas.height / 2) * pxToMm;       // total content height in mm
+
+  const imgData  = canvas.toDataURL('image/jpeg', 0.92);
+  const pages    = Math.ceil(totalH / pageH);
+
+  for (let i = 0; i < pages; i++) {
+    if (i > 0) pdf.addPage();
+    // Place the full image, shifting up by i full pages
+    pdf.addImage(imgData, 'JPEG', 0, -(i * pageH), pageW, totalH);
+  }
+
+  const name = (state.userName || 'Candidato').replace(/\s+/g, '_');
+  const date = new Date().toLocaleDateString('es-MX', { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\//g,'-');
+  pdf.save(`Informe_SCI_${name}_${date}.pdf`);
+}
+
 // ── GRÁFICAS: DASHBOARD ──
 function initDashboardCharts() {
   const userScores = getCapabilityScores();
