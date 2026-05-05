@@ -1917,7 +1917,162 @@ function initResultadosCharts() {
 
   renderResultsHeader(pct, dreyfusLabel);
   renderBehaviorCard(pct, dreyfusLabel);
+  renderBenchmarkDashboard();
   renderDesglose();
+}
+
+// ── BENCHMARK DE MERCADO ──
+// Datos simulados: N=247 candidatos evaluados en el assessment SCI
+const BENCHMARK_DATA = {
+  totalCandidates: 247,
+  byCapability: {
+    'MBWA':                        { avg: 1.38, stdDev: 0.39 },
+    'Gestión de Equipos':          { avg: 1.45, stdDev: 0.41 },
+    'Gestión por sistemas':        { avg: 1.29, stdDev: 0.36 },
+    'Toma de Decisiones':          { avg: 1.52, stdDev: 0.38 },
+    'Grit (resilencia + empuje)':  { avg: 1.61, stdDev: 0.43 },
+    'Orientación a datos':         { avg: 1.24, stdDev: 0.35 },
+    'Resolución de problemas':     { avg: 1.47, stdDev: 0.40 },
+    'Mejora continua':             { avg: 1.35, stdDev: 0.37 }
+  }
+};
+
+// Aproximación CDF normal estándar (Abramowitz & Stegun)
+function normCDF(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const poly = t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  const p = 1 - (1 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * z * z) * poly;
+  return z >= 0 ? p : 1 - p;
+}
+
+function getCapPercentile(userScore, cap) {
+  const b = BENCHMARK_DATA.byCapability[cap];
+  if (!b) return 50;
+  const z = (userScore - b.avg) / b.stdDev;
+  return Math.round(normCDF(z) * 100);
+}
+
+function renderBenchmarkDashboard() {
+  const el = document.getElementById('benchmark-dashboard');
+  if (!el) return;
+
+  const userScores   = getCapabilityScores();
+  const correctCount = state.answers.filter(a => a.correct).length;
+  const totalQ       = questions.length;
+  const pct          = Math.round((correctCount / totalQ) * 100);
+
+  // Global percentile: based on % apego vs simulated benchmark avg of 52%
+  const globalZ   = (pct - 52) / 18;
+  const globalPct = Math.round(normCDF(globalZ) * 100);
+
+  // Count how many caps are above benchmark avg
+  const aboveAvg = CAPS.filter(cap => {
+    const b = BENCHMARK_DATA.byCapability[cap];
+    return b && userScores[cap] > b.avg;
+  }).length;
+
+  const pctColor = p => p >= 70 ? '#00d8da' : p >= 40 ? '#ffa03c' : '#f800fa';
+  const pctLabel = p => p >= 70 ? '↑ Top ' + (100 - p) + '%' : p >= 40 ? '→ Prom.' : '↓ P' + p;
+
+  // Capability rows
+  const rows = CAPS.map(cap => {
+    const b       = BENCHMARK_DATA.byCapability[cap];
+    if (!b) return '';
+    const uScore  = userScores[cap] || 1.0;
+    const bAvg    = b.avg;
+    const p       = getCapPercentile(uScore, cap);
+    const isAbove = uScore > bAvg + 0.05;
+    const isBelow = uScore < bAvg - 0.05;
+    const barMax  = 3;
+    const uPct    = Math.round((uScore / barMax) * 100);
+    const bPct    = Math.round((bAvg   / barMax) * 100);
+    const statusColor = isAbove ? '#00d8da' : isBelow ? '#ffa03c' : 'rgba(255,255,255,0.5)';
+    const icon = capIcons[cap] || '⚡';
+
+    return `
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:15px;">${icon}</span>
+          <span style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.8);">${cap}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:11px;color:rgba(255,255,255,0.4);">
+            Tú: <strong style="color:rgba(255,255,255,0.75);">${uScore.toFixed(1)}</strong>
+            &nbsp;·&nbsp; Prom: <strong style="color:rgba(255,255,255,0.45);">${bAvg.toFixed(2)}</strong>
+          </span>
+          <span style="font-size:10px;font-weight:700;color:${pctColor(p)};
+                       background:${pctColor(p)}18;border:1px solid ${pctColor(p)}40;
+                       border-radius:20px;padding:2px 8px;white-space:nowrap;">
+            ${pctLabel(p)}
+          </span>
+        </div>
+      </div>
+      <div style="position:relative;height:8px;border-radius:99px;background:rgba(255,255,255,0.06);overflow:visible;">
+        <!-- benchmark line -->
+        <div style="position:absolute;top:-3px;bottom:-3px;width:2px;border-radius:2px;
+                    background:rgba(255,255,255,0.25);left:${bPct}%;
+                    transform:translateX(-50%);z-index:2;"
+             title="Promedio mercado: ${bAvg.toFixed(2)}"></div>
+        <!-- user bar -->
+        <div style="height:100%;border-radius:99px;width:${uPct}%;
+                    background:linear-gradient(90deg,${statusColor}99,${statusColor});
+                    transition:width 0.8s cubic-bezier(.4,0,.2,1);"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+  <div class="card" style="margin-bottom:24px;border-color:rgba(117,114,233,0.3);">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px;">
+      <div>
+        <h3 class="section-title" style="margin:0 0 4px;"><span>Benchmark</span> de Mercado</h3>
+        <p style="font-size:12px;color:rgba(255,255,255,0.35);margin:0;">
+          Comparativo contra <strong style="color:rgba(255,255,255,0.5);">${BENCHMARK_DATA.totalCandidates} candidatos</strong> evaluados con el mismo assessment
+        </p>
+      </div>
+      <span class="badge badge-purple" style="font-size:10px;">Beta · datos simulados</span>
+    </div>
+
+    <!-- KPI cards -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
+      <div style="background:rgba(0,216,218,0.06);border:1px solid rgba(0,216,218,0.2);
+                  border-radius:14px;padding:16px 14px;text-align:center;">
+        <div style="font-size:28px;font-weight:900;color:var(--cyan);line-height:1;">${globalPct}°</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">Percentil global</div>
+      </div>
+      <div style="background:rgba(117,114,233,0.06);border:1px solid rgba(117,114,233,0.2);
+                  border-radius:14px;padding:16px 14px;text-align:center;">
+        <div style="font-size:28px;font-weight:900;color:var(--purple);line-height:1;">${aboveAvg}<span style="font-size:14px;font-weight:400;color:rgba(255,255,255,0.3);">/8</span></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">Sobre el promedio</div>
+      </div>
+      <div style="background:rgba(248,0,250,0.05);border:1px solid rgba(248,0,250,0.15);
+                  border-radius:14px;padding:16px 14px;text-align:center;">
+        <div style="font-size:28px;font-weight:900;color:var(--magenta);line-height:1;">${BENCHMARK_DATA.totalCandidates}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">Candidatos base</div>
+      </div>
+    </div>
+
+    <!-- Leyenda -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="width:24px;height:6px;border-radius:99px;background:linear-gradient(90deg,rgba(0,216,218,0.6),#00d8da);"></div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.45);">Tu resultado</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="width:2px;height:14px;background:rgba(255,255,255,0.3);border-radius:2px;"></div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.45);">Promedio de mercado</span>
+      </div>
+    </div>
+
+    <!-- Bars -->
+    <div>${rows}</div>
+
+    <!-- Footnote -->
+    <p style="font-size:10px;color:rgba(255,255,255,0.2);margin:16px 0 0;text-align:right;">
+      Escala Dreyfus 0–3 · Datos SCI Assessment 2024–2025
+    </p>
+  </div>`;
 }
 
 // ── RESULTADOS: HEADER PERSONALIZADO ──
