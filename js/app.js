@@ -2213,14 +2213,63 @@ function renderDesglose() {
     return { cap, user, req, gap };
   }).sort((a, b) => b.gap - a.gap);
 
-  container.innerHTML = items.map(({ cap, user, req, gap }, rowIdx) => {
+  // Bottom 3: caps con mayor brecha (ya ordenadas desc por gap, tomamos las positivas)
+  const focusCaps = items.filter(i => i.gap > 0).slice(0, 3);
+  const focusIdxMap = new Map(focusCaps.map((f, i) => [f.cap, i])); // cap → 0/1/2
+
+  const FOCUS_COLORS = ['var(--magenta)', '#ffa03c', '#ffe66d'];
+  const FOCUS_BG     = ['rgba(248,0,250,0.06)', 'rgba(255,160,60,0.05)', 'rgba(255,230,109,0.04)'];
+  const FOCUS_BORDER = ['rgba(248,0,250,0.28)', 'rgba(255,160,60,0.25)', 'rgba(255,230,109,0.2)'];
+
+  // ── Bloque resumen de focos ──
+  const focusBlock = focusCaps.length > 0 ? `
+  <div style="margin-bottom:20px;padding:18px 20px;border-radius:14px;
+              background:linear-gradient(135deg,rgba(248,0,250,0.06),rgba(255,160,60,0.04));
+              border:1px solid rgba(248,0,250,0.22);">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <span style="font-size:17px;">🎯</span>
+      <span style="font-size:12px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:0.08em;">
+        Focos del Plan de Desarrollo
+      </span>
+      <span style="font-size:10px;background:rgba(248,0,250,0.12);border:1px solid rgba(248,0,250,0.3);
+                   color:var(--magenta);border-radius:20px;padding:2px 9px;font-weight:700;">
+        3 áreas prioritarias
+      </span>
+    </div>
+    <p style="font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6;margin:0 0 14px;">
+      Las siguientes capabilities presentan la mayor brecha respecto al nivel requerido por el rol.
+      Tu plan de capacitación estará orientado a cerrarlas.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${focusCaps.map(({ cap, user, req, gap }, i) => {
+        const { label: uLbl } = getDreyfusLabel(user);
+        const { label: rLbl } = getDreyfusLabel(req);
+        const fc = FOCUS_COLORS[i];
+        return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;
+                    background:${FOCUS_BG[i]};border:1px solid ${FOCUS_BORDER[i]};">
+          <div style="width:26px;height:26px;border-radius:50%;background:${fc}20;flex-shrink:0;
+                      border:2px solid ${fc};display:flex;align-items:center;justify-content:center;
+                      font-size:12px;font-weight:900;color:${fc};">${i + 1}</div>
+          <span style="font-size:14px;flex-shrink:0;">${capIcons[cap] || '⚡'}</span>
+          <span style="font-size:13px;font-weight:700;color:#fff;flex:1;">${cap}</span>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);">${uLbl} <span style="color:rgba(255,255,255,0.2);">→</span> ${rLbl}</div>
+            <div style="font-size:12px;font-weight:800;color:${fc};margin-top:1px;">−${gap.toFixed(1)} brecha</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>` : '';
+
+  container.innerHTML = focusBlock + items.map(({ cap, user, req, gap }) => {
     const { label: userLabel, color: userColor } = getDreyfusLabel(user);
     const { label: reqLabel }  = getDreyfusLabel(req);
     const reqPct  = Math.round((req / 3) * 100);
     const userPct = Math.round((user / 3) * 100);
 
-    const tlColor  = gap <= 0 ? '#00ff88' : gap <= 0.5 ? '#ffa03c' : 'var(--magenta)';
-    const tlGlow   = gap <= 0 ? 'rgba(0,255,136,0.4)' : gap <= 0.5 ? 'rgba(255,160,60,0.4)' : 'rgba(248,0,250,0.4)';
+    const tlColor = gap <= 0 ? '#00ff88' : gap <= 0.5 ? '#ffa03c' : 'var(--magenta)';
+    const tlGlow  = gap <= 0 ? 'rgba(0,255,136,0.4)' : gap <= 0.5 ? 'rgba(255,160,60,0.4)' : 'rgba(248,0,250,0.4)';
     const statusTxt = gap <= 0
       ? `<span style="color:#00ff88;font-weight:700;font-size:11px;">✓ Cumple${gap < -0.1 ? ' · Supera' : ''}</span>`
       : `<span style="color:${tlColor};font-weight:700;font-size:11px;">−${gap.toFixed(1)} brecha</span>`;
@@ -2231,19 +2280,32 @@ function renderDesglose() {
         ? `Estás en nivel <strong style="color:#ffa03c;">${userLabel}</strong>. El rol requiere <strong>${reqLabel}</strong>. Brecha pequeña que el programa abordará en los primeros módulos.`
         : `Estás en nivel <strong style="color:var(--magenta);">${userLabel}</strong>. El rol requiere <strong>${reqLabel}</strong>. Área de desarrollo prioritario — el programa tiene módulos específicos para cerrar esta brecha.`;
 
+    // Focus indicator for bottom-3 rows
+    const focusIdx = focusIdxMap.get(cap);
+    const isFocus  = focusIdx !== undefined;
+    const fc       = isFocus ? FOCUS_COLORS[focusIdx] : null;
+    const rowBorder = isFocus ? FOCUS_BORDER[focusIdx] : 'rgba(255,255,255,0.07)';
+    const rowBg     = isFocus ? FOCUS_BG[focusIdx]    : 'rgba(255,255,255,0.02)';
+    const focusBadge = isFocus ? `
+      <span style="font-size:10px;font-weight:800;color:${fc};background:${fc}18;
+                   border:1px solid ${fc}40;border-radius:20px;padding:2px 8px;
+                   white-space:nowrap;flex-shrink:0;">🎯 Foco ${focusIdx + 1}</span>` : '';
+
     return `
     <div class="desglose-row" onclick="toggleDesgloseRow(this)"
-         style="margin-bottom:8px;padding:14px 16px;border-radius:12px;border:1px solid rgba(255,255,255,0.07);
-                background:rgba(255,255,255,0.02);cursor:pointer;transition:border-color 0.2s,background 0.2s;"
+         style="margin-bottom:8px;padding:14px 16px;border-radius:12px;
+                border:1px solid ${rowBorder};background:${rowBg};
+                cursor:pointer;transition:border-color 0.2s,background 0.2s;"
          onmouseover="this.style.background='rgba(255,255,255,0.04)'"
-         onmouseout="if(!this.classList.contains('open'))this.style.background='rgba(255,255,255,0.02)'">
+         onmouseout="if(!this.classList.contains('open'))this.style.background='${rowBg}'">
 
       <!-- Row header -->
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
         <div style="width:11px;height:11px;border-radius:50%;background:${tlColor};flex-shrink:0;
                     box-shadow:0 0 7px ${tlGlow};"></div>
         <span style="font-size:18px;flex-shrink:0;">${capIcons[cap] || '⚡'}</span>
         <span style="font-size:14px;font-weight:600;flex:1;color:#fff;">${cap}</span>
+        ${focusBadge}
         <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:rgba(255,255,255,0.05);
                      border:1px solid ${userColor};color:${userColor};font-weight:600;white-space:nowrap;">${userLabel}</span>
         <button onclick="event.stopPropagation();abrirModalCapability('${cap}')"
