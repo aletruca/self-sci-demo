@@ -656,7 +656,7 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
           <button class="btn btn-secondary" onclick="navigate('screen-exploracion')">
             <i class="fas fa-arrow-left"></i> Regresar
           </button>
-          <button class="btn btn-primary btn-lg" id="btn-iniciar-assessment" onclick="navigate('screen-assessment')" disabled>
+          <button class="btn btn-primary btn-lg" id="btn-iniciar-assessment" onclick="navigate('screen-assessment-briefing')" disabled>
             Iniciar mi diagnóstico <i class="fas fa-brain"></i>
           </button>
         </div>
@@ -665,6 +665,48 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
   </section>
 
 
+
+  <!-- ══ ASSESSMENT BRIEFING ══ -->
+  <section id="screen-assessment-briefing" class="screen">
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <img src="assets/logo-self.svg" alt="SELF" style="height:32px;width:auto;filter:brightness(1.1);"/>
+        <img src="assets/sci-logo.png" alt="SCI" style="height:24px;width:auto;opacity:0.75;"/>
+      </div>
+    </nav>
+    <div style="padding:32px 20px;flex:1;display:flex;align-items:center;">
+      <div class="container" style="max-width:640px;">
+
+        <!-- Step dots -->
+        <div style="display:flex;justify-content:center;gap:8px;margin-bottom:36px;" id="briefing-dots">
+          <div class="bdot bdot-0" style="width:10px;height:10px;border-radius:50%;background:var(--cyan);transition:all 0.3s;"></div>
+          <div class="bdot bdot-1" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
+          <div class="bdot bdot-2" style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
+        </div>
+
+        <!-- Slide content -->
+        <div id="briefing-slide" style="min-height:340px;"></div>
+
+        <!-- Nav buttons -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:32px;">
+          <button id="briefing-btn-back" onclick="briefingPrev()"
+                  style="padding:10px 22px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.15);
+                         background:transparent;color:rgba(255,255,255,0.5);font-size:14px;font-weight:600;
+                         font-family:'Outfit',sans-serif;cursor:pointer;display:none;">
+            ← Anterior
+          </button>
+          <div></div>
+          <button id="briefing-btn-next" onclick="briefingNext()"
+                  style="padding:12px 32px;border-radius:12px;border:none;
+                         background:linear-gradient(135deg,var(--cyan),var(--purple));
+                         color:#fff;font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;">
+            Siguiente →
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </section>
 
   <!-- PANTALLAS 4, 5, 6 -->
   <!-- ══ ASSESSMENT ══ -->
@@ -680,16 +722,19 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
     </nav>
     <div style="padding:32px 20px;flex:1;">
       <div class="container">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <div>
-            <span class="badge badge-cyan">Supervisor de Producción</span>
-            <span class="badge badge-purple" style="margin-left:8px;">Diagnóstico Inicial</span>
+            <span class="badge badge-cyan" id="q-rol-badge">Diagnóstico Inicial</span>
+            <span class="badge badge-purple" style="margin-left:8px;">Capabilities SCI</span>
           </div>
-          <div style="font-size:14px;color:rgba(255,255,255,0.5);">
-            Pregunta <span id="q-current">1</span> de <span id="q-total">8</span>
+          <div style="text-align:right;">
+            <div style="font-size:13px;color:rgba(255,255,255,0.45);">
+              Pregunta <span id="q-current">1</span> de <span id="q-total">8</span>
+            </div>
+            <div id="q-cap-label" style="font-size:11px;color:var(--cyan);font-weight:700;margin-top:2px;letter-spacing:0.02em;"></div>
           </div>
         </div>
-        <div class="progress-bar-wrap" style="margin-bottom:32px;">
+        <div class="progress-bar-wrap" style="margin-bottom:32px;position:relative;">
           <div class="progress-bar-fill" id="assessment-progress" style="width:12.5%"></div>
         </div>
         <div class="capi-container" id="capi-assessment">

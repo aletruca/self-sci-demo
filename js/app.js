@@ -1162,6 +1162,9 @@ function navigate(screenId) {
   if (screenId === 'screen-seleccion-rol') {
     setTimeout(renderRoleCards, 80);
   }
+  if (screenId === 'screen-assessment-briefing') {
+    setTimeout(initBriefing, 80);
+  }
   if (screenId === 'screen-assessment') {
     state.currentQuestion = 0;
     state.assessmentPts = 0;
@@ -1498,6 +1501,10 @@ function renderQuestion() {
   document.getElementById('q-num').textContent = String(current).padStart(2, '0');
   document.getElementById('q-text').textContent = q.text;
   document.getElementById('q-competencia').textContent = q.competencia;
+  const capLabel = document.getElementById('q-cap-label');
+  if (capLabel) capLabel.textContent = q.capability || q.competencia;
+  const rolBadge = document.getElementById('q-rol-badge');
+  if (rolBadge && state.roleName) rolBadge.textContent = state.roleName;
 
   // Ocultar feedback
   const feedbackBox = document.getElementById('feedback-box');
@@ -2860,6 +2867,150 @@ function crearEmpresaYConfigurar() {
   toggleNewEmpresa();
   navigate('screen-admin-empresa-config');
   showToast(`✅ Empresa "${nombre}" creada — completa la configuración`, 'success');
+}
+
+// ── Assessment Briefing (3-slide intro) ──
+let briefingStep = 0;
+
+function initBriefing() {
+  briefingStep = 0;
+  renderBriefingSlide();
+}
+
+function briefingNext() {
+  if (briefingStep < 2) {
+    briefingStep++;
+    renderBriefingSlide();
+  } else {
+    navigate('screen-assessment');
+  }
+}
+
+function briefingPrev() {
+  if (briefingStep > 0) {
+    briefingStep--;
+    renderBriefingSlide();
+  }
+}
+
+function renderBriefingSlide() {
+  const slideEl  = document.getElementById('briefing-slide');
+  const btnBack  = document.getElementById('briefing-btn-back');
+  const btnNext  = document.getElementById('briefing-btn-next');
+  if (!slideEl) return;
+
+  // Update dots
+  document.querySelectorAll('#briefing-dots .bdot').forEach((d, i) => {
+    d.style.background = i === briefingStep ? 'var(--cyan)' : 'rgba(255,255,255,0.2)';
+    d.style.width  = i === briefingStep ? '28px' : '10px';
+    d.style.borderRadius = '5px';
+  });
+
+  // Back / Next labels
+  if (btnBack) btnBack.style.display = briefingStep > 0 ? 'block' : 'none';
+  if (btnNext) {
+    btnNext.textContent = briefingStep < 2 ? 'Siguiente →' : 'Comenzar diagnóstico 🚀';
+    btnNext.style.background = briefingStep < 2
+      ? 'linear-gradient(135deg,var(--cyan),var(--purple))'
+      : 'linear-gradient(135deg,#00ff88,var(--cyan))';
+  }
+
+  const rolName  = state.roleName || 'el rol seleccionado';
+  const rolEntry = state.roleName ? Object.entries(rolesData).find(([n]) => n === state.roleName) : null;
+  const rolIcon  = rolEntry ? rolEntry[1].icono : '🎯';
+  const rolNivel = rolEntry ? rolEntry[1].nivel : '';
+
+  const DREYFUS = [
+    { nivel:'Novice',            color:'rgba(255,255,255,0.4)', pts:'0.5–0.99', desc:'Sigue instrucciones paso a paso. Necesita supervisión constante.' },
+    { nivel:'Advanced Beginner', color:'#ffa03c',              pts:'1.0–1.49', desc:'Reconoce patrones recurrentes. Actúa con guía de un experto.' },
+    { nivel:'Competent',         color:'var(--cyan)',           pts:'1.5–1.99', desc:'Toma decisiones con criterio. Planea a mediano plazo.' },
+    { nivel:'Proficient',        color:'var(--purple)',         pts:'2.0–2.49', desc:'Visión sistémica. Adapta la estrategia con agilidad.' },
+    { nivel:'Expert',            color:'var(--magenta)',        pts:'2.5–3.0',  desc:'Opera por intuición. Referente de excelencia en su campo.' }
+  ];
+
+  const slides = [
+    // ── Slide 0: ¿Qué es esto? ──
+    `<div style="text-align:center;margin-bottom:28px;">
+       <div style="font-size:52px;margin-bottom:10px;">${rolIcon}</div>
+       <h1 style="font-size:22px;font-weight:800;margin:0 0 6px;">Diagnóstico de Capabilities SCI</h1>
+       <p style="font-size:14px;color:rgba(255,255,255,0.5);margin:0;">Para el rol: <strong style="color:var(--cyan);">${rolName}</strong></p>
+     </div>
+     <div class="card" style="border-color:rgba(0,216,218,0.2);margin-bottom:20px;">
+       <p style="font-size:14px;line-height:1.75;color:rgba(255,255,255,0.8);margin:0 0 16px;">
+         Estás a punto de iniciar tu <strong>Diagnóstico Inicial SCI</strong>, diseñado para medir tu nivel de dominio
+         actual en las capabilities clave que definen este perfil. No es un examen — es una
+         <strong>herramienta de autoconocimiento</strong> que revela tus fortalezas y áreas de desarrollo.
+       </p>
+       <div style="display:flex;flex-wrap:wrap;gap:6px;">
+         ${CAPS.map(c => `<span style="font-size:11px;background:rgba(0,216,218,0.08);border:1px solid rgba(0,216,218,0.2);
+           border-radius:20px;padding:4px 10px;color:rgba(255,255,255,0.65);">🔹 ${c}</span>`).join('')}
+       </div>
+     </div>
+     <div style="display:flex;gap:16px;flex-wrap:wrap;">
+       <div style="flex:1;min-width:120px;background:rgba(255,255,255,0.04);border-radius:12px;padding:14px;text-align:center;border:1px solid rgba(255,255,255,0.07);">
+         <div style="font-size:24px;font-weight:800;color:var(--cyan);">8</div>
+         <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:3px;">preguntas situacionales</div>
+       </div>
+       <div style="flex:1;min-width:120px;background:rgba(255,255,255,0.04);border-radius:12px;padding:14px;text-align:center;border:1px solid rgba(255,255,255,0.07);">
+         <div style="font-size:24px;font-weight:800;color:var(--purple);">~30</div>
+         <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:3px;">minutos estimados</div>
+       </div>
+       <div style="flex:1;min-width:120px;background:rgba(255,255,255,0.04);border-radius:12px;padding:14px;text-align:center;border:1px solid rgba(255,255,255,0.07);">
+         <div style="font-size:24px;font-weight:800;color:#00ff88;">5</div>
+         <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:3px;">niveles de dominio</div>
+       </div>
+     </div>`,
+
+    // ── Slide 1: ¿Cómo funciona? ──
+    `<h2 style="font-size:20px;font-weight:800;margin:0 0 6px;">El Modelo de Dominio SCI</h2>
+     <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 22px;">
+       Basado en el <strong style="color:rgba(255,255,255,0.75);">Modelo Dreyfus</strong> de adquisición de habilidades, cada respuesta ubica tu nivel real en cada capability.
+     </p>
+     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:22px;">
+       ${DREYFUS.map(d => `
+         <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;
+                     background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);">
+           <div style="width:12px;height:12px;border-radius:50%;background:${d.color};flex-shrink:0;"></div>
+           <div style="min-width:130px;">
+             <span style="font-size:12px;font-weight:700;color:${d.color};">${d.nivel}</span>
+             <span style="font-size:10px;color:rgba(255,255,255,0.3);margin-left:6px;">${d.pts}</span>
+           </div>
+           <div style="font-size:11px;color:rgba(255,255,255,0.5);line-height:1.5;">${d.desc}</div>
+         </div>`).join('')}
+     </div>
+     <div class="card" style="border-color:rgba(117,114,233,0.3);padding:14px 16px;">
+       <p style="font-size:13px;color:rgba(255,255,255,0.75);line-height:1.7;margin:0;">
+         💡 Cada pregunta describe una <strong>situación real de trabajo</strong>.
+         Tu respuesta revela qué nivel de dominio ejerces <em>naturalmente</em> en esa competencia.
+         No hay respuestas trampa — elige siempre lo que <strong>tú harías</strong> en esa situación.
+       </p>
+     </div>`,
+
+    // ── Slide 2: Tu compromiso ──
+    `<div style="text-align:center;margin-bottom:28px;">
+       <div style="font-size:44px;margin-bottom:8px;">🎯</div>
+       <h2 style="font-size:20px;font-weight:800;margin:0 0 4px;">Antes de empezar</h2>
+       <p style="font-size:13px;color:rgba(255,255,255,0.45);margin:0;">Para obtener el resultado más preciso</p>
+     </div>
+     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
+       ${[
+         ['⏱️', 'Duración estimada',    '~30–40 minutos, sin límite de tiempo. Responde con calma.'],
+         ['🧘', 'Entorno tranquilo',    'Busca un espacio sin interrupciones y cierra otras pestañas.'],
+         ['💡', 'Responde con honestidad', 'No busques la "respuesta correcta" — refleja tu comportamiento real.'],
+         ['📊', 'Tu resultado',         `Recibirás tu perfil de capabilities frente al nivel requerido por <strong style="color:var(--cyan);">${rolName}</strong>.`]
+       ].map(([ico, title, desc]) => `
+         <div style="display:flex;align-items:flex-start;gap:14px;padding:14px 16px;border-radius:12px;
+                     background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);">
+           <span style="font-size:20px;flex-shrink:0;">${ico}</span>
+           <div>
+             <div style="font-size:13px;font-weight:700;margin-bottom:3px;">${title}</div>
+             <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.6;">${desc}</div>
+           </div>
+         </div>`).join('')}
+     </div>`
+  ];
+
+  slideEl.innerHTML = slides[briefingStep];
 }
 
 // ── Modal ficha completa de rol ──
