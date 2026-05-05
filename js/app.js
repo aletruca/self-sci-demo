@@ -1269,17 +1269,17 @@ function renderRoleCards() {
   const areaSelects = document.querySelectorAll('#screen-exploracion select.form-select');
   const userAreaRaw = areaSelects[0]?.value || '';
 
-  // 2. Años de experiencia (tercer select en sección 01)
+  // 2. Años de experiencia total (segundo select en sección 01)
   const expRaw = areaSelects[1]?.value || '';
-  // Mapear experiencia → puntaje Dreyfus estimado del usuario (escala 0–3)
+  // Mapear experiencia total en SC/Manufactura → puntaje Dreyfus estimado (escala 0–3)
   const EXP_TO_PUNTAJE = {
-    'Menos de 6 meses': 0.8,
-    '6 meses – 1 año':  1.1,
-    '1 – 3 años':       1.5,
-    '3 – 5 años':       2.0,
-    'Más de 5 años':    2.3
+    'Menos de 2 años': 0.9,
+    '2 – 5 años':      1.4,
+    '5 – 10 años':     1.9,
+    '10 – 15 años':    2.3,
+    'Más de 15 años':  2.6
   };
-  const userPuntaje = EXP_TO_PUNTAJE[expRaw] ?? 1.5; // default: Advanced Beginner
+  const userPuntaje = EXP_TO_PUNTAJE[expRaw] ?? 1.9; // default: nivel medio
 
   // 3. Puesto libre (sección 01, primer input de texto) — señales de nivel
   const puestoTexto = (document.querySelector('#screen-exploracion .form-input')?.value || '').toLowerCase();
@@ -1289,6 +1289,10 @@ function renderRoleCards() {
                          : /(aux|asistente|auxiliar|operador|becario)/.test(puestoTexto)                        ? -0.3
                          : 0.0;
   const userLevel = Math.min(2.8, Math.max(0.5, userPuntaje + puestoLevelBoost));
+
+  // 3b. KPI Principal y Secundario (sección 04, selects 2 y 3)
+  const kpiPrincipal   = areaSelects[2]?.value || '';
+  const kpiSecundario  = areaSelects[3]?.value || '';
 
   // 4. Capabilities del perfil (actividades + retos seleccionados)
   const profileCaps = new Set();
@@ -1315,46 +1319,102 @@ function renderRoleCards() {
   // ════════════════════════════════════════════════════
 
   // Área del usuario → afinidad con áreas de roles (0–100)
+  // Valores con mayor separación para que el área sea realmente discriminante
   const AREA_COMPAT = {
-    'Operaciones / Producción': { T2:55, T1:70, Planning:55, COMEX:20, PPM:100, Transformation:45 },
-    'Calidad':                  { T2:50, T1:75, Planning:45, COMEX:20, PPM:90,  Transformation:50 },
-    'Logística':                { T2:100,T1:85, Planning:70, COMEX:65, PPM:45,  Transformation:30 },
-    'Recursos Humanos':         { T2:30, T1:35, Planning:55, COMEX:30, PPM:45,  Transformation:100 },
-    'Seguridad Industrial':     { T2:45, T1:90, Planning:25, COMEX:15, PPM:85,  Transformation:45 },
-    'Mantenimiento':            { T2:35, T1:85, Planning:25, COMEX:15, PPM:90,  Transformation:40 },
-    'Administración':           { T2:40, T1:40, Planning:100,COMEX:90, PPM:30,  Transformation:60 }
+    'Operaciones / Producción': { T2:45, T1:90, Planning:40, COMEX:10, PPM:75, Transformation:25 },
+    'Calidad':                  { T2:35, T1:65, Planning:35, COMEX:10, PPM:95, Transformation:40 },
+    'Logística':                { T2:100, T1:60, Planning:65, COMEX:50, PPM:25, Transformation:20 },
+    'Recursos Humanos':         { T2:15, T1:15, Planning:45, COMEX:25, PPM:35, Transformation:100 },
+    'Seguridad Industrial':     { T2:25, T1:90, Planning:15, COMEX:10, PPM:90, Transformation:25 },
+    'Mantenimiento':            { T2:20, T1:80, Planning:15, COMEX:10, PPM:95, Transformation:20 },
+    'Administración':           { T2:35, T1:25, Planning:100, COMEX:90, PPM:15, Transformation:55 }
+  };
+
+  // KPI seleccionado → afinidad con áreas de roles (señal directa del puesto real)
+  const KPI_AREA_AFFINITY = {
+    'Fill Rate — % surtimiento de pedidos':         { T2:85, T1:85, Planning:70, COMEX:30, PPM:35, Transformation:15 },
+    'Exactitud de inventario (%)':                  { T2:80, T1:90, Planning:65, COMEX:25, PPM:40, Transformation:10 },
+    'Productividad de picking (uds./hora-hombre)':  { T2:80, T1:95, Planning:30, COMEX:15, PPM:50, Transformation:10 },
+    'Tiempo de ciclo de recepción (min)':           { T2:75, T1:95, Planning:30, COMEX:20, PPM:45, Transformation:10 },
+    'Rotación de inventario':                       { T2:75, T1:75, Planning:90, COMEX:40, PPM:45, Transformation:10 },
+    'OTIF — Entrega completa y a tiempo (%)':       { T2:100, T1:70, Planning:60, COMEX:35, PPM:20, Transformation:10 },
+    'Nivel de servicio al cliente (%)':             { T2:95, T1:70, Planning:55, COMEX:50, PPM:20, Transformation:15 },
+    'Entregas a tiempo — OTD (%)':                  { T2:100, T1:65, Planning:55, COMEX:35, PPM:20, Transformation:10 },
+    'Costo por entrega':                            { T2:100, T1:60, Planning:50, COMEX:30, PPM:20, Transformation:10 },
+    'Utilización de flota (%)':                     { T2:100, T1:50, Planning:40, COMEX:20, PPM:15, Transformation:10 },
+    'OEE — Efectividad global del equipo':          { T2:20, T1:60, Planning:40, COMEX:10, PPM:100, Transformation:15 },
+    'Productividad operativa por turno':            { T2:25, T1:80, Planning:50, COMEX:10, PPM:100, Transformation:15 },
+    'Costo operativo por unidad':                   { T2:35, T1:75, Planning:65, COMEX:20, PPM:90, Transformation:15 },
+    'Throughput (unidades procesadas/hora)':        { T2:20, T1:70, Planning:50, COMEX:10, PPM:100, Transformation:10 },
+    'Ausentismo del equipo (%)':                    { T2:40, T1:45, Planning:40, COMEX:35, PPM:45, Transformation:90 },
+    'Rotación de personal (%)':                     { T2:35, T1:35, Planning:40, COMEX:35, PPM:40, Transformation:100 },
+    'Tasa de daño de producto (%)':                 { T2:55, T1:70, Planning:35, COMEX:25, PPM:85, Transformation:15 },
+    'Devoluciones y rechazos (%)':                  { T2:65, T1:65, Planning:40, COMEX:35, PPM:80, Transformation:15 },
+    'Nivel de calidad / defectos (%)':              { T2:40, T1:65, Planning:35, COMEX:20, PPM:95, Transformation:15 },
+    'NPS interno / Satisfacción del cliente':       { T2:80, T1:55, Planning:50, COMEX:65, PPM:30, Transformation:60 },
+    'Tiempo de ciclo total (almacén → entrega)':    { T2:90, T1:85, Planning:55, COMEX:30, PPM:35, Transformation:10 },
+    'Costo por unidad almacenada':                  { T2:80, T1:90, Planning:60, COMEX:25, PPM:45, Transformation:10 },
+    '% Pedidos perfectos':                          { T2:90, T1:80, Planning:65, COMEX:40, PPM:25, Transformation:10 },
+    'Eficiencia de ruta (%)':                       { T2:100, T1:60, Planning:50, COMEX:25, PPM:15, Transformation:10 },
+    'Costo de flete por pedido':                    { T2:100, T1:55, Planning:50, COMEX:35, PPM:15, Transformation:10 },
+    'Tiempo promedio de entrega (hrs)':             { T2:95, T1:60, Planning:55, COMEX:35, PPM:20, Transformation:10 },
+    'Costo operativo total':                        { T2:45, T1:60, Planning:80, COMEX:55, PPM:75, Transformation:20 },
+    'Productividad por turno':                      { T2:30, T1:80, Planning:50, COMEX:10, PPM:95, Transformation:15 },
+    'Accidentes / incidentes de seguridad':         { T2:30, T1:85, Planning:15, COMEX:10, PPM:85, Transformation:20 }
   };
 
   function getAreaScore(userArea, roleArea) {
     const map = AREA_COMPAT[userArea];
-    if (!map) return 55; // sin área definida → neutral
+    if (!map) return 50; // sin área definida → neutral
+    return map[roleArea] ?? 30;
+  }
+
+  function getKpiAreaScore(kpiVal, roleArea) {
+    if (!kpiVal || kpiVal === '' || kpiVal === 'otro') return 50;
+    const map = KPI_AREA_AFFINITY[kpiVal];
+    if (!map) return 50;
     return map[roleArea] ?? 40;
   }
 
+  // Combina área declarada con señales de KPI seleccionados
+  function getEffectiveAreaScore(userArea, roleArea) {
+    const baseArea = getAreaScore(userArea, roleArea);
+    const s1 = getKpiAreaScore(kpiPrincipal, roleArea);
+    const s2 = getKpiAreaScore(kpiSecundario, roleArea);
+    const hasKpi1 = kpiPrincipal && kpiPrincipal !== '' && kpiPrincipal !== 'otro';
+    const hasKpi2 = kpiSecundario && kpiSecundario !== '' && kpiSecundario !== 'otro';
+
+    if (hasKpi1 && hasKpi2) {
+      const kpiBlend = Math.round(s1 * 0.65 + s2 * 0.35);
+      return Math.round(baseArea * 0.50 + kpiBlend * 0.50);
+    }
+    if (hasKpi1) return Math.round(baseArea * 0.55 + s1 * 0.45);
+    if (hasKpi2) return Math.round(baseArea * 0.65 + s2 * 0.35);
+    return baseArea;
+  }
+
   // Nivel del usuario vs. nivel del rol (puntaje 0–3)
-  // La zona ideal es que el rol esté ligeramente por encima del usuario (reto alcanzable)
   function getLevelScore(uLevel, rolPuntaje) {
     const delta = rolPuntaje - uLevel; // positivo = rol más senior que usuario
-    if (delta >= -0.15 && delta <= 0.35) return 100; // mismo nivel o pequeño stretch
-    if (delta >  0.35  && delta <= 0.75) return 78;  // rol moderadamente superior (buen reto)
-    if (delta >  0.75  && delta <= 1.20) return 50;  // rol muy por encima
-    if (delta >  1.20)                   return 20;  // demasiado senior para el usuario
-    if (delta <  -0.15 && delta >= -0.6) return 70;  // usuario ya supera ligeramente el rol
-    return 35; // usuario muy por encima del rol
+    if (delta >= -0.20 && delta <= 0.30) return 100; // encaje exacto
+    if (delta >  0.30  && delta <= 0.70) return 80;  // reto alcanzable
+    if (delta >  0.70  && delta <= 1.20) return 50;  // rol bastante más senior
+    if (delta >  1.20)                   return 18;  // demasiado senior
+    if (delta <  -0.20 && delta >= -0.65) return 72; // usuario supera ligeramente
+    return 30; // usuario muy por encima del rol
   }
 
   // Relevancia de las capabilities del usuario dentro del rol
-  // Usa tags (top-3 caps reales del Excel) y puntaje para ponderar
   function getCapScore(pCaps, rol) {
-    if (pCaps.size === 0) return 55;
+    if (pCaps.size === 0) return 50;
     let total = 0;
     pCaps.forEach(pc => {
       const capData = rol.capabilities[pc];
       const inTags  = rol.tags.some(t => t.toLowerCase().includes(pc.toLowerCase().substring(0, 8)));
-      if (inTags)                              total += 100; // cap es top-3 del rol
-      else if (capData?.puntaje >= 2.0)        total += 72;  // cap importante para el rol
-      else if (capData?.puntaje >= 1.5)        total += 45;  // cap moderadamente relevante
-      else                                     total += 12;  // cap apenas aparece en el rol
+      if (inTags)                              total += 100;
+      else if (capData?.puntaje >= 2.0)        total += 70;
+      else if (capData?.puntaje >= 1.5)        total += 40;
+      else                                     total += 10;
     });
     return Math.round(total / pCaps.size);
   }
@@ -1362,20 +1422,19 @@ function renderRoleCards() {
   // ════════════════════════════════════════════════════
   //  CÁLCULO DEL MATCH (3 factores ponderados)
   // ════════════════════════════════════════════════════
-  //  40% Nivel     — ¿es el rol apropiado para la experiencia del usuario?
-  //  38% Área      — ¿coincide el área del usuario con el área del rol?
-  //  22% Capabilities — ¿ejercita el usuario las caps clave del rol?
+  //  45% Área efectiva  — área declarada + señal de KPIs
+  //  38% Nivel          — experiencia vs. seniority del rol
+  //  17% Capabilities   — actividades/retos → caps del rol
   // ════════════════════════════════════════════════════
 
   const matchScores = {};
   Object.entries(rolesData).forEach(([name, rol]) => {
-    const areaScore  = getAreaScore(userAreaRaw, rol.area);
+    const areaScore  = getEffectiveAreaScore(userAreaRaw, rol.area);
     const levelScore = getLevelScore(userLevel, rol.puntaje);
     const capScore   = getCapScore(profileCaps, rol);
 
-    const raw = areaScore * 0.38 + levelScore * 0.40 + capScore * 0.22;
-    // Escalar al rango 52–96 para que los números sean informativos pero no extremos
-    matchScores[name] = Math.round(Math.min(96, Math.max(52, raw)));
+    const raw = areaScore * 0.45 + levelScore * 0.38 + capScore * 0.17;
+    matchScores[name] = Math.round(Math.min(96, Math.max(45, raw)));
   });
 
   // ── Todos los roles ordenados por match ──
