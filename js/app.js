@@ -1193,6 +1193,10 @@ function navigate(screenId) {
       renderSesionesSync();
     }, 80);
   }
+  if (screenId === 'screen-admin-dashboard') {
+    setTimeout(renderKpiAvancePromedio, 80);
+    setTimeout(renderCalendarioGlobal, 80);
+  }
   if (screenId === 'screen-admin-modulos') {
     setTimeout(renderModulosGrid, 80);
   }
@@ -3219,18 +3223,51 @@ function importarParticipantes() {
   let fi = document.getElementById('__import-fi');
   if (!fi) {
     fi = document.createElement('input');
-    fi.type = 'file'; fi.id = '__import-fi'; fi.accept = '.csv,.xlsx';
+    fi.type = 'file'; fi.id = '__import-fi'; fi.accept = '.csv,.xlsx,.xls';
     fi.style.display = 'none';
     document.body.appendChild(fi);
     fi.addEventListener('change', e => {
       const f = e.target.files[0];
       if (!f) return;
       showToast(`📤 Procesando: ${f.name}...`, 'info');
-      setTimeout(() => {
-        showToast(`✅ ${f.name} importado — 8 participantes agregados`, 'success');
-        fi.value = '';
-        renderTablaParticipantes();
-      }, 1200);
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const data = new Uint8Array(ev.target.result);
+          const wb   = XLSX.read(data, { type: 'array' });
+          const ws   = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+          if (!rows.length) { showToast('⚠️ El archivo está vacío', 'error'); return; }
+          // Normalizar headers
+          const normaliza = str => String(str).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+          const keys = Object.keys(rows[0]).map(normaliza);
+          const iNombre = keys.findIndex(h => h.includes('nombre'));
+          const iCorreo = keys.findIndex(h => h.includes('correo') || h.includes('email') || h.includes('usuario'));
+          const iRol    = keys.findIndex(h => h.includes('rol'));
+          const iArea   = keys.findIndex(h => h.includes('area'));
+          if (iNombre < 0 || iCorreo < 0) {
+            showToast('⚠️ El archivo debe tener columnas: Nombre, Correo, Rol, Área', 'error');
+            return;
+          }
+          const origKeys = Object.keys(rows[0]);
+          let agregados = 0;
+          rows.forEach(row => {
+            const nombre = String(row[origKeys[iNombre]] || '').trim();
+            const correo = String(row[origKeys[iCorreo]] || '').trim();
+            if (!nombre || !correo) return;
+            const rol  = iRol  >= 0 ? String(row[origKeys[iRol]]  || 'Participante').trim() : 'Participante';
+            const area = iArea >= 0 ? String(row[origKeys[iArea]] || '—').trim() : '—';
+            mockParticipantes.push({ nombre, correo, rol, area, avance: 0, estado: 'Activo' });
+            agregados++;
+          });
+          fi.value = '';
+          renderTablaParticipantes();
+          showToast(`✅ ${agregados} participante(s) importado(s) desde ${f.name}`, 'success');
+        } catch(err) {
+          showToast('⚠️ Error al leer el archivo: ' + err.message, 'error');
+        }
+      };
+      reader.readAsArrayBuffer(f);
     });
   }
   fi.click();
@@ -3560,6 +3597,10 @@ function toggleNuevaSesion() {
             <input class="form-input" id="ns-facilitador" placeholder="Nombre del facilitador"/>
           </div>
           <div class="form-group" style="margin:0;">
+            <label class="form-label">Duración (minutos)</label>
+            <input class="form-input" type="number" id="ns-duracion" value="90" min="15" step="15"/>
+          </div>
+          <div class="form-group" style="margin:0;">
             <label class="form-label">Máx. participantes</label>
             <input class="form-input" type="number" id="ns-max" value="40"/>
           </div>
@@ -3580,12 +3621,13 @@ function crearNuevaSesion() {
   const fechaRaw    = document.getElementById('ns-fecha')?.value;
   const hora        = document.getElementById('ns-hora')?.value || '10:00';
   const facilitador = document.getElementById('ns-facilitador')?.value?.trim() || 'Por definir';
+  const duracion    = parseInt(document.getElementById('ns-duracion')?.value) || 90;
   const max         = parseInt(document.getElementById('ns-max')?.value) || 40;
   if (!titulo) { showToast('⚠️ El título es requerido', 'error'); return; }
   const fechaDisplay = fechaRaw
     ? new Date(fechaRaw + 'T12:00:00').toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })
     : 'Por confirmar';
-  mockSesiones.push({ titulo, tipo, fecha: fechaDisplay, hora: hora + ' hrs', duracion: '90 min', facilitador, inscritos: 0, max });
+  mockSesiones.push({ titulo, tipo, fecha: fechaDisplay, hora: hora + ' hrs', duracion: duracion + ' min', facilitador, inscritos: 0, max });
   document.getElementById('form-nueva-sesion').style.display = 'none';
   renderSesionesSync();
   showToast(`✅ Sesión "${titulo}" agregada`, 'success');
@@ -4025,16 +4067,29 @@ const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
 const MESES_ABBR = { 'Ene':0,'Feb':1,'Mar':2,'Abr':3,'May':4,'Jun':5,
                      'Jul':6,'Ago':7,'Sep':8,'Oct':9,'Nov':10,'Dic':11 };
 
+const MODULE_COLORS = [
+  { color: 'var(--cyan)',    bg: 'rgba(0,216,218,0.25)'   },
+  { color: 'var(--purple)',  bg: 'rgba(117,114,233,0.25)' },
+  { color: '#00ff88',        bg: 'rgba(0,255,136,0.2)'    },
+  { color: 'var(--magenta)', bg: 'rgba(248,0,250,0.2)'    },
+  { color: 'orange',         bg: 'rgba(255,165,0,0.2)'    },
+  { color: '#ff6b6b',        bg: 'rgba(255,107,107,0.2)'  },
+];
+
 function getModuleCalEvents() {
   return mockModulosConfig
     .filter(m => m.activo)
-    .map(m => {
-      const match = m.semana.match(/Semana (\d+)/);
+    .map((m, i) => {
+      const match = m.semana.match(/Semana (\d+)[-–](\d+)/);
       if (!match) return null;
-      const weekNum = parseInt(match[1]);
-      const date = new Date(PROGRAM_START);
-      date.setDate(date.getDate() + (weekNum - 1) * 7);
-      return { date, label: m.icono + ' ' + m.nombre, type: 'modulo' };
+      const w1 = parseInt(match[1]);
+      const w2 = parseInt(match[2]);
+      const startDate = new Date(PROGRAM_START);
+      startDate.setDate(startDate.getDate() + (w1 - 1) * 7);
+      const endDate = new Date(PROGRAM_START);
+      endDate.setDate(endDate.getDate() + w2 * 7 - 1);
+      const clr = MODULE_COLORS[i % MODULE_COLORS.length];
+      return { startDate, endDate, label: m.icono + ' ' + m.nombre, type: 'modulo', color: clr.color, bg: clr.bg };
     })
     .filter(Boolean);
 }
@@ -4069,9 +4124,16 @@ function renderCalendario() {
 
   function eventsForDay(d) {
     const events = [];
+    const cur = new Date(year, month, d);
     modEvents.forEach(e => {
-      if (e.date.getFullYear()===year && e.date.getMonth()===month && e.date.getDate()===d)
-        events.push({ label: e.label, color:'var(--cyan)', bg:'rgba(0,216,218,0.15)' });
+      if (cur >= e.startDate && cur <= e.endDate) {
+        const isStart = cur.getTime() === e.startDate.getTime();
+        events.push({
+          label: isStart ? e.label : '',
+          color: e.color, bg: e.bg,
+          isBar: true, isStart
+        });
+      }
     });
     sesEvents.forEach(e => {
       if (e.date.getFullYear()===year && e.date.getMonth()===month && e.date.getDate()===d)
@@ -4100,9 +4162,12 @@ function renderCalendario() {
         const borderB = isLastRow ? '' : 'border-bottom:1px solid rgba(255,255,255,0.05);';
         const borderR = isLastCol ? '' : 'border-right:1px solid rgba(255,255,255,0.05);';
         if (!day) return `<div style="padding:10px;min-height:80px;${borderR}${borderB}"></div>`;
-        const evHtml = eventsForDay(day).map(e =>
-          `<div style="margin-top:4px;padding:3px 6px;background:${e.bg};border-left:2px solid ${e.color};border-radius:4px;font-size:11px;color:${e.color};line-height:1.3;">${e.label}</div>`
-        ).join('');
+        const evHtml = eventsForDay(day).map(e => {
+          if (e.isBar) {
+            return `<div style="margin-top:3px;padding:2px 6px;background:${e.bg};border-left:${e.isStart?'3px solid var(--cyan)':'0px'};border-radius:${e.isStart?'4px':'0 4px 4px 0'};font-size:11px;color:${e.color};line-height:1.4;">${e.label || '&nbsp;'}</div>`;
+          }
+          return `<div style="margin-top:3px;padding:3px 6px;background:${e.bg};border-left:2px solid ${e.color};border-radius:4px;font-size:11px;color:${e.color};line-height:1.3;">${e.label}</div>`;
+        }).join('');
         return `<div style="padding:10px;min-height:80px;${borderR}${borderB}">
           <div style="font-size:13px;color:${isWeekend?'rgba(255,255,255,0.25)':'inherit'};">${day}</div>
           ${evHtml}
@@ -4123,4 +4188,141 @@ function calendarNext() {
   calState.month++;
   if (calState.month > 11) { calState.month = 0; calState.year++; }
   renderCalendario();
+}
+
+// ══════════════════════════════════════
+//  KPI: AVANCE PROMEDIO DINÁMICO
+// ══════════════════════════════════════
+function renderKpiAvancePromedio() {
+  const el = document.getElementById('kpi-avance-promedio');
+  if (!el) return;
+  const avances = [72, 58, 0]; // avances de las 3 empresas mock
+  const promedio = Math.round(avances.reduce((a, b) => a + b, 0) / avances.filter(a => a > 0).length);
+  el.textContent = promedio + '%';
+}
+
+// ══════════════════════════════════════
+//  CALENDARIO GLOBAL (Panel Admin)
+// ══════════════════════════════════════
+const calGlobalState = { year: 2025, month: 3 };
+
+// Datos de empresas: inicio del programa y color
+const mockEmpresas = [
+  { nombre: 'Manufactura Avanzada', color: 'rgba(0,216,218,0.7)', border: 'var(--cyan)',   start: new Date(2025, 3, 16) },
+  { nombre: 'Grupo Salud Integral', color: 'rgba(117,114,233,0.7)', border: 'var(--purple)', start: new Date(2025, 4, 1)  },
+  { nombre: 'Retail Express MX',    color: 'rgba(255,165,0,0.7)',   border: 'orange',        start: null },
+];
+
+function getGlobalEvents(year, month) {
+  const events = {}; // { 'YYYY-MM-DD': [{ label, color, border, type }] }
+
+  function addEvent(date, ev) {
+    const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    if (!events[key]) events[key] = [];
+    events[key].push(ev);
+  }
+
+  // Módulos por empresa
+  mockEmpresas.forEach(emp => {
+    if (!emp.start) return;
+    mockModulosConfig.filter(m => m.activo).forEach(m => {
+      const match = m.semana.match(/Semana (\d+)[-–](\d+)/);
+      if (!match) return;
+      const w1 = parseInt(match[1]);
+      const w2 = parseInt(match[2]);
+      const startDate = new Date(emp.start);
+      startDate.setDate(startDate.getDate() + (w1 - 1) * 7);
+      const endDate = new Date(emp.start);
+      endDate.setDate(endDate.getDate() + w2 * 7 - 1);
+      // Pintar cada día del rango dentro del mes actual
+      const cur = new Date(startDate);
+      while (cur <= endDate) {
+        if (cur.getFullYear() === year && cur.getMonth() === month) {
+          const isStart = cur.getTime() === startDate.getTime();
+          addEvent(new Date(cur), {
+            label: isStart ? m.icono + ' ' + m.nombre : '',
+            color: emp.color, border: emp.border, type: 'modulo',
+            isStart, isEnd: cur.getTime() === endDate.getTime()
+          });
+        }
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+  });
+
+  // Sesiones síncronas
+  mockSesiones.forEach(s => {
+    const parts = s.fecha.split(' ');
+    const month2 = MESES_ABBR[parts[1]];
+    if (month2 === undefined) return;
+    const d = new Date(parseInt(parts[2]), month2, parseInt(parts[0]));
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      addEvent(d, { label: s.titulo + ' · ' + s.hora, color: 'rgba(248,0,250,0.7)', border: 'var(--magenta)', type: 'sesion', isStart: true });
+    }
+  });
+
+  return events;
+}
+
+function renderCalendarioGlobal() {
+  const label = document.getElementById('cal-global-label');
+  const grid  = document.getElementById('cal-global-grid');
+  if (!label || !grid) return;
+
+  const { year, month } = calGlobalState;
+  label.textContent = MESES_ES[month] + ' ' + year;
+
+  const events   = getGlobalEvents(year, month);
+  const DIAS     = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+  const firstDay = new Date(year, month, 1);
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  let startDow   = (firstDay.getDay() + 6) % 7;
+
+  function evKey(d) { return `${year}-${month}-${d}`; }
+
+  let cells = [];
+  for (let i = 0; i < startDow; i++) cells.push(null);
+  for (let d = 1; d <= totalDays; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const headerHtml = `
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid rgba(255,255,255,0.08);">
+      ${DIAS.map((d,i) => `<div style="padding:8px;text-align:center;font-size:11px;font-weight:700;color:${i>=5?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.4)'};">${d}</div>`).join('')}
+    </div>`;
+
+  const bodyHtml = `
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);">
+      ${cells.map((day, idx) => {
+        const isLastRow = idx >= cells.length - 7;
+        const isLastCol = (idx + 1) % 7 === 0;
+        const isWeekend = idx % 7 >= 5;
+        const borderB = isLastRow ? '' : 'border-bottom:1px solid rgba(255,255,255,0.05);';
+        const borderR = isLastCol ? '' : 'border-right:1px solid rgba(255,255,255,0.05);';
+        if (!day) return `<div style="padding:8px;min-height:70px;${borderR}${borderB}"></div>`;
+        const dayEvents = events[evKey(day)] || [];
+        const evHtml = dayEvents.map(e => {
+          if (e.type === 'modulo') {
+            return `<div style="margin-top:2px;padding:2px 5px;background:${e.color};border-radius:3px;font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${e.label}">${e.isStart && e.label ? e.label : '&nbsp;'}</div>`;
+          }
+          return `<div style="margin-top:2px;padding:2px 5px;background:${e.color};border-radius:3px;font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${e.label}"><i class="fas fa-video"></i> ${e.label}</div>`;
+        }).join('');
+        return `<div style="padding:8px;min-height:70px;${borderR}${borderB}">
+          <div style="font-size:12px;color:${isWeekend?'rgba(255,255,255,0.2)':'rgba(255,255,255,0.7)'};">${day}</div>
+          ${evHtml}
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  grid.innerHTML = `<div style="overflow:hidden;">${headerHtml}${bodyHtml}</div>`;
+}
+
+function calGlobalPrev() {
+  calGlobalState.month--;
+  if (calGlobalState.month < 0) { calGlobalState.month = 11; calGlobalState.year--; }
+  renderCalendarioGlobal();
+}
+function calGlobalNext() {
+  calGlobalState.month++;
+  if (calGlobalState.month > 11) { calGlobalState.month = 0; calGlobalState.year++; }
+  renderCalendarioGlobal();
 }
