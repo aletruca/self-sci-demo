@@ -1188,6 +1188,7 @@ function navigate(screenId) {
     }, 80);
   }
   if (screenId === 'screen-admin-contenido') setTimeout(renderAdminContenido, 80);
+  if (screenId === 'screen-modulo') setTimeout(initSopa, 150);
   if (screenId === 'screen-admin-dashboard') {
     setTimeout(renderKpiAvancePromedio, 80);
     setTimeout(renderCalendarioGlobal, 80);
@@ -3466,7 +3467,7 @@ const URLS_RECURSOS_D1 = {
   lectura2:  'https://www.deloitte.com/us/en/services/consulting/articles/customer-centric-supply-chain-data.html'
 };
 
-let diaRecursos = { video1: false, video2: false, lectura1: false, lectura2: false, quiz: false };
+let diaRecursos = { video1: false, video2: false, lectura1: false, lectura2: false, actividad: false, quiz: false };
 
 function abrirRecurso(id) {
   const url = URLS_RECURSOS_D1[id];
@@ -3666,6 +3667,343 @@ function mostrarResultadosQuiz() {
 function desbloquearCompletarDia() {
   marcarRecurso('quiz');
 }
+
+// ══════════════════════════════════════
+//  ACTIVIDAD — SOPA DE LETRAS EXPERTO
+// ══════════════════════════════════════
+
+// Grid 16x16 con 5 términos experto horizontales
+const SOPA_GRID = [
+  ['S','I','N','C','R','O','N','I','Z','A','C','I','O','N','K','W'],  // SINCRONIZACION [0,0] H (14)
+  ['B','T','X','Q','M','G','P','H','Z','F','J','Y','L','D','N','R'],
+  ['O','M','N','I','C','A','N','A','L','I','D','A','D','W','B','X'],  // OMNICANALIDAD  [2,0] H (13)
+  ['K','G','J','Z','T','F','H','P','Q','R','X','N','Y','M','L','B'],
+  ['T','R','A','Z','A','B','I','L','I','D','A','D','W','K','G','P'],  // TRAZABILIDAD   [4,0] H (12)
+  ['X','N','Q','B','M','J','F','T','H','Z','Y','L','K','G','R','D'],
+  ['V','I','S','I','B','I','L','I','D','A','D','F','Q','N','M','X'],  // VISIBILIDAD    [6,0] H (11)
+  ['K','P','T','G','Z','H','N','X','B','J','Q','Y','M','R','L','W'],
+  ['R','E','S','I','L','I','E','N','C','I','A','K','P','T','X','G'],  // RESILIENCIA    [8,0] H (11)
+  ['Z','M','H','Q','B','N','T','K','X','P','J','Y','F','L','G','D'],
+  ['W','X','B','K','G','T','P','Z','N','M','H','Q','J','F','Y','L'],
+  ['T','G','N','M','X','B','K','Z','H','Q','P','J','Y','L','F','W'],
+  ['P','H','Q','T','Z','X','G','N','K','B','M','J','L','Y','W','F'],
+  ['N','Z','G','X','K','M','T','B','Q','H','P','L','J','Y','W','F'],
+  ['M','K','B','H','P','G','N','X','Z','T','Q','J','L','F','Y','W'],
+  ['X','B','T','P','H','Z','M','K','G','N','Q','F','J','Y','L','W']
+];
+
+const SOPA_WORDS = [
+  {
+    word: 'SINCRONIZACION', row: 0, col: 0, dir: 'H',
+    pista: 'Coordinación precisa entre los ritmos de producción, distribución y demanda del cliente.'
+  },
+  {
+    word: 'OMNICANALIDAD',  row: 2, col: 0, dir: 'H',
+    pista: 'Capacidad de ofrecer una experiencia integrada sin importar el canal que use el cliente.'
+  },
+  {
+    word: 'TRAZABILIDAD',   row: 4, col: 0, dir: 'H',
+    pista: 'Capacidad de seguir el recorrido exacto de un producto desde su origen hasta su destino final.'
+  },
+  {
+    word: 'VISIBILIDAD',    row: 6, col: 0, dir: 'H',
+    pista: 'Acceso en tiempo real al estado de cada eslabón de la cadena, desde el proveedor hasta el cliente.'
+  },
+  {
+    word: 'RESILIENCIA',    row: 8, col: 0, dir: 'H',
+    pista: 'Capacidad de absorber disrupciones y recuperarse sin perder el nivel de servicio al cliente.'
+  }
+];
+
+let sopaState = { found: new Set(), pistaActual: 0, palabraEscrita: '', selecting: false, start: null, sel: [] };
+
+function sopaGetCells(w) {
+  const cells = [];
+  const dr = w.dir === 'V' ? 1 : w.dir === 'D' ? 1 : 0;
+  const dc = w.dir === 'H' ? 1 : w.dir === 'D' ? 1 : 0;
+  for (let i = 0; i < w.word.length; i++) cells.push({ r: w.row + dr*i, c: w.col + dc*i });
+  return cells;
+}
+
+function abrirActividad() {
+  sopaState = { found: new Set(), pistaActual: 0, palabraEscrita: '', selecting: false, start: null, sel: [] };
+
+  const prev = document.getElementById('actividad-modal');
+  if (prev) prev.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'actividad-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(8,10,18,0.97);z-index:9999;overflow-y:auto;';
+  modal.innerHTML = `
+    <div style="max-width:700px;margin:0 auto;padding:28px 20px 60px;">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+        <div>
+          <span class="badge badge-magenta">Connected Customer · Día 1</span>
+          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">Actividad · Vocabulario Experto · 10 pts</div>
+        </div>
+        <button onclick="cerrarActividad()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:16px;">✕</button>
+      </div>
+
+      <!-- Progreso -->
+      <div style="display:flex;gap:6px;margin-bottom:24px;" id="act-progress">
+        ${SOPA_WORDS.map((_, i) => `<div style="flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,0.1);" id="act-prog-${i}"></div>`).join('')}
+      </div>
+
+      <!-- Instrucciones -->
+      <div style="background:rgba(248,0,250,0.06);border:1px solid rgba(248,0,250,0.2);border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:rgba(255,255,255,0.6);line-height:1.6;">
+        <strong style="color:var(--magenta);">¿Cómo funciona?</strong> Lee la pista, escribe el término de supply chain que corresponde y luego encuéntralo en el grid.
+      </div>
+
+      <!-- Pista actual -->
+      <div id="act-pista-area"></div>
+
+      <!-- Input -->
+      <div id="act-input-area" style="margin-bottom:24px;"></div>
+
+      <!-- Grid -->
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:16px;">
+        <table id="act-sopa-table" style="border-collapse:collapse;margin:0 auto;"></table>
+      </div>
+
+      <!-- Status -->
+      <div id="act-status" style="text-align:center;font-size:14px;font-weight:600;color:var(--cyan);min-height:22px;"></div>
+
+      <!-- Resultados -->
+      <div id="act-resultados" style="display:none;"></div>
+    </div>`;
+
+  document.body.appendChild(modal);
+  document.body.style.overflow = 'hidden';
+  actRenderGrid();
+  actMostrarPista(0);
+}
+
+function cerrarActividad() {
+  const modal = document.getElementById('actividad-modal');
+  if (modal) modal.remove();
+  document.body.style.overflow = '';
+}
+
+function actRenderGrid() {
+  const table = document.getElementById('act-sopa-table');
+  if (!table) return;
+  table.innerHTML = '';
+  for (let r = 0; r < 16; r++) {
+    const tr = document.createElement('tr');
+    for (let c = 0; c < 16; c++) {
+      const td = document.createElement('td');
+      td.className = 'sopa-td';
+      td.id = `act-td-${r}-${c}`;
+      td.textContent = SOPA_GRID[r][c];
+      td.dataset.r = r; td.dataset.c = c;
+      // Marcar ya encontradas
+      for (const wname of sopaState.found) {
+        const w = SOPA_WORDS.find(x => x.word === wname);
+        if (w && sopaGetCells(w).some(x => x.r === r && x.c === c)) { td.classList.add('found'); break; }
+      }
+      tr.appendChild(td);
+    }
+    table.appendChild(tr);
+  }
+}
+
+function actMostrarPista(idx) {
+  const w = SOPA_WORDS[idx];
+  if (!w) return;
+  sopaState.pistaActual = idx;
+  sopaState.palabraEscrita = '';
+
+  // Actualizar progreso
+  SOPA_WORDS.forEach((_, i) => {
+    const el = document.getElementById('act-prog-' + i);
+    if (!el) return;
+    if (i < idx) el.style.background = 'var(--cyan)';
+    else if (i === idx) el.style.background = 'var(--magenta)';
+    else el.style.background = 'rgba(255,255,255,0.1)';
+  });
+
+  const pistaEl = document.getElementById('act-pista-area');
+  if (pistaEl) pistaEl.innerHTML = `
+    <div style="margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--magenta);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">Pista ${idx+1} de ${SOPA_WORDS.length}</div>
+      <div style="font-size:16px;font-weight:600;line-height:1.5;color:rgba(255,255,255,0.9);">${w.pista}</div>
+    </div>`;
+
+  const inputEl = document.getElementById('act-input-area');
+  if (inputEl) inputEl.innerHTML = `
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input id="act-input" type="text" placeholder="Escribe el término aquí..." autocomplete="off" autocorrect="off" spellcheck="false"
+        style="flex:1;padding:12px 16px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:#fff;font-size:15px;font-weight:600;letter-spacing:0.05em;outline:none;text-transform:uppercase;"
+        oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')actVerificar()"/>
+      <button class="btn btn-primary" onclick="actVerificar()" style="padding:12px 20px;white-space:nowrap;">
+        <i class="fas fa-search"></i> Buscar
+      </button>
+    </div>
+    <div id="act-input-feedback" style="min-height:18px;margin-top:8px;font-size:12px;"></div>`;
+
+  setTimeout(() => { const inp = document.getElementById('act-input'); if (inp) inp.focus(); }, 100);
+  const st = document.getElementById('act-status');
+  if (st) st.textContent = '';
+}
+
+function actVerificar() {
+  const inp = document.getElementById('act-input');
+  if (!inp) return;
+  const escrita = inp.value.trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const w = SOPA_WORDS[sopaState.pistaActual];
+  const fb = document.getElementById('act-input-feedback');
+
+  if (escrita === w.word) {
+    // Correcto — resaltar en el grid
+    inp.style.borderColor = '#00ff88';
+    if (fb) fb.innerHTML = `<span style="color:#00ff88;font-weight:700;">✅ ¡Correcto! Ahora encuéntrala en el grid y selecciónala.</span>`;
+
+    // Activar selección solo para esta palabra
+    actActivarSeleccion(w);
+  } else if (escrita.length > 0) {
+    inp.style.borderColor = 'var(--magenta)';
+    if (fb) fb.innerHTML = `<span style="color:var(--magenta);">❌ No es ese término. Piénsalo de nuevo.</span>`;
+    inp.value = '';
+    setTimeout(() => { inp.style.borderColor = 'rgba(255,255,255,0.15)'; if(fb) fb.innerHTML=''; }, 2000);
+  }
+}
+
+function actActivarSeleccion(w) {
+  // Resaltar levemente las celdas de la palabra como pista visual
+  sopaGetCells(w).forEach(({ r, c }) => {
+    const td = document.getElementById(`act-td-${r}-${c}`);
+    if (td) td.style.background = 'rgba(248,0,250,0.12)';
+  });
+
+  const st = document.getElementById('act-status');
+  if (st) st.textContent = '👆 Arrastra sobre las letras en el grid para seleccionar la palabra.';
+
+  // Agregar eventos de selección al grid
+  const table = document.getElementById('act-sopa-table');
+  if (!table) return;
+
+  sopaState.selecting = false; sopaState.start = null; sopaState.sel = [];
+
+  table.querySelectorAll('.sopa-td').forEach(td => {
+    td.onmousedown = e => { e.preventDefault(); actSelDown(td); };
+    td.onmouseenter = () => { if (sopaState.selecting) actSelEnter(td); };
+    td.onmouseup = () => actSelUp(w);
+    td.ontouchstart = e => { e.preventDefault(); actSelDown(td); };
+    td.ontouchmove = e => { e.preventDefault(); const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY); if (el && el.classList.contains('sopa-td')) actSelEnter(el); };
+    td.ontouchend = e => { e.preventDefault(); actSelUp(w); };
+  });
+}
+
+function actSelDown(td) {
+  sopaState.selecting = true;
+  sopaState.start = { r: +td.dataset.r, c: +td.dataset.c };
+  actClearSel();
+  if (!td.classList.contains('found')) td.classList.add('sel');
+  sopaState.sel = [{ r: sopaState.start.r, c: sopaState.start.c }];
+}
+
+function actSelEnter(td) {
+  if (!sopaState.selecting || !sopaState.start) return;
+  actClearSel();
+  const r2 = +td.dataset.r, c2 = +td.dataset.c;
+  const line = actBuildLine(sopaState.start.r, sopaState.start.c, r2, c2);
+  sopaState.sel = line;
+  line.forEach(({ r, c }) => {
+    const cell = document.getElementById(`act-td-${r}-${c}`);
+    if (cell && !cell.classList.contains('found')) cell.classList.add('sel');
+  });
+}
+
+function actBuildLine(r1, c1, r2, c2) {
+  const dr = r2-r1, dc = c2-c1;
+  const len = Math.max(Math.abs(dr), Math.abs(dc));
+  if (len === 0) return [{ r:r1, c:c1 }];
+  if (dr !== 0 && dc !== 0 && Math.abs(dr) !== Math.abs(dc)) return [];
+  const sr = dr === 0 ? 0 : dr/Math.abs(dr);
+  const sc = dc === 0 ? 0 : dc/Math.abs(dc);
+  const cells = [];
+  for (let i = 0; i <= len; i++) cells.push({ r: r1+sr*i, c: c1+sc*i });
+  return cells;
+}
+
+function actClearSel() {
+  sopaState.sel.forEach(({ r, c }) => {
+    const td = document.getElementById(`act-td-${r}-${c}`);
+    if (td && !td.classList.contains('found')) { td.classList.remove('sel'); td.style.background = ''; }
+  });
+  sopaState.sel = [];
+}
+
+function actSelUp(w) {
+  if (!sopaState.selecting) return;
+  sopaState.selecting = false;
+  const sel = sopaState.sel.map(({ r, c }) => SOPA_GRID[r][c]).join('');
+
+  if (sel === w.word) {
+    // ¡Encontrada!
+    sopaGetCells(w).forEach(({ r, c }) => {
+      const td = document.getElementById(`act-td-${r}-${c}`);
+      if (td) { td.classList.remove('sel'); td.classList.add('found'); td.style.background = ''; }
+    });
+    sopaState.found.add(w.word);
+
+    // Quitar eventos del grid
+    document.querySelectorAll('#act-sopa-table .sopa-td').forEach(td => {
+      td.onmousedown = null; td.onmouseenter = null; td.onmouseup = null;
+      td.ontouchstart = null; td.ontouchmove = null; td.ontouchend = null;
+    });
+
+    const st = document.getElementById('act-status');
+    if (st) st.textContent = `✅ ¡${w.word} encontrada!`;
+
+    setTimeout(() => {
+      const siguiente = sopaState.pistaActual + 1;
+      if (siguiente < SOPA_WORDS.length) {
+        actMostrarPista(siguiente);
+      } else {
+        actMostrarResultados();
+      }
+    }, 1200);
+  } else {
+    actClearSel();
+    const st = document.getElementById('act-status');
+    if (st) { st.textContent = 'Intenta de nuevo — selecciona exactamente las letras de la palabra.'; st.style.color = 'var(--magenta)'; }
+    setTimeout(() => { if(st){ st.textContent='👆 Arrastra sobre las letras en el grid.'; st.style.color='var(--cyan)'; } }, 2000);
+  }
+}
+
+function actMostrarResultados() {
+  document.getElementById('act-pista-area').style.display = 'none';
+  document.getElementById('act-input-area').style.display = 'none';
+  document.getElementById('act-status').textContent = '';
+  SOPA_WORDS.forEach((_, i) => {
+    const el = document.getElementById('act-prog-' + i);
+    if (el) el.style.background = 'var(--cyan)';
+  });
+
+  const res = document.getElementById('act-resultados');
+  res.style.display = 'block';
+  res.innerHTML = `
+    <div style="text-align:center;padding:24px 0 32px;">
+      <div style="font-size:64px;font-weight:900;color:#00ff88;line-height:1;">5/5</div>
+      <div style="font-size:22px;font-weight:700;margin:10px 0 6px;">+10 pts</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.45);">¡Dominas el vocabulario experto de Connected Customer!</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:28px;">
+      ${SOPA_WORDS.map(w => `
+        <div style="background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.15);border-radius:10px;padding:12px 16px;">
+          <div style="font-size:13px;font-weight:800;color:#00ff88;letter-spacing:0.06em;margin-bottom:3px;">${w.word}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5;">${w.pista}</div>
+        </div>`).join('')}
+    </div>
+    <button class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;" onclick="cerrarActividad();marcarRecurso('actividad');showFloatingPoints(10);">
+      Cerrar y continuar <i class="fas fa-check"></i>
+    </button>`;
+}
+
+function initSopa() {} // legacy — ya no se usa inline
 
 function completarDia() {
   showToast('🎉 ¡Día 1 completado! +10 pts', 'success');

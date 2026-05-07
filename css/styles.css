@@ -530,3 +530,14 @@ body {
   .diploma-wrap { padding: 32px 20px; }
   .nps-btn { width: 34px; height: 34px; font-size: 12px; }
 }
+
+/* ── SOPA DE LETRAS ── */
+.sopa-td {
+  width:28px;height:28px;text-align:center;vertical-align:middle;
+  font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);
+  cursor:pointer;border:1px solid rgba(255,255,255,0.06);
+  border-radius:3px;user-select:none;transition:background 0.1s,color 0.1s;
+}
+.sopa-td:hover { background:rgba(0,216,218,0.12); }
+.sopa-td.sel   { background:rgba(255,200,0,0.3);color:#fff; }
+.sopa-td.found { background:rgba(0,255,136,0.18);color:#00ff88;cursor:default; }
