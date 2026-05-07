@@ -3458,15 +3458,80 @@ const BANCO_D1 = [
 
 let quizState = {};
 
+// ─── CHECKLIST DE RECURSOS ────────────────────────────────────
+const URLS_RECURSOS_D1 = {
+  video1:    'https://scimexiconet.sharepoint.com/sites/ACADEMIALOGISTICA687/Documentos compartidos/Archivos generales/../../../../:v:/s/ACADEMIALOGISTICA687/ETq6Mc-2uCVFupURSy3L3EEBiUoe335euNt1E21hUWSUVQ?e=ETcWwp',
+  video2:    'https://scimexiconet.sharepoint.com/sites/ACADEMIALOGISTICA687/Documentos compartidos/Archivos generales/../../../../:v:/s/ACADEMIALOGISTICA687/IQDQfwRqRE5XTZ3B663dCGFrAUMHgzNmYKW-rgMsEmpXldk?e=awX4Yo',
+  lectura1:  'https://icttm.org/case-study-the-supply-chain-success-story-of-amazon/',
+  lectura2:  'https://www.deloitte.com/us/en/services/consulting/articles/customer-centric-supply-chain-data.html'
+};
+
+let diaRecursos = { video1: false, video2: false, lectura1: false, lectura2: false, quiz: false };
+
+function abrirRecurso(id) {
+  const url = URLS_RECURSOS_D1[id];
+  if (url) window.open(url, '_blank');
+  marcarRecurso(id);
+}
+
+function marcarRecurso(id) {
+  diaRecursos[id] = true;
+  const el = document.getElementById('check-' + id);
+  if (el) {
+    el.style.background = '#00ff88';
+    el.style.borderColor = '#00ff88';
+    el.innerHTML = '✓';
+    el.style.color = '#000';
+  }
+  verificarCompletarDia();
+}
+
+function verificarCompletarDia() {
+  const todos = Object.values(diaRecursos).every(v => v);
+  const btn = document.getElementById('btn-completar-dia');
+  if (!btn || btn._desbloqueado) return;
+  if (todos) {
+    btn._desbloqueado = true;
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+    btn.innerHTML = 'Completar día y continuar <i class="fas fa-arrow-right"></i>';
+    showToast('🔓 ¡Todo listo! Ya puedes avanzar al siguiente día.', 'success');
+  }
+}
+
 function abrirQuiz() {
   const shuffled = [...BANCO_D1].sort(() => Math.random() - 0.5);
   quizState = { preguntas: shuffled.slice(0, 5), actual: 0, respuestas: [], ptsGanados: 0, timerSeg: 300, timerInterval: null };
-  const modal = document.getElementById('quiz-modal');
-  if (!modal) return;
-  document.getElementById('quiz-results-area').style.display = 'none';
-  document.getElementById('quiz-question-area').style.display = 'block';
-  document.getElementById('quiz-timer').style.color = 'var(--cyan)';
-  modal.style.display = 'block';
+
+  // Eliminar modal previo si existe
+  const prev = document.getElementById('quiz-modal');
+  if (prev) prev.remove();
+
+  // Crear modal directo en body (evita problemas de stacking context)
+  const modal = document.createElement('div');
+  modal.id = 'quiz-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(8,10,18,0.97);z-index:9999;overflow-y:auto;';
+  modal.innerHTML = `
+    <div style="max-width:600px;margin:0 auto;padding:28px 20px 60px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+        <div>
+          <span class="badge badge-cyan">Connected Customer · Día 1</span>
+          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">Quiz del día · 25 pts</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:18px;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <i class="fas fa-clock" style="font-size:13px;color:rgba(255,255,255,0.3);"></i>
+            <span id="quiz-timer" style="font-size:22px;font-weight:800;color:var(--cyan);font-variant-numeric:tabular-nums;min-width:46px;">5:00</span>
+          </div>
+          <button onclick="cerrarQuiz()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:16px;line-height:1;">✕</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:32px;" id="quiz-progress-dots"></div>
+      <div id="quiz-question-area"></div>
+      <div id="quiz-results-area" style="display:none;"></div>
+    </div>`;
+  document.body.appendChild(modal);
   document.body.style.overflow = 'hidden';
   renderQuizPregunta();
   iniciarTimerQuiz();
@@ -3475,7 +3540,7 @@ function abrirQuiz() {
 function cerrarQuiz() {
   if (quizState.timerInterval) clearInterval(quizState.timerInterval);
   const modal = document.getElementById('quiz-modal');
-  if (modal) modal.style.display = 'none';
+  if (modal) modal.remove();
   document.body.style.overflow = '';
 }
 
@@ -3593,9 +3658,13 @@ function mostrarResultadosQuiz() {
         </div>
       `).join('')}
     </div>` : `<div style="text-align:center;padding:0 0 28px;font-size:15px;color:#00ff88;">🎉 ¡Respondiste todo correctamente!</div>`}
-    <button class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;" onclick="cerrarQuiz();if(${ptsGanados}>0)showFloatingPoints(${ptsGanados});">
+    <button class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;" onclick="cerrarQuiz();desbloquearCompletarDia();if(${ptsGanados}>0)showFloatingPoints(${ptsGanados});">
       Cerrar y continuar <i class="fas fa-check"></i>
     </button>`;
+}
+
+function desbloquearCompletarDia() {
+  marcarRecurso('quiz');
 }
 
 function completarDia() {

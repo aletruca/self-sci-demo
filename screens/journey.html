@@ -349,13 +349,21 @@
           <div class="card" style="margin-bottom:20px;">
             <h4 style="color:var(--cyan);margin-bottom:14px;font-size:15px;"><i class="fas fa-video" style="margin-right:8px;"></i>Videos del día</h4>
             <div style="display:flex;flex-direction:column;gap:10px;">
-              <div class="video-placeholder" style="margin-bottom:0;height:140px;" onclick="abrirVideoPlayer()">
-                <div class="play-btn" style="width:44px;height:44px;font-size:16px;">▶</div>
-                <p style="color:rgba(255,255,255,0.5);font-size:13px;margin-top:6px;">¿Qué es la cadena de suministro? — 5 min</p>
+              <div style="position:relative;">
+                <div id="check-video1" style="position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);background:transparent;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;z-index:1;transition:all 0.3s;"></div>
+                <div class="video-placeholder" style="margin-bottom:0;height:140px;cursor:pointer;" onclick="abrirRecurso('video1')">
+                  <div class="play-btn" style="width:44px;height:44px;font-size:16px;">▶</div>
+                  <p style="color:rgba(255,255,255,0.5);font-size:13px;margin-top:6px;">¿Qué es la cadena de suministro? — 5 min</p>
+                  <p style="font-size:11px;color:rgba(0,216,218,0.6);margin-top:2px;"><i class="fas fa-external-link-alt"></i> Abrir en SharePoint</p>
+                </div>
               </div>
-              <div class="video-placeholder" style="margin-bottom:0;height:140px;" onclick="abrirVideoPlayer()">
-                <div class="play-btn" style="width:44px;height:44px;font-size:16px;">▶</div>
-                <p style="color:rgba(255,255,255,0.5);font-size:13px;margin-top:6px;">Cadena de suministro centrada en el cliente — 7 min</p>
+              <div style="position:relative;">
+                <div id="check-video2" style="position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);background:transparent;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;z-index:1;transition:all 0.3s;"></div>
+                <div class="video-placeholder" style="margin-bottom:0;height:140px;cursor:pointer;" onclick="abrirRecurso('video2')">
+                  <div class="play-btn" style="width:44px;height:44px;font-size:16px;">▶</div>
+                  <p style="color:rgba(255,255,255,0.5);font-size:13px;margin-top:6px;">Cadena de suministro centrada en el cliente — 7 min</p>
+                  <p style="font-size:11px;color:rgba(0,216,218,0.6);margin-top:2px;"><i class="fas fa-external-link-alt"></i> Abrir en SharePoint</p>
+                </div>
               </div>
             </div>
           </div>
@@ -394,14 +402,20 @@
           <div class="card" style="margin-bottom:20px;">
             <h4 style="margin-bottom:14px;font-size:15px;">📎 Recursos adicionales</h4>
             <div style="display:flex;flex-direction:column;gap:8px;">
-              <a href="#" target="_blank" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,165,0,0.06);border:1px solid rgba(255,165,0,0.2);border-radius:8px;text-decoration:none;">
-                <span style="font-size:13px;color:rgba(255,255,255,0.8);">🗺️ Infografía: La historia de éxito de Amazon</span>
-                <span style="font-size:11px;color:orange;">5 min <i class="fas fa-external-link-alt"></i></span>
-              </a>
-              <a href="https://www.deloitte.com" target="_blank" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:8px;text-decoration:none;">
-                <span style="font-size:13px;color:rgba(255,255,255,0.8);">📄 Artículo: Conectividad del consumidor — Deloitte</span>
-                <span style="font-size:11px;color:rgba(255,255,255,0.4);">7 min <i class="fas fa-external-link-alt"></i></span>
-              </a>
+              <div onclick="abrirRecurso('lectura1')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,165,0,0.06);border:1px solid rgba(255,165,0,0.2);border-radius:8px;cursor:pointer;position:relative;">
+                <span style="font-size:13px;color:rgba(255,255,255,0.8);">🗺️ Caso de éxito: La cadena de suministro de Amazon</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:11px;color:orange;">5 min <i class="fas fa-external-link-alt"></i></span>
+                  <div id="check-lectura1" style="width:20px;height:20px;border-radius:50%;border:1px solid rgba(255,165,0,0.4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;transition:all 0.3s;"></div>
+                </div>
+              </div>
+              <div onclick="abrirRecurso('lectura2')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:8px;cursor:pointer;">
+                <span style="font-size:13px;color:rgba(255,255,255,0.8);">📄 Artículo: Cadena de suministro centrada en el cliente — Deloitte</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span style="font-size:11px;color:rgba(255,255,255,0.4);">7 min <i class="fas fa-external-link-alt"></i></span>
+                  <div id="check-lectura2" style="width:20px;height:20px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;transition:all 0.3s;"></div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -565,9 +579,9 @@
             </button>
           </div>
 
-          <!-- Botón completar -->
-          <button class="btn btn-primary" style="width:100%;" onclick="completarDia()">
-            Completar día y continuar <i class="fas fa-arrow-right"></i>
+          <!-- Botón completar — se activa al terminar el quiz -->
+          <button id="btn-completar-dia" class="btn btn-primary" style="width:100%;opacity:0.35;cursor:not-allowed;" disabled onclick="completarDia()">
+            <i class="fas fa-lock" style="font-size:12px;"></i> Completa el quiz para continuar
           </button>
         </div>
       </div>
