@@ -1187,6 +1187,7 @@ function navigate(screenId) {
       renderSesionesSync();
     }, 80);
   }
+  if (screenId === 'screen-admin-contenido') setTimeout(renderAdminContenido, 80);
   if (screenId === 'screen-admin-dashboard') {
     setTimeout(renderKpiAvancePromedio, 80);
     setTimeout(renderCalendarioGlobal, 80);
@@ -2111,12 +2112,34 @@ const mockSesiones = [
 ];
 
 const mockModulosGrid = [
-  { nombre:'Liderazgo Operativo',  icono:'⚡', nivel:'Nivel 1 — Novato',       temas:['Gestión del turno','Delegación','Resolución de problemas'], duracion:'4h',   activos:3 },
-  { nombre:'Gestión de Equipos',   icono:'👥', nivel:'Nivel 2 — Principiante', temas:['Comunicación','Retroalimentación','Trabajo en equipo'],     duracion:'3h',   activos:2 },
-  { nombre:'KPIs y Métricas',      icono:'📊', nivel:'Nivel 2 — Principiante', temas:['OEE','Productividad','Análisis de datos'],                  duracion:'3.5h', activos:2 },
-  { nombre:'Comunicación Efectiva',icono:'💬', nivel:'Nivel 3 — Competente',   temas:['Escucha activa','Negociación','Presentaciones'],            duracion:'2.5h', activos:1 },
-  { nombre:'Bienestar Laboral',    icono:'🧘', nivel:'Nivel 3 — Competente',   temas:['NOM-035','Manejo del estrés','PERMA'],                      duracion:'2h',   activos:1 },
-  { nombre:'Seguridad e Higiene',  icono:'🦺', nivel:'Nivel 4 — Avanzado',     temas:['Normas STPS','Riesgos laborales','Planes de emergencia'],   duracion:'3h',   activos:0 },
+  {
+    id: 'connected-customer',
+    nombre: 'Connected Customer & Product',
+    icono: '🌐',
+    nivel: 'Nivel 4 — Avanzado',
+    semanas: '2 semanas',
+    descripcion: 'Comprende cómo la cadena de suministro centrada en el cliente y el producto conectado transforman las operaciones y la experiencia del cliente.',
+    temas: ['Cliente conectado', 'Omnicanalidad', 'Gestión de portafolio', 'Órdenes sin fricción', 'Servicios de campo'],
+    duracion: '10 días',
+    activos: 3,
+    contenido: [
+      { dia:1, titulo:'La mejor cadena de suministro centrada en el cliente', pregunta:'¿Qué significa hoy una "mejor cadena de suministro"?', objetivo:'Distinguir la nueva definición de excelencia en la cadena de suministro para identificar los elementos que hoy generan valor al cliente.', recursos:[{tipo:'video',titulo:'¿Qué es la cadena de suministro?',duracion:'5 min',url:'#sharepoint'},{tipo:'video',titulo:'Cadena de suministro centrada en el cliente',duracion:'7 min',url:'#sharepoint'},{tipo:'infografia',titulo:'La historia de éxito de la cadena de suministro de Amazon',duracion:'5 min',url:'https://www.deloitte.com'},{tipo:'articulo',titulo:'Conectividad del consumidor',duracion:'7 min',url:'https://www.deloitte.com'}], actividad:{titulo:'Descubre qué define hoy a la mejor cadena de suministro',puntos:10,url:'#sharepoint'} },
+      { dia:2, titulo:'Transformación de la cadena de suministro', pregunta:'¿Por qué y cómo cambió la cadena de suministro?', objetivo:'Identificar las fuerzas tecnológicas, sociales y económicas que transformaron la cadena de suministro.', recursos:[{tipo:'video',titulo:'Conexiones que transforman la experiencia',duracion:'5 min',url:'#sharepoint'},{tipo:'video',titulo:'De la cadena a la red',duracion:'8 min',url:'#sharepoint'},{tipo:'video',titulo:'El auge de las cadenas de suministro centradas en el cliente',duracion:'7 min',url:'https://www.scmr.com'},{tipo:'articulo',titulo:'¿Por qué el futuro de la experiencia del cliente exige la cadena de suministro de la experiencia?',duracion:'7 min',url:'https://www.pwc.com'}], actividad:{titulo:'Riesgos de no transformarse',puntos:10,url:'#sharepoint'} },
+      { dia:3, titulo:'El cliente conectado', pregunta:'¿Quién impulsó el cambio de la cadena de suministro?', objetivo:'Analizar las características del cliente conectado y relacionarlas con las nuevas exigencias que impone a los procesos logísticos.', recursos:[{tipo:'video',titulo:'El cliente conectado',duracion:'6 min',url:'#sharepoint'},{tipo:'podcast',titulo:'Mapa del recorrido del cliente',duracion:'15 min',url:'#sharepoint'},{tipo:'articulo',titulo:'Logística 4.0 y el auge del cliente conectado',duracion:'2 min',url:'https://www.logisticsexecutive.com'}], actividad:{titulo:'Reescribe la promesa',puntos:10,url:'#sharepoint'} },
+      { dia:4, titulo:'La nueva realidad: cadenas visibles, digitales y preparadas', pregunta:'¿Cómo responder al nuevo entorno de la cadena de suministro centrada en el cliente?', objetivo:'Examinar los habilitadores modernos: resiliencia, nearshoring, digitalización y sostenibilidad.', recursos:[{tipo:'articulo',titulo:'Creación de cadenas de suministro resilientes y sostenibles',duracion:'3 min',url:'https://www.ibm.com'},{tipo:'articulo',titulo:'Nearshoring: Superando los obstáculos',duracion:'5 min',url:'https://www.bain.com'},{tipo:'video',titulo:'Tendencias logísticas 2026',duracion:'7 min',url:'https://www.acrosslogistics.com'},{tipo:'video',titulo:'La última milla',duracion:'6 min',url:'#pendiente'},{tipo:'infografia',titulo:'¿Qué esperan los consumidores de los servicios de última milla?',duracion:'3 min',url:'#pendiente'}], actividad:{titulo:'Nearshoring con estrategia',puntos:10,url:'#sharepoint'} },
+      { dia:5, titulo:'Experiencia omnicanal customizada', pregunta:'¿Cómo se traduce esto a la experiencia del cliente?', objetivo:'Analizar cómo los modelos omnicanal integran operaciones físicas y digitales para explicar su impacto en la experiencia del cliente conectado.', recursos:[{tipo:'video',titulo:'Omnicanalidad',duracion:'5 min',url:'#pendiente'},{tipo:'articulo',titulo:'Experiencia del cliente B2C frente a B2B',duracion:'6 min',url:'https://www.medallia.com'},{tipo:'articulo',titulo:'Cómo la personalización habilitada por IA está transformando las cadenas de suministro omnicanal',duracion:'6 min',url:'#pendiente'},{tipo:'infografia',titulo:'Un futuro diseñado por la logística omnicanal',duracion:'3 min',url:'#pendiente'}], actividad:{titulo:'Omnicanal para B2B vs B2C: igual de claro, pero con reglas distintas',puntos:10,url:'#sharepoint'} },
+      { dia:6, titulo:'Gestión del portafolio de productos', pregunta:'¿Cómo equilibrar oferta, rentabilidad y valor al cliente?', objetivo:'Interpretar los criterios de gestión del portafolio y comparar cómo distintas combinaciones de productos afectan la rentabilidad.', recursos:[{tipo:'podcast',titulo:'Gestión de la cartera de productos',duracion:'9 min',url:'https://www.businessmap.io'},{tipo:'articulo',titulo:'¿Qué es la racionalización de SKU?',duracion:'7 min',url:'https://www.shopify.com'},{tipo:'articulo',titulo:'Evolucionar las carteras de productos para adaptarlas a las necesidades cambiantes',duracion:'8 min',url:'https://www.gartner.com'}], actividad:{titulo:'Limpieza inteligente del portafolio',puntos:10,url:'#sharepoint'} },
+      { dia:7, titulo:'Órdenes sin fricción', pregunta:'¿Cómo eliminar barreras en la experiencia del cliente?', objetivo:'Identificar los principales puntos de fricción en el proceso pedido–cumplimiento y analizar cómo eliminarlos.', recursos:[{tipo:'video',titulo:'De la fricción a la fluidez',duracion:'6 min',url:'#pendiente'},{tipo:'articulo',titulo:'Eliminar la fricción en las cadenas de suministro para obtener una ventaja competitiva',duracion:'3 min',url:'#pendiente'},{tipo:'articulo',titulo:'Experiencia sin fricciones: La clave para retener clientes en la era digital',duracion:'9 min',url:'#pendiente'}], actividad:{titulo:'Diseña un pedido "sin fricción" para un cliente nuevo',puntos:10,url:'#sharepoint'} },
+      { dia:8, titulo:'Servicio al cliente', pregunta:'¿Cómo medimos y mejoramos esa experiencia del cliente?', objetivo:'Comprender las dimensiones del servicio al cliente en la cadena de suministro y valorar qué métricas permiten mejorar la atención.', recursos:[{tipo:'podcast',titulo:'Servicio al cliente vs Experiencia de cliente',duracion:'13 min',url:'https://podcasts.apple.com'},{tipo:'articulo',titulo:'El papel del servicio al cliente en la mejora de la gestión de la cadena de suministro',duracion:'5 min',url:'#pendiente'},{tipo:'articulo',titulo:'¿Customer Effort Score o Net Promoter Score?',duracion:'5 min',url:'#pendiente'}], actividad:{titulo:'¿Qué estás midiendo?',puntos:10,url:'#sharepoint'} },
+      { dia:9, titulo:'Servicios de campo conectados', pregunta:'¿Cómo integramos todo el ecosistema para crear valor sostenible?', objetivo:'Reconocer los elementos operativos, técnicos y digitales del servicio de campo para sintetizar cómo generan valor sostenible.', recursos:[{tipo:'video',titulo:'Servicios de campo conectados',duracion:'4 min',url:'#pendiente'},{tipo:'articulo',titulo:'La diferencia entre servicio de campo y servicio de campo conectado',duracion:'5 min',url:'#pendiente'},{tipo:'infografia',titulo:'Comprendiendo el servicio de campo conectado',duracion:'6 min',url:'#pendiente'},{tipo:'articulo',titulo:'Equipos conectados, clientes satisfechos',duracion:'8 min',url:'#pendiente'}], actividad:{titulo:'Primera visita resuelta, evita la segunda vuelta',puntos:10,url:'#sharepoint'} },
+      { dia:10, titulo:'Evaluación final', pregunta:'¿Cómo se ve reflejado todo lo aprendido?', objetivo:'Integrar y demostrar los conocimientos adquiridos a lo largo del módulo.', recursos:[], actividad:{titulo:'Examen final del módulo',puntos:50,url:'#pendiente'} }
+    ]
+  },
+  { id:'planificacion-sincronica', nombre:'Planeación Sincrónica', icono:'🔄', nivel:'Nivel 4 — Avanzado', semanas:'2 semanas', descripcion:'Domina las técnicas de sincronización entre demanda, producción y distribución para optimizar el flujo de materiales e información.', temas:['S&OP','Demand Sensing','Planeación colaborativa','CPFR','Restricciones'], duracion:'10 días', activos:2, contenido:[] },
+  { id:'smart-operations', nombre:'Smart Operations', icono:'⚙️', nivel:'Nivel 4 — Avanzado', semanas:'2 semanas', descripcion:'Aplica tecnologías digitales e inteligencia artificial para transformar las operaciones en sistemas más inteligentes y eficientes.', temas:['IoT','Automatización','Gemelos digitales','Analítica avanzada','IA operativa'], duracion:'10 días', activos:2, contenido:[] },
+  { id:'dynamic-fulfillment', nombre:'Dynamic Fulfillment', icono:'🚀', nivel:'Nivel 4 — Avanzado', semanas:'2 semanas', descripcion:'Diseña y gestiona redes de cumplimiento dinámicas que respondan con agilidad a la demanda del cliente conectado.', temas:['Microfulfilment','Last mile','Cross-docking','Inventario dinámico','Promesa de entrega'], duracion:'10 días', activos:2, contenido:[] },
+  { id:'game-changers', nombre:'Game Changers', icono:'🎯', nivel:'Nivel 5 — Experto', semanas:'5 semanas', descripcion:'Desarrolla las habilidades que distinguen a los líderes de alto impacto: negociación, innovación, liderazgo, y dominio de la IA aplicada.', temas:['Negociación','Innovación','Liderazgo','Citizen AI'], duracion:'25 días', activos:1, contenido:[] },
+  { id:'lean', nombre:'Lean', icono:'🎯', nivel:'Nivel 2 — Principiante', semanas:'2 semanas', descripcion:'Comprende y aplica los principios Lean para eliminar desperdicios, mejorar flujos y crear valor sostenible en la cadena de operaciones.', temas:['Value Stream','5S','Kaizen','Kanban','A3'], duracion:'10 días', activos:1, contenido:[] },
 ];
 
 const mockPermisos = [
@@ -3186,4 +3209,397 @@ function calGlobalNext() {
   calGlobalState.month++;
   if (calGlobalState.month > 11) { calGlobalState.month = 0; calGlobalState.year++; }
   renderCalendarioGlobal();
+}
+
+// ══════════════════════════════════════
+//  GESTIÓN DE CONTENIDO (CMS)
+// ══════════════════════════════════════
+
+const TIPO_ICONO = { video:'fas fa-video', podcast:'fas fa-headphones', articulo:'fas fa-file-alt', infografia:'fas fa-image', actividad:'fas fa-tasks' };
+const TIPO_COLOR = { video:'var(--cyan)', podcast:'var(--purple)', articulo:'rgba(255,255,255,0.7)', infografia:'orange', actividad:'var(--magenta)' };
+
+let _moduloEditando = null;
+
+function renderAdminContenido() {
+  const el = document.getElementById('admin-contenido-vista');
+  if (!el) return;
+  if (_moduloEditando) { renderEditorModulo(_moduloEditando); return; }
+
+  const pendientesTotal = mod => (mod.contenido || []).reduce((acc, dia) => {
+    const rPend = (dia.recursos || []).filter(r => r.url === '#pendiente' || r.url === '#sharepoint').length;
+    const aPend = dia.actividad && (dia.actividad.url === '#pendiente' || dia.actividad.url === '#sharepoint') ? 1 : 0;
+    return acc + rPend + aPend;
+  }, 0);
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+      ${mockModulosGrid.map(m => {
+        const pend = pendientesTotal(m);
+        const dias = (m.contenido || []).length;
+        return `
+        <div class="card" style="border-color:rgba(0,216,218,0.2);cursor:pointer;" onclick="abrirEditorModulo('${m.id}')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+            <div style="font-size:36px;">${m.icono}</div>
+            ${pend > 0 ? `<span style="background:rgba(255,165,0,0.15);border:1px solid orange;color:orange;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;">${pend} pendientes</span>` : `<span style="background:rgba(0,255,136,0.1);border:1px solid #00ff88;color:#00ff88;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;">Completo</span>`}
+          </div>
+          <h3 style="font-weight:700;margin-bottom:4px;font-size:15px;">${m.nombre}</h3>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:10px;">${m.nivel} · ${m.semanas}</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:14px;line-height:1.5;">${m.descripcion}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:12px;color:rgba(255,255,255,0.4);">${dias} días mapeados</span>
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();abrirEditorModulo('${m.id}')"><i class="fas fa-edit"></i> Editar</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function abrirEditorModulo(id) {
+  _moduloEditando = id;
+  renderEditorModulo(id);
+}
+
+function cerrarEditorModulo() {
+  _moduloEditando = null;
+  renderAdminContenido();
+}
+
+function renderEditorModulo(id) {
+  const el = document.getElementById('admin-contenido-vista');
+  const m  = mockModulosGrid.find(x => x.id === id);
+  if (!el || !m) return;
+
+  const diasHtml = (m.contenido || []).map(dia => {
+    const pendientes = (dia.recursos || []).filter(r => r.url === '#pendiente' || r.url === '#sharepoint').length + (dia.actividad && (dia.actividad.url === '#pendiente' || dia.actividad.url === '#sharepoint') ? 1 : 0);
+    const recursosHtml = (dia.recursos || []).map((r, ri) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:6px;flex-wrap:wrap;">
+        <i class="${TIPO_ICONO[r.tipo] || 'fas fa-file'}" style="color:${TIPO_COLOR[r.tipo] || 'white'};width:16px;"></i>
+        <span style="flex:1;font-size:13px;min-width:150px;">${r.titulo}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,0.35);">${r.duracion || ''}</span>
+        <input value="${r.url}" placeholder="URL o link de SharePoint"
+          style="background:rgba(255,255,255,0.06);border:1px solid ${r.url==='#pendiente'?'orange':r.url==='#sharepoint'?'rgba(248,0,250,0.4)':'rgba(255,255,255,0.1)'};border-radius:6px;padding:5px 10px;font-size:12px;color:white;font-family:'Outfit',sans-serif;width:220px;"
+          onchange="actualizarRecurso('${id}',${dia.dia},${ri},'url',this.value);this.style.borderColor='rgba(0,255,136,0.5)'"/>
+      </div>`).join('');
+
+    const actHtml = dia.actividad ? `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(248,0,250,0.05);border:1px solid rgba(248,0,250,0.2);border-radius:8px;margin-top:6px;flex-wrap:wrap;">
+        <i class="fas fa-tasks" style="color:var(--magenta);width:16px;"></i>
+        <span style="flex:1;font-size:13px;min-width:150px;color:var(--magenta);">Actividad: ${dia.actividad.titulo}</span>
+        <span style="font-size:11px;color:rgba(255,255,255,0.35);">${dia.actividad.puntos} pts</span>
+        <input value="${dia.actividad.url}" placeholder="URL de la actividad"
+          style="background:rgba(255,255,255,0.06);border:1px solid ${dia.actividad.url==='#pendiente'?'orange':dia.actividad.url==='#sharepoint'?'rgba(248,0,250,0.4)':'rgba(255,255,255,0.1)'};border-radius:6px;padding:5px 10px;font-size:12px;color:white;font-family:'Outfit',sans-serif;width:220px;"
+          onchange="actualizarActividad('${id}',${dia.dia},'url',this.value);this.style.borderColor='rgba(0,255,136,0.5)'"/>
+      </div>` : '';
+
+    return `
+      <div class="card" style="margin-bottom:14px;border-color:rgba(255,255,255,0.07);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;cursor:pointer;" onclick="toggleDia(this)">
+          <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">D${dia.dia}</div>
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:14px;">${dia.titulo}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.4);">${dia.pregunta}</div>
+          </div>
+          ${pendientes > 0 ? `<span style="font-size:11px;color:orange;background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.3);border-radius:5px;padding:2px 7px;">${pendientes} pendiente${pendientes>1?'s':''}</span>` : `<span style="font-size:11px;color:#00ff88;">✓ Completo</span>`}
+          <i class="fas fa-chevron-down" style="color:rgba(255,255,255,0.3);transition:transform 0.2s;"></i>
+        </div>
+        <div class="dia-recursos" style="display:none;">
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <i class="fas fa-bullseye" style="color:var(--cyan);margin-right:6px;"></i>${dia.objetivo}
+          </div>
+          ${recursosHtml}
+          ${actHtml}
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px;font-size:12px;" onclick="agregarRecurso('${id}',${dia.dia})">
+            <i class="fas fa-plus"></i> Agregar recurso
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div style="margin-bottom:20px;">
+      <button class="btn btn-secondary btn-sm" onclick="cerrarEditorModulo()"><i class="fas fa-arrow-left"></i> Todos los módulos</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:flex-start;">
+      <div>
+        <div class="card" style="margin-bottom:20px;border-color:rgba(0,216,218,0.2);">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+            <div style="font-size:42px;">${m.icono}</div>
+            <div>
+              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;">${m.nombre}</h2>
+              <div style="font-size:13px;color:rgba(255,255,255,0.4);">${m.nivel} · ${m.semanas} · ${(m.contenido||[]).length} días</div>
+            </div>
+          </div>
+          <p style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.6;">${m.descripcion}</p>
+        </div>
+        <h3 class="section-title" style="margin-bottom:16px;"><span>Días</span> de contenido</h3>
+        ${diasHtml || '<div class="card" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px;">Sin contenido mapeado aún</div>'}
+      </div>
+      <div>
+        <div class="card" style="border-color:rgba(248,0,250,0.2);position:sticky;top:20px;">
+          <h4 style="margin-bottom:16px;color:var(--magenta);">Resumen del módulo</h4>
+          ${(() => {
+            const total = (m.contenido||[]).reduce((a,d) => a + (d.recursos||[]).length, 0);
+            const pend  = (m.contenido||[]).reduce((a,d) => a + (d.recursos||[]).filter(r=>r.url==='#pendiente').length, 0);
+            const share = (m.contenido||[]).reduce((a,d) => a + (d.recursos||[]).filter(r=>r.url==='#sharepoint').length, 0);
+            const ok    = total - pend - share;
+            const pts   = (m.contenido||[]).reduce((a,d) => a + (d.actividad?.puntos||0), 0);
+            return `
+              <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
+                <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Total recursos</span><strong>${total}</strong></div>
+                <div style="display:flex;justify-content:space-between;"><span style="color:#00ff88;">Con link</span><strong style="color:#00ff88;">${ok}</strong></div>
+                <div style="display:flex;justify-content:space-between;"><span style="color:var(--magenta);">En SharePoint</span><strong style="color:var(--magenta);">${share}</strong></div>
+                <div style="display:flex;justify-content:space-between;"><span style="color:orange;">Pendientes</span><strong style="color:orange;">${pend}</strong></div>
+                <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:10px;display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Puntos totales</span><strong style="color:var(--cyan);">${pts} pts</strong></div>
+              </div>`;
+          })()}
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleDia(header) {
+  const recursos = header.parentElement.querySelector('.dia-recursos');
+  const icon = header.querySelector('.fa-chevron-down');
+  if (recursos.style.display === 'none') {
+    recursos.style.display = 'block';
+    if (icon) icon.style.transform = 'rotate(180deg)';
+  } else {
+    recursos.style.display = 'none';
+    if (icon) icon.style.transform = 'rotate(0deg)';
+  }
+}
+
+function actualizarRecurso(moduloId, dia, recursoIdx, campo, valor) {
+  const m = mockModulosGrid.find(x => x.id === moduloId);
+  if (!m) return;
+  const d = m.contenido.find(d => d.dia === dia);
+  if (!d || !d.recursos[recursoIdx]) return;
+  d.recursos[recursoIdx][campo] = valor;
+  showToast('✅ Recurso actualizado', 'success');
+}
+
+function actualizarActividad(moduloId, dia, campo, valor) {
+  const m = mockModulosGrid.find(x => x.id === moduloId);
+  if (!m) return;
+  const d = m.contenido.find(d => d.dia === dia);
+  if (!d || !d.actividad) return;
+  d.actividad[campo] = valor;
+  showToast('✅ Actividad actualizada', 'success');
+}
+
+function agregarRecurso(moduloId, dia) {
+  const m = mockModulosGrid.find(x => x.id === moduloId);
+  if (!m) return;
+  const d = m.contenido.find(d => d.dia === dia);
+  if (!d) return;
+  d.recursos.push({ tipo: 'articulo', titulo: 'Nuevo recurso', duracion: '5 min', url: '#pendiente' });
+  renderEditorModulo(moduloId);
+  showToast('✅ Recurso agregado', 'success');
+}
+
+function nuevoModulo() {
+  showToast('🚧 Función disponible próximamente', 'info');
+}
+
+// ══════════════════════════════════════
+//  QUIZ CONNECTED CUSTOMER — MODAL
+// ══════════════════════════════════════
+
+const BANCO_D1 = [
+  {
+    q: '¿Qué define mejor a una cadena de suministro de excelencia hoy?',
+    opts: ['Tener los costos operativos más bajos del mercado', 'Entregar el producto correcto, en el momento correcto, con la experiencia que el cliente espera', 'Tener el mayor número de proveedores certificados', 'Automatizar el mayor número de procesos posible'],
+    c: 1,
+    exp: 'La excelencia moderna se mide por la experiencia completa que recibe el cliente, no solo por la eficiencia interna de la operación.'
+  },
+  {
+    q: '¿Qué cambio impulsó Amazon en las expectativas del cliente conectado?',
+    opts: ['Redujo los precios de los productos al mínimo posible', 'Eliminó la necesidad de proveedores externos', 'Convirtió la velocidad, visibilidad y personalización en expectativas básicas', 'Demostró que el comercio físico ya no es necesario'],
+    c: 2,
+    exp: 'Amazon redefinió el estándar: entrega rápida, seguimiento en tiempo real y personalización dejaron de ser diferenciadores para convertirse en expectativas básicas.'
+  },
+  {
+    q: '¿Desde dónde diseña sus procesos una cadena centrada en el cliente?',
+    opts: ['Desde el proveedor hacia el cliente', 'Desde la experiencia que el cliente necesita vivir, hacia atrás en la cadena', 'Desde el área de finanzas para optimizar costos', 'Desde el área de producción para maximizar volumen'],
+    c: 1,
+    exp: 'El diseño "outside-in" parte de la experiencia deseada por el cliente y trabaja hacia atrás para rediseñar cada proceso de la cadena.'
+  },
+  {
+    q: '¿Qué obliga a hacer la conectividad del consumidor a las organizaciones?',
+    opts: ['Reducir el número de eslabones en la cadena', 'Enfocarse únicamente en la última milla', 'Repensar cada eslabón de la cadena, desde el proveedor hasta la última milla', 'Eliminar intermediarios del proceso logístico'],
+    c: 2,
+    exp: 'La conectividad del consumidor exige revisar toda la cadena para crear una experiencia coherente de extremo a extremo, no solo la distribución final.'
+  },
+  {
+    q: '¿Cómo se mide hoy la excelencia en la cadena de suministro?',
+    opts: ['Por el número de certificaciones ISO que tiene la empresa', 'Por el costo por unidad transportada', 'Por la velocidad de producción en planta', 'Por el valor que genera al cliente final, no solo por la eficiencia operativa'],
+    c: 3,
+    exp: 'Las métricas tradicionales de eficiencia ya no son suficientes. El indicador clave es el valor percibido y la experiencia generada para el cliente final.'
+  },
+  {
+    q: '¿Cuál es el impacto más importante del cliente conectado para las empresas?',
+    opts: ['Reduce los márgenes de ganancia de forma permanente', 'Obliga a reducir el portafolio de productos', 'Exige que toda la cadena responda a sus necesidades en tiempo real', 'Permite eliminar los canales de distribución tradicionales'],
+    c: 2,
+    exp: 'El cliente conectado espera que las empresas operen con la misma visibilidad y velocidad de respuesta que tiene él al consultar su pedido desde el celular.'
+  },
+  {
+    q: '¿Qué significa diseñar la cadena "desde afuera hacia adentro"?',
+    opts: ['Contratar proveedores internacionales antes que locales', 'Empezar con la experiencia del cliente y trabajar hacia atrás en la cadena', 'Abrir primero operaciones en mercados extranjeros', 'Digitalizar todos los procesos externos antes que los internos'],
+    c: 1,
+    exp: '"Outside-in" significa que el punto de partida es la experiencia que el cliente necesita vivir. Desde ahí se rediseña cada proceso hacia el interior de la cadena.'
+  },
+  {
+    q: '¿Qué papel juega la visibilidad en la cadena de suministro del cliente conectado?',
+    opts: ['Permite reducir el número de empleados en operaciones', 'Es opcional para empresas con operaciones pequeñas', 'Es fundamental para anticipar problemas y cumplir las promesas al cliente', 'Solo es relevante en la logística de última milla'],
+    c: 2,
+    exp: 'La visibilidad en toda la cadena permite identificar riesgos con anticipación y cumplir de forma consistente las expectativas del cliente en cada punto de contacto.'
+  }
+];
+
+let quizState = {};
+
+function abrirQuiz() {
+  const shuffled = [...BANCO_D1].sort(() => Math.random() - 0.5);
+  quizState = { preguntas: shuffled.slice(0, 5), actual: 0, respuestas: [], ptsGanados: 0, timerSeg: 300, timerInterval: null };
+  const modal = document.getElementById('quiz-modal');
+  if (!modal) return;
+  document.getElementById('quiz-results-area').style.display = 'none';
+  document.getElementById('quiz-question-area').style.display = 'block';
+  document.getElementById('quiz-timer').style.color = 'var(--cyan)';
+  modal.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  renderQuizPregunta();
+  iniciarTimerQuiz();
+}
+
+function cerrarQuiz() {
+  if (quizState.timerInterval) clearInterval(quizState.timerInterval);
+  const modal = document.getElementById('quiz-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function iniciarTimerQuiz() {
+  quizState.timerInterval = setInterval(() => {
+    quizState.timerSeg--;
+    const min = Math.floor(quizState.timerSeg / 60);
+    const sec = quizState.timerSeg % 60;
+    const el = document.getElementById('quiz-timer');
+    if (el) {
+      el.textContent = `${min}:${sec.toString().padStart(2, '0')}`;
+      if (quizState.timerSeg <= 30) el.style.color = 'var(--magenta)';
+    }
+    if (quizState.timerSeg <= 0) { clearInterval(quizState.timerInterval); mostrarResultadosQuiz(); }
+  }, 1000);
+}
+
+function renderQuizPregunta() {
+  const { preguntas, actual } = quizState;
+  const p = preguntas[actual];
+  const letters = ['A', 'B', 'C', 'D'];
+  const dotsEl = document.getElementById('quiz-progress-dots');
+  if (dotsEl) {
+    dotsEl.innerHTML = preguntas.map((_, i) => {
+      const bg = i < actual ? 'var(--cyan)' : (i === actual ? 'var(--magenta)' : 'rgba(255,255,255,0.12)');
+      return `<div style="flex:1;height:4px;border-radius:2px;background:${bg};transition:background 0.3s;"></div>`;
+    }).join('');
+  }
+  const area = document.getElementById('quiz-question-area');
+  area.innerHTML = `
+    <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.08em;">Pregunta ${actual + 1} de 5</div>
+    <h3 style="font-size:18px;font-weight:700;line-height:1.45;margin-bottom:26px;">${p.q}</h3>
+    <div style="display:flex;flex-direction:column;gap:10px;" id="quiz-opts">
+      ${p.opts.map((opt, i) => `
+        <div class="quiz-opt-item" onclick="responderQuiz(${i})" data-idx="${i}" style="display:flex;align-items:flex-start;gap:14px;padding:14px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);cursor:pointer;transition:border-color 0.15s;">
+          <div style="width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:rgba(255,255,255,0.4);">${letters[i]}</div>
+          <div style="font-size:14px;line-height:1.5;padding-top:3px;">${opt}</div>
+        </div>
+      `).join('')}
+    </div>`;
+  area.querySelectorAll('.quiz-opt-item').forEach(el => {
+    el.addEventListener('mouseover', () => { if (!el.dataset.locked) el.style.borderColor = 'rgba(255,255,255,0.3)'; });
+    el.addEventListener('mouseout',  () => { if (!el.dataset.locked) el.style.borderColor = 'rgba(255,255,255,0.1)'; });
+  });
+}
+
+function responderQuiz(idx) {
+  const { preguntas, actual } = quizState;
+  const p = preguntas[actual];
+  const opts = document.querySelectorAll('.quiz-opt-item');
+  const letters = ['A', 'B', 'C', 'D'];
+  opts.forEach(o => { o.style.cursor = 'default'; o.dataset.locked = '1'; o.onclick = null; });
+  const correcta = (idx === p.c);
+  opts[idx].style.background = correcta ? 'rgba(0,255,136,0.1)' : 'rgba(248,0,250,0.1)';
+  opts[idx].style.borderColor = correcta ? '#00ff88' : 'var(--magenta)';
+  const dot = opts[idx].querySelector('div');
+  dot.style.background = correcta ? '#00ff88' : 'var(--magenta)';
+  dot.style.color = 'black'; dot.style.border = 'none';
+  if (!correcta) {
+    opts[p.c].style.background = 'rgba(0,255,136,0.07)';
+    opts[p.c].style.borderColor = 'rgba(0,255,136,0.5)';
+    const cdot = opts[p.c].querySelector('div');
+    cdot.style.background = 'rgba(0,255,136,0.2)'; cdot.style.color = '#00ff88';
+  }
+  quizState.respuestas.push({ correcta, elegida: idx });
+  if (correcta) quizState.ptsGanados += 5;
+  const area = document.getElementById('quiz-question-area');
+  const fb = document.createElement('div');
+  fb.style.cssText = 'margin-top:16px;padding:12px 16px;border-radius:8px;font-size:13px;line-height:1.5;';
+  if (correcta) {
+    fb.style.background = 'rgba(0,255,136,0.07)'; fb.style.borderLeft = '3px solid #00ff88';
+    fb.innerHTML = '<span style="color:#00ff88;font-weight:700;">✅ ¡Correcto!</span>';
+  } else {
+    fb.style.background = 'rgba(248,0,250,0.05)'; fb.style.borderLeft = '3px solid var(--magenta)';
+    fb.innerHTML = `<span style="color:var(--magenta);font-weight:700;">❌ Incorrecto</span> — Correcta: <strong style="color:#00ff88;">${letters[p.c]}) ${p.opts[p.c]}</strong>`;
+  }
+  area.appendChild(fb);
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-primary'; btn.style.cssText = 'width:100%;margin-top:16px;';
+  const isLast = actual === preguntas.length - 1;
+  btn.innerHTML = isLast ? 'Ver resultados <i class="fas fa-chart-bar"></i>' : 'Siguiente <i class="fas fa-arrow-right"></i>';
+  btn.onclick = () => { quizState.actual++; if (quizState.actual >= quizState.preguntas.length) mostrarResultadosQuiz(); else renderQuizPregunta(); };
+  area.appendChild(btn);
+}
+
+function mostrarResultadosQuiz() {
+  if (quizState.timerInterval) clearInterval(quizState.timerInterval);
+  const { preguntas, respuestas, ptsGanados } = quizState;
+  const correctas = respuestas.filter(r => r.correcta).length;
+  const letters = ['A', 'B', 'C', 'D'];
+  document.getElementById('quiz-question-area').style.display = 'none';
+  const timerEl = document.getElementById('quiz-timer');
+  if (timerEl) timerEl.textContent = '–';
+  const results = document.getElementById('quiz-results-area');
+  results.style.display = 'block';
+  const pct = Math.round((correctas / preguntas.length) * 100);
+  const color = pct >= 80 ? '#00ff88' : pct >= 60 ? 'var(--cyan)' : 'var(--magenta)';
+  const msg = pct >= 80 ? '¡Excelente dominio del tema!' : pct >= 60 ? 'Buen trabajo, sigue practicando.' : 'Te recomendamos repasar los conceptos del día.';
+  const errores = preguntas.map((p, i) => ({ p, r: respuestas[i] || { correcta: false, elegida: -1 } })).filter(({ r }) => !r.correcta);
+  results.innerHTML = `
+    <div style="text-align:center;padding:20px 0 32px;">
+      <div style="font-size:72px;font-weight:900;color:${color};line-height:1;">${correctas}/${preguntas.length}</div>
+      <div style="font-size:22px;font-weight:700;margin:10px 0 6px;">${ptsGanados} pts ganados</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.45);">${msg}</div>
+    </div>
+    ${errores.length > 0 ? `
+    <div style="margin-bottom:28px;">
+      <h4 style="font-size:12px;font-weight:700;color:var(--magenta);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:14px;"><i class="fas fa-lightbulb"></i> Revisa estos conceptos</h4>
+      ${errores.map(({ p, r }) => `
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:16px;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:10px;line-height:1.4;">${p.q}</div>
+          ${r.elegida >= 0 ? `<div style="font-size:12px;color:var(--magenta);margin-bottom:4px;">Tu respuesta: ${letters[r.elegida]}) ${p.opts[r.elegida]}</div>` : ''}
+          <div style="font-size:12px;color:#00ff88;margin-bottom:10px;">✓ Correcta: ${letters[p.c]}) ${p.opts[p.c]}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.45);border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;line-height:1.6;">${p.exp}</div>
+        </div>
+      `).join('')}
+    </div>` : `<div style="text-align:center;padding:0 0 28px;font-size:15px;color:#00ff88;">🎉 ¡Respondiste todo correctamente!</div>`}
+    <button class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;" onclick="cerrarQuiz();if(${ptsGanados}>0)showFloatingPoints(${ptsGanados});">
+      Cerrar y continuar <i class="fas fa-check"></i>
+    </button>`;
+}
+
+function completarDia() {
+  showToast('🎉 ¡Día 1 completado! +10 pts', 'success');
+  showFloatingPoints(10);
+  setTimeout(() => navigate('screen-journey'), 1500);
 }
