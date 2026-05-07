@@ -333,6 +333,14 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
           <i class="fas fa-shield-halved"></i> Acceso Administrador
         </button>
 
+        <!-- Demo skip button -->
+        <div style="margin-top:24px;padding:12px 16px;border:1px dashed rgba(255,200,0,0.4);border-radius:10px;background:rgba(255,200,0,0.05);">
+          <p style="font-size:11px;color:rgba(255,200,0,0.6);text-align:center;margin:0 0 8px 0;letter-spacing:0.05em;text-transform:uppercase;">Modo Demo</p>
+          <button class="btn" style="width:100%;background:rgba(255,200,0,0.15);border:1px solid rgba(255,200,0,0.4);color:rgba(255,200,0,0.9);font-weight:600;" onclick="navigate('screen-modulo')">
+            <i class="fas fa-bolt"></i> Ver entrenamiento directamente
+          </button>
+        </div>
+
         <p style="text-align:center;margin-top:16px;font-size:13px;color:rgba(255,255,255,0.3);">
           <a href="#" style="color:rgba(0,216,218,0.7);text-decoration:none;">¿Olvidaste tu contraseña?</a>
         </p>
@@ -356,6 +364,9 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
         <img src="assets/sci-logo.png" alt="SCI" style="height:24px;width:auto;opacity:0.75;"/>
       </div>
       <div style="font-size:13px;color:rgba(255,255,255,0.4);">Manufactura Avanzada S.A.</div>
+      <button onclick="navigate('screen-modulo')" style="background:rgba(255,200,0,0.15);border:1px dashed rgba(255,200,0,0.5);color:rgba(255,200,0,0.9);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:0.03em;">
+        <i class="fas fa-bolt"></i> Demo: saltar al entrenamiento
+      </button>
     </nav>
 
     <div style="padding:40px 20px;flex:1;">
