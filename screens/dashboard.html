@@ -22,7 +22,7 @@
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px;">
         <div>
           <h1 class="page-title">Mi Progreso</h1>
-          <p class="page-subtitle">Módulo 1 completado · Semana 2 de 12</p>
+          <p class="page-subtitle">Módulo 1 completado · Semana 2 de 15</p>
         </div>
         <div style="display:flex;gap:10px;">
           <button class="btn btn-outline btn-sm" onclick="shareReport()">
@@ -34,34 +34,179 @@
         </div>
       </div>
 
-      <!-- Puntos celebración -->
-      <div class="card" style="background:linear-gradient(135deg,rgba(0,216,218,0.12),rgba(117,114,233,0.12));border-color:rgba(0,216,218,0.4);margin-bottom:24px;text-align:center;padding:28px;" id="celebration-card">
-        <div style="font-size:48px;margin-bottom:8px;" class="bounce-in">🎉</div>
-        <h3 style="font-size:22px;font-weight:800;margin-bottom:6px;">¡Completaste la Lección 2!</h3>
-        <p style="color:rgba(255,255,255,0.6);margin-bottom:16px;">Ganaste <strong style="color:var(--cyan);">+50 puntos</strong> — ¡Sigue así!</p>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <div class="badge badge-cyan" style="font-size:14px;padding:8px 16px;">⭐ 390 puntos totales</div>
-          <div class="badge badge-green" style="font-size:14px;padding:8px 16px;">🏅 Medalla Fast Start desbloqueada</div>
+      <!-- ① RANKING DE LA GENERACIÓN — primero -->
+      <div class="card" style="margin-bottom:20px;background:linear-gradient(135deg,rgba(117,114,233,0.1),rgba(248,0,250,0.06));border-color:rgba(117,114,233,0.3);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+          <h4 style="font-size:15px;margin:0;">🏆 <span style="color:var(--purple);">Ranking</span> de tu Generación</h4>
+          <span style="font-size:11px;color:rgba(255,255,255,0.35);">Generación Mayo 2025 · 24 participantes</span>
+        </div>
+
+        <!-- Top 3 -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+          <div style="text-align:center;padding-top:16px;">
+            <div style="font-size:28px;margin-bottom:4px;">🥈</div>
+            <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:8px 6px;">
+              <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.8);">Carlos M.</div>
+              <div style="font-size:13px;font-weight:800;color:rgba(192,192,192,0.9);margin-top:2px;">520 pts</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:2px;">#2</div>
+            </div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:36px;margin-bottom:4px;">🥇</div>
+            <div style="background:rgba(255,200,60,0.1);border:1px solid rgba(255,200,60,0.3);border-radius:10px;padding:8px 6px;">
+              <div style="font-size:11px;font-weight:700;color:rgba(255,200,60,0.9);">Sofía R.</div>
+              <div style="font-size:15px;font-weight:900;color:rgba(255,200,60,0.95);margin-top:2px;">610 pts</div>
+              <div style="font-size:9px;color:rgba(255,200,60,0.5);margin-top:2px;">#1</div>
+            </div>
+          </div>
+          <div style="text-align:center;padding-top:16px;">
+            <div style="font-size:28px;margin-bottom:4px;">🥉</div>
+            <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:8px 6px;">
+              <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.8);">Diana P.</div>
+              <div style="font-size:13px;font-weight:800;color:rgba(205,127,50,0.9);margin-top:2px;">490 pts</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:2px;">#3</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tu posición -->
+        <div style="background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.25);border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--magenta),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;">AG</div>
+            <div>
+              <div style="font-size:12px;font-weight:700;color:white;">Ana García</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.4);">340 pts · Módulo 1 en curso</div>
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:22px;font-weight:900;color:var(--magenta);">#8</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4);">de 24</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;text-align:center;">
+          <span style="font-size:12px;color:rgba(255,255,255,0.5);">Eres el <strong style="color:var(--magenta);">número 8</strong> de toda tu generación</span>
+          <span style="font-size:11px;color:rgba(255,255,255,0.3);margin-left:8px;">· +180 pts para entrar al Top 3</span>
         </div>
       </div>
 
-      <!-- Stats generales -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+      <!-- ② 4 KPIs GLOBALES -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;">
+
         <div class="stat-card">
-          <div class="stat-value" style="color:var(--cyan);">40%</div>
-          <div class="stat-label">Avance del programa</div>
+          <div class="stat-value" style="color:var(--cyan);">13%</div>
+          <div class="stat-label">Avance global</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Sem 2 de 15</div>
         </div>
+
         <div class="stat-card">
-          <div class="stat-value" style="color:var(--purple);">2/5</div>
-          <div class="stat-label">Lecciones completadas</div>
+          <div class="stat-value" style="color:#00ff88;">85%</div>
+          <div class="stat-label">Promedio aprovechamiento</div>
+          <div style="font-size:10px;color:rgba(0,255,136,0.5);margin-top:4px;">1 módulo terminado</div>
         </div>
+
         <div class="stat-card">
-          <div class="stat-value" style="color:var(--magenta);">390</div>
-          <div class="stat-label">Puntos acumulados</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" style="color:#00ff88;">2</div>
+          <div class="stat-value" style="color:var(--purple);">2/11</div>
           <div class="stat-label">Medallas obtenidas</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">disponibles</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--magenta);">+16pp</div>
+          <div class="stat-label">Aprendizaje acumulado</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:4px;">Δ M1: 62%→78%</div>
+        </div>
+
+      </div>
+
+      <!-- ③ PUNTOS Y APROVECHAMIENTO POR MÓDULO -->
+      <div class="card" style="margin-bottom:24px;">
+        <h4 style="font-size:14px;margin-bottom:14px;">⭐ Puntos y Aprovechamiento por Módulo</h4>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+
+          <!-- M1 completado -->
+          <div style="background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.2);border-radius:8px;padding:10px 12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <div>
+                <span style="font-size:11px;font-weight:700;color:white;">Módulo 1</span>
+                <span style="font-size:10px;color:rgba(255,255,255,0.4);margin-left:6px;">Cliente y Producto Conectado</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                <span style="font-size:12px;font-weight:800;color:var(--magenta);">340</span>
+                <span style="font-size:10px;color:rgba(255,255,255,0.3);">/ 400 pts</span>
+                <span style="font-size:10px;font-weight:700;background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.3);border-radius:20px;padding:1px 8px;color:#00ff88;">85%</span>
+              </div>
+            </div>
+            <div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;">
+              <div style="width:85%;height:100%;background:linear-gradient(90deg,#00ff88,var(--cyan));border-radius:3px;"></div>
+            </div>
+          </div>
+
+          <!-- M2 pendiente -->
+          <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:10px 12px;opacity:0.6;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <div>
+                <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);">Módulo 2</span>
+                <span style="font-size:10px;color:rgba(255,255,255,0.3);margin-left:6px;">Dynamic Fulfillment</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                <span style="font-size:10px;color:rgba(255,255,255,0.3);">— / 400 pts</span>
+                <span style="font-size:9px;color:rgba(255,255,255,0.25);border:1px dashed rgba(255,255,255,0.15);border-radius:20px;padding:1px 8px;">pendiente</span>
+              </div>
+            </div>
+            <div style="height:5px;background:rgba(255,255,255,0.04);border-radius:3px;"></div>
+          </div>
+
+          <!-- M3 -->
+          <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:10px 12px;opacity:0.4;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);">Módulo 3</span>
+                <span style="font-size:10px;color:rgba(255,255,255,0.25);margin-left:6px;">Smart Operations</span>
+              </div>
+              <span style="font-size:10px;color:rgba(255,255,255,0.2);">— / 400 pts</span>
+            </div>
+          </div>
+
+          <!-- M4 -->
+          <div style="background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:10px 12px;opacity:0.3;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);">Módulo 4</span>
+                <span style="font-size:10px;color:rgba(255,255,255,0.2);margin-left:6px;">Synchronized Planning</span>
+              </div>
+              <span style="font-size:10px;color:rgba(255,255,255,0.15);">— / 400 pts</span>
+            </div>
+          </div>
+
+          <!-- M5 -->
+          <div style="background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.03);border-radius:8px;padding:10px 12px;opacity:0.25;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.35);">Módulo 5</span>
+                <span style="font-size:10px;color:rgba(255,255,255,0.18);margin-left:6px;">Game Changers</span>
+              </div>
+              <span style="font-size:10px;color:rgba(255,255,255,0.12);">— / 400 pts</span>
+            </div>
+          </div>
+
+          <!-- TOTAL — aprovechamiento = promedio de módulos completados -->
+          <div style="background:rgba(117,114,233,0.1);border:1px solid rgba(117,114,233,0.3);border-radius:8px;padding:12px;margin-top:4px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-size:12px;font-weight:800;color:var(--purple);">ACUMULADO</span>
+              <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                <span style="font-size:14px;font-weight:900;color:var(--cyan);">340</span>
+                <span style="font-size:11px;color:rgba(255,255,255,0.4);">/ 2,000 pts totales</span>
+              </div>
+            </div>
+            <div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;margin-bottom:8px;">
+              <div style="width:17%;height:100%;background:linear-gradient(90deg,var(--purple),var(--cyan));border-radius:3px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.4);">
+              <span>Promedio aprovechamiento <strong style="color:#00ff88;">85%</strong> <span style="color:rgba(255,255,255,0.25);">(módulos terminados)</span></span>
+              <span>Δ aprendizaje <strong style="color:var(--magenta);">+16pp</strong></span>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -81,8 +226,84 @@
           <h4 style="margin-bottom:4px;font-size:15px;color:var(--white);">
             🔄 Modelo Kirkpatrick
           </h4>
-          <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:16px;">Comparativa Pre vs. Estimado Post</p>
+          <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:16px;">Diagnóstico inicial vs Evaluación final</p>
           <canvas id="kirkpatrick-chart" height="180"></canvas>
+        </div>
+      </div>
+
+      <!-- Evaluación por módulo: Pre vs Post -->
+      <div class="card" style="margin-bottom:24px;">
+        <h4 style="margin-bottom:4px;font-size:15px;color:var(--white);">📈 Evaluación por Módulo — Inicial vs. Final</h4>
+        <p style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:16px;">Kirkpatrick Nivel 2 · Aprendizaje medido pre y post cada módulo</p>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+
+          <!-- M1 — completado -->
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+              <div style="font-size:12px;font-weight:700;color:white;">Módulo 1 · Cliente y Producto Conectado</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:10px;color:var(--magenta);">Pre: 62%</span>
+                <span style="font-size:10px;color:rgba(255,255,255,0.3);">→</span>
+                <span style="font-size:10px;color:#00ff88;font-weight:700;">Post: 78%</span>
+                <span style="font-size:10px;background:rgba(0,255,136,0.15);border:1px solid rgba(0,255,136,0.3);border-radius:20px;padding:1px 7px;color:#00ff88;font-weight:700;">+16% ✓</span>
+              </div>
+            </div>
+            <div style="position:relative;height:8px;background:rgba(255,255,255,0.06);border-radius:4px;">
+              <div style="position:absolute;left:0;top:0;height:100%;width:62%;background:rgba(248,0,250,0.4);border-radius:4px;"></div>
+              <div style="position:absolute;left:0;top:0;height:100%;width:78%;background:linear-gradient(90deg,rgba(0,255,136,0.6),var(--cyan));border-radius:4px;opacity:0.85;"></div>
+            </div>
+          </div>
+
+          <!-- M2 — pendiente -->
+          <div style="opacity:0.5;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+              <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.6);">Módulo 2 · Dynamic Fulfillment</div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <span style="font-size:10px;color:var(--magenta);">Pre: 62%</span>
+                <span style="font-size:10px;color:rgba(255,255,255,0.3);">→</span>
+                <span style="font-size:10px;color:rgba(255,255,255,0.3);">Post: pendiente</span>
+              </div>
+            </div>
+            <div style="position:relative;height:8px;background:rgba(255,255,255,0.06);border-radius:4px;">
+              <div style="position:absolute;left:0;top:0;height:100%;width:62%;background:rgba(248,0,250,0.25);border-radius:4px;"></div>
+            </div>
+          </div>
+
+          <!-- M3 — pendiente -->
+          <div style="opacity:0.35;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+              <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.5);">Módulo 3 · Smart Operations</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.25);">Pre: — · Post: pendiente</div>
+            </div>
+            <div style="height:8px;background:rgba(255,255,255,0.04);border-radius:4px;"></div>
+          </div>
+
+          <!-- M4 — pendiente -->
+          <div style="opacity:0.25;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+              <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);">Módulo 4 · Synchronized Planning</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.2);">Pre: — · Post: pendiente</div>
+            </div>
+            <div style="height:8px;background:rgba(255,255,255,0.03);border-radius:4px;"></div>
+          </div>
+
+          <!-- M5 — pendiente -->
+          <div style="opacity:0.2;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+              <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.35);">Módulo 5 · Game Changers</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.15);">Pre: — · Post: pendiente</div>
+            </div>
+            <div style="height:8px;background:rgba(255,255,255,0.02);border-radius:4px;"></div>
+          </div>
+
+        </div>
+
+        <!-- Leyenda -->
+        <div style="display:flex;gap:16px;margin-top:14px;font-size:10px;color:rgba(255,255,255,0.4);">
+          <span><span style="color:rgba(248,0,250,0.7);">█</span> Evaluación inicial (62%)</span>
+          <span><span style="color:#00ff88;">█</span> Post-módulo (real)</span>
+          <span style="color:rgba(255,255,255,0.2);">█ Sin evaluar aún</span>
         </div>
       </div>
 
@@ -130,26 +351,35 @@
         <div class="card">
           <h4 style="margin-bottom:16px;font-size:15px;"><span style="color:var(--purple);">Mis Medallas</span> y Logros</h4>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center;">
+
+            <!-- Desbloqueado: Diagnóstico -->
             <div>
-              <div class="medal medal-gold bounce-in">🌟</div>
-              <div style="font-size:11px;color:var(--white);font-weight:600;">Explorer</div>
-              <div style="font-size:10px;color:rgba(255,255,255,0.4);">Completar diagnóstico</div>
+              <div class="medal medal-cyan bounce-in" style="font-size:20px;">🎯</div>
+              <div style="font-size:10px;color:var(--white);font-weight:600;margin-top:4px;">Diagnóstico</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:2px;">Completado</div>
             </div>
+
+            <!-- Desbloqueado: Ráfaga 5 días -->
             <div>
-              <div class="medal medal-cyan bounce-in" style="animation-delay:0.2s;">⚡</div>
-              <div style="font-size:11px;color:var(--white);font-weight:600;">Fast Start</div>
-              <div style="font-size:10px;color:rgba(255,255,255,0.4);">Lección en tiempo</div>
+              <div class="medal bounce-in" style="background:rgba(0,255,136,0.15);border:2px solid rgba(0,255,136,0.5);width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-size:20px;animation-delay:0.2s;">🔥</div>
+              <div style="font-size:10px;color:#00ff88;font-weight:600;margin-top:4px;">Ráfaga 5 días</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:2px;">Lun–Vie seguidos</div>
             </div>
-            <div style="opacity:0.3;">
-              <div class="medal" style="background:rgba(255,255,255,0.05);border:2px dashed rgba(255,255,255,0.2);width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;">🔥</div>
-              <div style="font-size:11px;color:rgba(255,255,255,0.4);">On Fire</div>
-              <div style="font-size:10px;color:rgba(255,255,255,0.3);">3 días seguidos</div>
+
+            <!-- Bloqueado: Módulo sin pausas -->
+            <div style="opacity:0.4;">
+              <div class="medal" style="background:rgba(255,255,255,0.04);border:2px dashed rgba(255,255,255,0.15);width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-size:18px;">📅</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px;">Sin pausas</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.25);margin-top:2px;">0 faltas · M1</div>
             </div>
-            <div style="opacity:0.3;">
-              <div class="medal" style="background:rgba(255,255,255,0.05);border:2px dashed rgba(255,255,255,0.2);width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:20px;">🏆</div>
-              <div style="font-size:11px;color:rgba(255,255,255,0.4);">Módulo 1</div>
-              <div style="font-size:10px;color:rgba(255,255,255,0.3);">Completar mod. 1</div>
+
+            <!-- Bloqueado: Estrella del módulo -->
+            <div style="opacity:0.35;">
+              <div class="medal" style="background:rgba(255,255,255,0.04);border:2px dashed rgba(255,255,255,0.15);width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 4px;font-size:18px;">⭐</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:4px;">Estrella M1</div>
+              <div style="font-size:9px;color:rgba(255,255,255,0.2);margin-top:2px;">Instructor</div>
             </div>
+
           </div>
         </div>
       </div>

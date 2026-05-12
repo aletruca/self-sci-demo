@@ -1194,7 +1194,7 @@ function navigate(screenId) {
     }, 80);
   }
   if (screenId === 'screen-admin-contenido') setTimeout(renderAdminContenido, 80);
-  if (screenId === 'screen-modulo') setTimeout(initSopa, 150);
+  if (screenId === 'screen-modulo') { loadState(); setTimeout(() => renderDia(currentDia), 150); }
   if (screenId === 'screen-admin-dashboard') {
     setTimeout(renderKpiAvancePromedio, 80);
     setTimeout(renderCalendarioGlobal, 80);
@@ -2639,25 +2639,25 @@ function initDashboardCharts() {
     });
   }
 
-  // Kirkpatrick — nivel 2 refleja el diagnóstico real
+  // Kirkpatrick — Diagnóstico inicial vs Evaluación Final
   const kirkCtx = document.getElementById('kirkpatrick-chart');
   if (kirkCtx) {
     kirkCtx._chart = new Chart(kirkCtx, {
       type: 'bar',
       data: {
-        labels: ['Nivel 1\nReacción', 'Nivel 2\nAprendizaje', 'Nivel 3\nAplicación', 'Nivel 4\nResultados'],
+        labels: ['N1 Reacción', 'N2 Aprendizaje', 'N3 Aplicación', 'N4 Resultados'],
         datasets: [
           {
             label: 'Diagnóstico inicial',
-            data: [0, diagScore, 0, 0],
+            data: [72, diagScore, 45, 38],
             backgroundColor: 'rgba(248,0,250,0.3)',
             borderColor: '#F800fa',
             borderWidth: 1.5,
             borderRadius: 4
           },
           {
-            label: 'Proyección al finalizar',
-            data: [85, Math.min(95, diagScore + 20), 75, 70],
+            label: 'Evaluación final (proyectado)',
+            data: [90, Math.min(95, diagScore + 28), 78, 72],
             backgroundColor: 'rgba(0,216,218,0.25)',
             borderColor: '#00d8da',
             borderWidth: 1.5,
@@ -2674,13 +2674,21 @@ function initDashboardCharts() {
           },
           y: {
             min: 0, max: 100,
-            ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 } },
+            ticks: {
+              color: 'rgba(255,255,255,0.4)', font: { size: 10 },
+              callback: v => v + '%'
+            },
             grid: { color: 'rgba(255,255,255,0.06)' }
           }
         },
         plugins: {
           legend: {
             labels: { color: 'rgba(255,255,255,0.6)', font: { size: 11, family: 'Outfit' }, boxWidth: 14 }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}%`
+            }
           }
         },
         animation: { duration: 1200, delay: 200 }
@@ -2715,12 +2723,31 @@ function checkQuiz(element, isCorrect) {
 }
 
 // ── NPS ──
-function selectNPS(btn) {
+function selectNPS(btn, diaNum) {
   document.querySelectorAll('.nps-btn').forEach(b => b.classList.remove('selected-nps'));
   btn.classList.add('selected-nps');
   const val = parseInt(btn.dataset.v);
   let msg = val >= 9 ? '¡Gracias! Tu feedback nos impulsa 🚀' : val >= 7 ? '¡Gracias por tu valoración! 👍' : '¡Gracias! Trabajaremos para mejorar.';
   showToast(msg, 'success');
+  // Mark NPS done and unlock complete button
+  if (diaNum) {
+    diaRecursos['nps'] = true;
+    if (!diasEstado[diaNum]) diasEstado[diaNum] = {};
+    diasEstado[diaNum].nps = val;
+    saveState();
+    verificarCompletarDia();
+    // Show comentarios button
+    const btnCom = document.getElementById('btn-comentarios-' + diaNum);
+    if (btnCom) btnCom.style.display = 'inline-block';
+  }
+}
+
+function toggleComentarios(diaNum) {
+  const sec = document.getElementById('comentarios-section-' + diaNum);
+  if (sec) {
+    const visible = sec.style.display !== 'none';
+    sec.style.display = visible ? 'none' : 'block';
+  }
 }
 
 // ── COMPARTIR REPORTE ──
@@ -2752,6 +2779,10 @@ function showToast(msg, type = 'info') {
 
 // ── FLOATING POINTS ──
 function showFloatingPoints(pts) {
+  ptsAcumulados += pts;
+  saveState();
+  const acumEl = document.getElementById('pts-acumulados-display');
+  if (acumEl) acumEl.textContent = ptsAcumulados + ' pts';
   const popup = document.createElement('div');
   popup.className = 'points-popup';
   popup.textContent = `+${pts} pts ⭐`;
@@ -4606,12 +4637,70 @@ const URLS_RECURSOS_D1 = {
   lectura2:  'https://www.deloitte.com/us/en/services/consulting/articles/customer-centric-supply-chain-data.html'
 };
 
-let diaRecursos = { video1: false, video2: false, lectura1: false, lectura2: false, actividad: false, quiz: false };
+let diaRecursos = { video1: false, lectura1: false, simulador: false, quiz: false };
+
+// Palabras clave por recurso para calificar reflexiones
+const PALABRAS_CLAVE = {
+  video1:   ['cadena','suministro','cliente','valor','eficiencia','proceso','entrega','logistica','logística','operacion','operación'],
+  video2:   ['cliente','experiencia','centrada','proceso','diseño','demanda','servicio','satisfaccion','satisfacción','conexion','conexión'],
+  lectura1: ['amazon','velocidad','visibilidad','expectativa','entrega','estandar','estándar','omnicanal','personaliz','cliente'],
+  lectura2: ['cliente','datos','decision','decisión','cadena','centrada','experiencia','valor','demanda','servicio']
+};
 
 function abrirRecurso(id) {
-  const url = URLS_RECURSOS_D1[id];
-  if (url) window.open(url, '_blank');
-  marcarRecurso(id);
+  const dCfg = (typeof DIAS_CC !== 'undefined' && DIAS_CC[currentDia - 1]);
+  const url = (dCfg && dCfg.recursos[id]) ? dCfg.recursos[id].url : URLS_RECURSOS_D1[id];
+  const esPendiente = !url || url.startsWith('#sharepoint');
+  if (!esPendiente) {
+    window.open(url, '_blank');
+    setTimeout(() => {
+      const reflexionEl = document.getElementById('reflexion-' + id);
+      if (reflexionEl) reflexionEl.style.display = 'block';
+    }, 800);
+  } else {
+    // Mostrar aviso inline en lugar del recurso
+    const container = document.getElementById('reflexion-' + id);
+    if (container) {
+      container.style.display = 'block';
+      const prevAviso = container.querySelector('.pendiente-aviso');
+      if (!prevAviso) {
+        const aviso = document.createElement('div');
+        aviso.className = 'pendiente-aviso';
+        aviso.style.cssText = 'padding:10px 14px;border-radius:8px;background:rgba(255,165,0,0.08);border:1px solid rgba(255,165,0,0.25);font-size:12px;color:orange;margin-bottom:10px;';
+        aviso.innerHTML = '⏳ Este video estará disponible próximamente. Puedes continuar con el resto del día.';
+        container.insertBefore(aviso, container.firstChild);
+      }
+    }
+    marcarRecurso(id);
+  }
+}
+
+function calificarReflexion(id) {
+  const txt = document.getElementById('txt-' + id);
+  const fb  = document.getElementById('fb-' + id);
+  if (!txt || !fb) return;
+
+  const respuesta = txt.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  if (respuesta.length < 10) {
+    fb.innerHTML = '<span style="color:var(--magenta);">✏️ Escribe un poco más antes de enviar.</span>';
+    return;
+  }
+
+  const dCfg = (typeof DIAS_CC !== 'undefined' && DIAS_CC[currentDia - 1]);
+  const claves = (dCfg && dCfg.recursos[id]) ? dCfg.recursos[id].claves : (PALABRAS_CLAVE[id] || []);
+  const mencionadas = claves.filter(p => respuesta.includes(p.normalize('NFD').replace(/[\u0300-\u036f]/g,'')));
+
+  if (mencionadas.length >= 2) {
+    fb.innerHTML = '<span style="color:#00ff88;font-weight:600;">✅ ¡Muy bien! Identificaste los conceptos clave correctamente.</span>';
+    txt.disabled = true;
+    txt.style.opacity = '0.5';
+    document.querySelector(`button[onclick="calificarReflexion('${id}')"]`).style.display = 'none';
+    marcarRecurso(id);
+  } else if (mencionadas.length === 1) {
+    fb.innerHTML = '<span style="color:orange;">🔄 Vas por buen camino. Intenta profundizar más: ¿qué impacto tiene esto en el cliente?</span>';
+  } else {
+    fb.innerHTML = '<span style="color:var(--magenta);">💡 Intenta conectar tu respuesta con el cliente, el valor o la cadena de suministro.</span>';
+  }
 }
 
 function marcarRecurso(id) {
@@ -4623,6 +4712,11 @@ function marcarRecurso(id) {
     el.innerHTML = '✓';
     el.style.color = '#000';
   }
+  // Persistir recursos completados en diasEstado
+  if (!diasEstado[currentDia]) diasEstado[currentDia] = {};
+  if (!diasEstado[currentDia].recursos) diasEstado[currentDia].recursos = {};
+  diasEstado[currentDia].recursos[id] = true;
+  saveState();
   verificarCompletarDia();
 }
 
@@ -4640,9 +4734,29 @@ function verificarCompletarDia() {
   }
 }
 
+function shuffleOptsPreg(p) {
+  const idx = [0,1,2,3];
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return { ...p, opts: idx.map(i => p.opts[i]), c: idx.indexOf(p.c) };
+}
+
 function abrirQuiz() {
-  const shuffled = [...BANCO_D1].sort(() => Math.random() - 0.5);
-  quizState = { preguntas: shuffled.slice(0, 5), actual: 0, respuestas: [], ptsGanados: 0, timerSeg: 300, timerInterval: null };
+  // Bloquear si ya se hizo (solo se puede hacer una vez)
+  if (diasEstado[currentDia] && diasEstado[currentDia].quiz) {
+    showToast('✋ Esta evaluación ya fue completada — solo se puede hacer una vez', 'info');
+    return;
+  }
+  const banco = (typeof BANCO_CC !== 'undefined') ? BANCO_CC : BANCO_D1;
+  const dCfg = (typeof DIAS_CC !== 'undefined' && DIAS_CC[currentDia - 1]);
+  const numPreguntas = (dCfg && dCfg.esPreQuiz) ? 10 : 5;
+  const timerSeg = numPreguntas === 10 ? 600 : 300;
+  const shuffled = [...banco].sort(() => Math.random() - 0.5);
+  const preguntas = shuffled.slice(0, numPreguntas).map(shuffleOptsPreg);
+  quizState = { preguntas, actual: 0, respuestas: [], ptsGanados: 0, timerSeg, timerInterval: null };
+  wrongQuestionsByDay[currentDia] = []; // Resetear/inicializar para este día
 
   // Eliminar modal previo si existe
   const prev = document.getElementById('quiz-modal');
@@ -4656,13 +4770,13 @@ function abrirQuiz() {
     <div style="max-width:600px;margin:0 auto;padding:28px 20px 60px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
         <div>
-          <span class="badge badge-cyan">Connected Customer · Día 1</span>
-          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">Quiz del día · 25 pts</div>
+          <span class="badge badge-cyan">Connected Customer · Día ${currentDia}</span>
+          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">${numPreguntas === 10 ? 'Pre-evaluación · 10 preguntas' : 'Quiz del día · 5 pts'}</div>
         </div>
         <div style="display:flex;align-items:center;gap:18px;">
           <div style="display:flex;align-items:center;gap:7px;">
             <i class="fas fa-clock" style="font-size:13px;color:rgba(255,255,255,0.3);"></i>
-            <span id="quiz-timer" style="font-size:22px;font-weight:800;color:var(--cyan);font-variant-numeric:tabular-nums;min-width:46px;">5:00</span>
+            <span id="quiz-timer" style="font-size:22px;font-weight:800;color:var(--cyan);font-variant-numeric:tabular-nums;min-width:46px;">${numPreguntas === 10 ? '10:00' : '5:00'}</span>
           </div>
           <button onclick="cerrarQuiz()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:16px;line-height:1;">✕</button>
         </div>
@@ -4682,6 +4796,10 @@ function cerrarQuiz() {
   const modal = document.getElementById('quiz-modal');
   if (modal) modal.remove();
   document.body.style.overflow = '';
+  // Re-render to show completed state
+  if (diasEstado[currentDia] && diasEstado[currentDia].quiz) {
+    renderDia(currentDia);
+  }
 }
 
 function iniciarTimerQuiz() {
@@ -4711,7 +4829,7 @@ function renderQuizPregunta() {
   }
   const area = document.getElementById('quiz-question-area');
   area.innerHTML = `
-    <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.08em;">Pregunta ${actual + 1} de 5</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.08em;">Pregunta ${actual + 1} de ${preguntas.length}</div>
     <h3 style="font-size:18px;font-weight:700;line-height:1.45;margin-bottom:26px;">${p.q}</h3>
     <div style="display:flex;flex-direction:column;gap:10px;" id="quiz-opts">
       ${p.opts.map((opt, i) => `
@@ -4746,7 +4864,14 @@ function responderQuiz(idx) {
     cdot.style.background = 'rgba(0,255,136,0.2)'; cdot.style.color = '#00ff88';
   }
   quizState.respuestas.push({ correcta, elegida: idx });
-  if (correcta) quizState.ptsGanados += 5;
+  const _esPreQ = (typeof DIAS_CC !== 'undefined' && DIAS_CC[currentDia-1] && DIAS_CC[currentDia-1].esPreQuiz);
+  const _esPostQ = quizState.esPostQuiz === true;
+  if (correcta && !_esPreQ) quizState.ptsGanados += 1;
+  // Guardar preguntas falladas para el repaso del día siguiente
+  if (!correcta) {
+    if (!wrongQuestionsByDay[currentDia]) wrongQuestionsByDay[currentDia] = [];
+    if (wrongQuestionsByDay[currentDia].length < 3) wrongQuestionsByDay[currentDia].push(p);
+  }
   const area = document.getElementById('quiz-question-area');
   const fb = document.createElement('div');
   fb.style.cssText = 'margin-top:16px;padding:12px 16px;border-radius:8px;font-size:13px;line-height:1.5;';
@@ -4771,6 +4896,22 @@ function mostrarResultadosQuiz() {
   const { preguntas, respuestas, ptsGanados } = quizState;
   const correctas = respuestas.filter(r => r.correcta).length;
   const letters = ['A', 'B', 'C', 'D'];
+  const dCfgQ = (typeof DIAS_CC !== 'undefined' && DIAS_CC[currentDia-1]);
+  const esPreQ = dCfgQ && dCfgQ.esPreQuiz;
+
+  // Marcar quiz como hecho inmediatamente (no esperar a cerrar)
+  if (!diasEstado[currentDia]) diasEstado[currentDia] = {};
+  diasEstado[currentDia].quiz = true;
+  saveState();
+
+  // Guardar score Kirkpatrick para comparar con evaluación final
+  if (esPreQ) {
+    const pct = Math.round((correctas / preguntas.length) * 100);
+    try { localStorage.setItem('kirkpatrick_pre_score', correctas); localStorage.setItem('kirkpatrick_pre_pct', pct); } catch(e) {}
+  }
+
+  const esPostQ = quizState.esPostQuiz === true;
+
   document.getElementById('quiz-question-area').style.display = 'none';
   const timerEl = document.getElementById('quiz-timer');
   if (timerEl) timerEl.textContent = '–';
@@ -4780,11 +4921,60 @@ function mostrarResultadosQuiz() {
   const color = pct >= 80 ? '#00ff88' : pct >= 60 ? 'var(--cyan)' : 'var(--magenta)';
   const msg = pct >= 80 ? '¡Excelente dominio del tema!' : pct >= 60 ? 'Buen trabajo, sigue practicando.' : 'Te recomendamos repasar los conceptos del día.';
   const errores = preguntas.map((p, i) => ({ p, r: respuestas[i] || { correcta: false, elegida: -1 } })).filter(({ r }) => !r.correcta);
+
+  // Bloque de puntos según tipo de quiz
+  let ptsLine, closeFn, btnLabel;
+  if (esPreQ) {
+    ptsLine  = `<div style="font-size:13px;color:var(--cyan);font-weight:600;margin-top:8px;">Diagnóstico registrado · Sin impacto en puntos</div>`;
+    closeFn  = `cerrarQuiz();unlockPreQuizContent();`;
+    btnLabel = `Comenzar el módulo <i class="fas fa-arrow-right"></i>`;
+  } else if (esPostQ) {
+    // Guardar post-score y construir comparativa Kirkpatrick
+    try { localStorage.setItem('kirkpatrick_post_score', correctas); localStorage.setItem('kirkpatrick_post_pct', pct); } catch(e) {}
+    if (!diasEstado[10]) diasEstado[10] = {};
+    diasEstado[10].postEval = true;
+    const preScore = parseInt(localStorage.getItem('kirkpatrick_pre_score') || '0');
+    const prePct   = parseInt(localStorage.getItem('kirkpatrick_pre_pct')   || '0');
+    const delta = correctas - preScore;
+    const deltaColor = delta > 0 ? '#00ff88' : delta < 0 ? 'var(--magenta)' : 'var(--cyan)';
+    const deltaSign  = delta > 0 ? '+' : '';
+    const kirkpatrick = `
+      <div style="background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-radius:12px;padding:16px;margin-bottom:20px;">
+        <div style="font-size:11px;color:#00ff88;font-weight:700;letter-spacing:0.08em;margin-bottom:12px;">📊 COMPARATIVA KIRKPATRICK NIVEL 2</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;">
+          <div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">DIAGNÓSTICO INICIAL</div>
+            <div style="font-size:28px;font-weight:900;color:var(--cyan);">${preScore}/10</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);">${prePct}%</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-size:24px;color:rgba(255,255,255,0.2);">→</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px;">EVALUACIÓN FINAL</div>
+            <div style="font-size:28px;font-weight:900;color:${color};">${correctas}/10</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4);">${pct}%</div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
+          <span style="font-size:20px;font-weight:800;color:${deltaColor};">${deltaSign}${delta} respuestas</span>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:3px;">${delta > 0 ? 'Aprendizaje demostrado ✓' : delta === 0 ? 'Nivel mantenido' : 'Revisar conceptos'}</div>
+        </div>
+      </div>`;
+    ptsLine  = `${kirkpatrick}<div style="font-size:22px;font-weight:700;margin:10px 0 6px;">+${ptsGanados} pts ganados</div>`;
+    closeFn  = `cerrarQuiz();if(${ptsGanados}>0)showFloatingPoints(${ptsGanados});setTimeout(()=>navigate('screen-journey'),800);`;
+    btnLabel = `Ver mi Journey <i class="fas fa-trophy"></i>`;
+  } else {
+    ptsLine  = `<div style="font-size:22px;font-weight:700;margin:10px 0 6px;">+${ptsGanados} pts ganados</div>`;
+    closeFn  = `cerrarQuiz();desbloquearCompletarDia();${ptsGanados > 0 ? 'showFloatingPoints(' + ptsGanados + ');' : ''}`;
+    btnLabel = `Cerrar y continuar <i class="fas fa-check"></i>`;
+  }
+
   results.innerHTML = `
     <div style="text-align:center;padding:20px 0 32px;">
       <div style="font-size:72px;font-weight:900;color:${color};line-height:1;">${correctas}/${preguntas.length}</div>
-      <div style="font-size:22px;font-weight:700;margin:10px 0 6px;">${ptsGanados} pts ganados</div>
-      <div style="font-size:14px;color:rgba(255,255,255,0.45);">${msg}</div>
+      ${ptsLine}
+      <div style="font-size:14px;color:rgba(255,255,255,0.45);margin-top:6px;">${msg}</div>
     </div>
     ${errores.length > 0 ? `
     <div style="margin-bottom:28px;">
@@ -4798,13 +4988,140 @@ function mostrarResultadosQuiz() {
         </div>
       `).join('')}
     </div>` : `<div style="text-align:center;padding:0 0 28px;font-size:15px;color:#00ff88;">🎉 ¡Respondiste todo correctamente!</div>`}
-    <button class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;" onclick="cerrarQuiz();desbloquearCompletarDia();if(${ptsGanados}>0)showFloatingPoints(${ptsGanados});">
-      Cerrar y continuar <i class="fas fa-check"></i>
+    <button class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;" onclick="${closeFn}">
+      ${btnLabel}
     </button>`;
 }
 
 function desbloquearCompletarDia() {
   marcarRecurso('quiz');
+  if (!diasEstado[currentDia]) diasEstado[currentDia] = {};
+  diasEstado[currentDia].quiz = true;
+}
+
+function unlockPreQuizContent() {
+  diasPreQuizDone[currentDia] = true;
+  if (!diasEstado[currentDia]) diasEstado[currentDia] = {};
+  diasEstado[currentDia].quiz = true;
+  saveState();
+  renderDia(currentDia);
+  setTimeout(() => { diaRecursos.quiz = true; marcarRecurso('quiz'); }, 50);
+}
+
+function abrirRepaso(diaNum) {
+  const wrong = wrongQuestionsByDay[diaNum - 1] || [];
+  let preguntas = wrong.slice(0, 3);
+  // Completar hasta 3 con preguntas aleatorias del banco (no duplicadas)
+  if (preguntas.length < 3) {
+    const usedQs = new Set(preguntas.map(p => p.q));
+    const filler = [...BANCO_CC].sort(() => Math.random() - 0.5)
+      .filter(p => !usedQs.has(p.q))
+      .slice(0, 3 - preguntas.length);
+    preguntas = [...preguntas, ...filler];
+  }
+  preguntas = preguntas.map(shuffleOptsPreg);
+  if (preguntas.length === 0) {
+    if (!diasEstado[diaNum]) diasEstado[diaNum] = {};
+    diasEstado[diaNum].repaso = true;
+    if (diaNum === 10) renderDia10(); else renderDia(diaNum);
+    return;
+  }
+  let repasoIdx = 0;
+  let repasoAllCorrect = true;
+  const prev = document.getElementById('repaso-modal');
+  if (prev) prev.remove();
+  const modal = document.createElement('div');
+  modal.id = 'repaso-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(8,10,18,0.97);z-index:9999;overflow-y:auto;';
+  modal.innerHTML = `
+    <div style="max-width:600px;margin:0 auto;padding:28px 20px 60px;">
+      <div style="margin-bottom:28px;">
+        <span class="badge" style="background:rgba(117,114,233,0.2);color:var(--purple);border:1px solid rgba(117,114,233,0.3);">Repaso · Día ${diaNum}</span>
+        <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">Repaso del día anterior · ${preguntas.length} pregunta${preguntas.length > 1 ? 's' : ''} fallada${preguntas.length > 1 ? 's' : ''} · Sin puntos</div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:32px;" id="repaso-dots"></div>
+      <div id="repaso-question-area"></div>
+    </div>`;
+  document.body.appendChild(modal);
+  document.body.style.overflow = 'hidden';
+
+  function renderRepasoPregunta() {
+    const p = preguntas[repasoIdx];
+    const letters = ['A', 'B', 'C', 'D'];
+    const dotsEl = document.getElementById('repaso-dots');
+    if (dotsEl) {
+      dotsEl.innerHTML = preguntas.map((_, i) => {
+        const bg = i < repasoIdx ? 'var(--purple)' : (i === repasoIdx ? 'var(--magenta)' : 'rgba(255,255,255,0.12)');
+        return `<div style="flex:1;height:4px;border-radius:2px;background:${bg};transition:background 0.3s;"></div>`;
+      }).join('');
+    }
+    const area = document.getElementById('repaso-question-area');
+    if (!area) return;
+    area.innerHTML = `
+      <div style="font-size:12px;color:rgba(117,114,233,0.7);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em;">Repaso ${repasoIdx + 1} de ${preguntas.length}</div>
+      <h3 style="font-size:18px;font-weight:700;line-height:1.45;margin-bottom:26px;">${p.q}</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;" id="repaso-opts">
+        ${p.opts.map((opt, i) => `
+          <div class="repaso-opt-item" data-idx="${i}" style="display:flex;align-items:flex-start;gap:14px;padding:14px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);cursor:pointer;transition:border-color 0.15s;">
+            <div style="width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;color:rgba(255,255,255,0.4);">${letters[i]}</div>
+            <div style="font-size:14px;line-height:1.5;padding-top:3px;">${opt}</div>
+          </div>`).join('')}
+      </div>`;
+    area.querySelectorAll('.repaso-opt-item').forEach(el => {
+      el.addEventListener('mouseover', () => { if (!el.dataset.locked) el.style.borderColor = 'rgba(255,255,255,0.3)'; });
+      el.addEventListener('mouseout',  () => { if (!el.dataset.locked) el.style.borderColor = 'rgba(255,255,255,0.1)'; });
+      el.addEventListener('click', () => {
+        if (el.dataset.locked) return;
+        const idx = parseInt(el.dataset.idx);
+        const opts = area.querySelectorAll('.repaso-opt-item');
+        opts.forEach(o => { o.style.cursor = 'default'; o.dataset.locked = '1'; });
+        const correcta = (idx === p.c);
+        if (!correcta) repasoAllCorrect = false;
+        el.style.background = correcta ? 'rgba(0,255,136,0.1)' : 'rgba(248,0,250,0.1)';
+        el.style.borderColor = correcta ? '#00ff88' : 'var(--magenta)';
+        const dot = el.querySelector('div');
+        dot.style.background = correcta ? '#00ff88' : 'var(--magenta)';
+        dot.style.color = 'black'; dot.style.border = 'none';
+        if (!correcta) {
+          opts[p.c].style.background = 'rgba(0,255,136,0.07)';
+          opts[p.c].style.borderColor = 'rgba(0,255,136,0.5)';
+          const cdot = opts[p.c].querySelector('div');
+          cdot.style.background = 'rgba(0,255,136,0.2)'; cdot.style.color = '#00ff88';
+        }
+        const fb = document.createElement('div');
+        fb.style.cssText = 'margin-top:16px;padding:12px 16px;border-radius:8px;font-size:13px;line-height:1.5;';
+        if (correcta) {
+          fb.style.background = 'rgba(0,255,136,0.07)'; fb.style.borderLeft = '3px solid #00ff88';
+          fb.innerHTML = '<span style="color:#00ff88;font-weight:700;">✅ ¡Correcto esta vez!</span>';
+        } else {
+          fb.style.background = 'rgba(248,0,250,0.05)'; fb.style.borderLeft = '3px solid var(--magenta)';
+          fb.innerHTML = `<span style="color:var(--magenta);font-weight:700;">❌ Sigue fallando</span> — Correcta: <strong style="color:#00ff88;">${letters[p.c]}) ${p.opts[p.c]}</strong><div style="margin-top:6px;font-size:12px;color:rgba(255,255,255,0.45);">${p.exp}</div>`;
+        }
+        area.appendChild(fb);
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-primary'; btn.style.cssText = 'width:100%;margin-top:16px;';
+        const isLast = repasoIdx === preguntas.length - 1;
+        btn.innerHTML = isLast ? 'Completar repaso <i class="fas fa-check"></i>' : 'Siguiente <i class="fas fa-arrow-right"></i>';
+        btn.onclick = () => {
+          repasoIdx++;
+          if (repasoIdx >= preguntas.length) {
+            modal.remove();
+            document.body.style.overflow = '';
+            if (!diasEstado[diaNum]) diasEstado[diaNum] = {};
+            diasEstado[diaNum].repaso = true;
+            // Bonus point if all 3 correct
+            if (repasoAllCorrect) { showFloatingPoints(1); showToast('⭐ +1 pt bonus por repasar correctamente todo', 'success'); }
+            saveState();
+            if (diaNum === 10) renderDia10(); else renderDia(diaNum);
+          } else {
+            renderRepasoPregunta();
+          }
+        };
+        area.appendChild(btn);
+      });
+    });
+  }
+  renderRepasoPregunta();
 }
 
 // ══════════════════════════════════════
@@ -4854,7 +5171,7 @@ const SOPA_WORDS = [
   }
 ];
 
-let sopaState = { found: new Set(), pistaActual: 0, palabraEscrita: '', selecting: false, start: null, sel: [] };
+let sopaState = { found: new Set(), pistaActual: 0, palabraEscrita: '', selecting: false, start: null, sel: [], pts: 0 };
 
 function sopaGetCells(w) {
   const cells = [];
@@ -4880,7 +5197,7 @@ function abrirActividad() {
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
         <div>
           <span class="badge badge-magenta">Connected Customer · Día 1</span>
-          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">Actividad · Vocabulario Experto · 10 pts</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">Actividad · Vocabulario Experto · 5 pts</div>
         </div>
         <button onclick="cerrarActividad()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:16px;">✕</button>
       </div>
@@ -5010,12 +5327,6 @@ function actVerificar() {
 }
 
 function actActivarSeleccion(w) {
-  // Resaltar levemente las celdas de la palabra como pista visual
-  sopaGetCells(w).forEach(({ r, c }) => {
-    const td = document.getElementById(`act-td-${r}-${c}`);
-    if (td) td.style.background = 'rgba(248,0,250,0.12)';
-  });
-
   const st = document.getElementById('act-status');
   if (st) st.textContent = '👆 Arrastra sobre las letras en el grid para seleccionar la palabra.';
 
@@ -5087,6 +5398,8 @@ function actSelUp(w) {
       if (td) { td.classList.remove('sel'); td.classList.add('found'); td.style.background = ''; }
     });
     sopaState.found.add(w.word);
+    sopaState.pts += 1;
+    showFloatingPoints(1);
 
     // Quitar eventos del grid
     document.querySelectorAll('#act-sopa-table .sopa-td').forEach(td => {
@@ -5127,7 +5440,7 @@ function actMostrarResultados() {
   res.innerHTML = `
     <div style="text-align:center;padding:24px 0 32px;">
       <div style="font-size:64px;font-weight:900;color:#00ff88;line-height:1;">5/5</div>
-      <div style="font-size:22px;font-weight:700;margin:10px 0 6px;">+10 pts</div>
+      <div style="font-size:22px;font-weight:700;margin:10px 0 6px;">+${sopaState.pts} pts</div>
       <div style="font-size:14px;color:rgba(255,255,255,0.45);">¡Dominas el vocabulario experto de Connected Customer!</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:28px;">
@@ -5137,15 +5450,1262 @@ function actMostrarResultados() {
           <div style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.5;">${w.pista}</div>
         </div>`).join('')}
     </div>
-    <button class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;" onclick="cerrarActividad();marcarRecurso('actividad');showFloatingPoints(10);">
+    <button class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;" onclick="cerrarActividad();marcarRecurso('actividad');">
       Cerrar y continuar <i class="fas fa-check"></i>
     </button>`;
 }
 
 function initSopa() {} // legacy — ya no se usa inline
 
-function completarDia() {
-  showToast('🎉 ¡Día 1 completado! +10 pts', 'success');
-  showFloatingPoints(10);
-  setTimeout(() => navigate('screen-journey'), 1500);
+// ══════════════════════════════════════
+//  SIMULADOR — ¿Eficiente o Excelente?
+// ══════════════════════════════════════
+
+const INDICADORES = [
+  { id:'i1', nombre:'Utilización de flota', desc:'% de capacidad de carga usada por unidad por ruta', tipo:'FALSO',
+    exp:'Alta utilización significa consolidar pedidos cuando conviene a la ruta, no cuando el cliente los necesita. Un camión al 95% que llega dos días tarde es un éxito interno y un fracaso para la tienda que perdió ventas.' },
+  { id:'i2', nombre:'Costo por entrega', desc:'Gasto logístico total dividido entre número de entregas realizadas', tipo:'FALSO',
+    exp:'Incentiva reducir frecuencia de visita y aumentar volumen. El cliente pequeño recibe menos visitas, hace pedidos más grandes de los que puede financiar y termina con desabasto entre visitas.' },
+  { id:'i3', nombre:'OTIF interno', desc:'% de órdenes entregadas completas y en fecha comprometida en el sistema', tipo:'FALSO',
+    exp:'El engaño: si planeación mueve la fecha en el sistema antes de que venza el plazo, el sistema registra cumplimiento. El cliente recibió tarde; el reporte dice 98% OTIF.' },
+  { id:'i4', nombre:'Tasa de rechazo en almacén', desc:'% de unidades rechazadas por calidad antes de salir del CEDIS', tipo:'FALSO',
+    exp:'Mide calidad interna, no la percibida en el punto de entrega. El producto puede pasar el control del CEDIS y llegar golpeado o en presentación equivocada.' },
+  { id:'i5', nombre:'Tasa de quiebre en anaquel', desc:'Frecuencia con que una tienda reporta faltante de un SKU entre visitas', tipo:'REAL',
+    exp:'Este es el indicador que el dueño de la tienda siente cada vez que le dice "no" a un cliente. No vive en ningún reporte de la distribuidora porque requiere datos del punto de venta.' },
+  { id:'i6', nombre:'Predictibilidad de ventana de entrega', desc:'Varianza entre hora prometida y hora real de llegada por ruta y cliente', tipo:'REAL',
+    exp:'Una tienda puede adaptarse a un proveedor que llega tarde si llega predeciblemente tarde. Lo que destruye la operación es la varianza: hoy a las 9am, mañana a las 4pm.' },
+  { id:'i7', nombre:'Fill rate percibido por el cliente', desc:'% de líneas del pedido original que llegaron completas según el cliente', tipo:'REAL',
+    exp:'Diferente al fill rate interno. Si el sistema reduce la orden por desabasto, internamente hay 100% de cumplimiento. Para el cliente, llegó incompleto.' },
+  { id:'i8', nombre:'Resolución en primera llamada', desc:'% de reclamaciones resueltas sin reescalación ni segunda llamada', tipo:'REAL',
+    exp:'Lo que mide la percepción no es solo si se resolvió, sino cuántas veces el cliente tuvo que insistir. Predice churn de clientes mejor que cualquier KPI de almacén.' },
+  { id:'i9', nombre:'NPS post-entrega', desc:'Net Promoter Score capturado por la app del repartidor al momento de la entrega', tipo:'DISTRACTOR',
+    exp:'Parece centrado en el cliente, pero se captura con el repartidor presente, creando sesgo social. El dueño raramente da un 6 con el repartidor enfrente. Un indicador de cliente capturado con lógica interna.' },
+  { id:'i10', nombre:'Rotación de inventario en CEDIS', desc:'Velocidad a la que el inventario del centro de distribución se convierte en entregas', tipo:'DISTRACTOR',
+    exp:'Optimizar rotación lleva a reducir SKUs lentos y priorizar rutas de alto volumen, desabasteciendo selectivamente a los clientes pequeños que más dependen del distribuidor.' }
+];
+
+const FASE2_LLAMADAS = [
+  {
+    cliente: 'Don Roberto — Abarrotes El Fénix',
+    queja: '"Me cambiaron la fecha de entrega sin avisarme. Contraté personal extra para recibir y nadie llegó. Eso me costó dinero."',
+    opciones: [
+      { txt: 'Disculparse y ofrecer un descuento en el próximo pedido.', pts: 1, fb: 'El descuento calma la queja inmediata pero no resuelve la causa raíz: la falta de aviso. El cliente seguirá viviendo lo mismo.' },
+      { txt: 'Comprometerse a notificarle con 24 horas de anticipación cualquier cambio de fecha.', pts: 3, fb: '¡Correcto! Atacas el problema real: la falta de visibilidad y comunicación proactiva. Esto construye confianza.' },
+      { txt: 'Explicarle que los cambios de ruta son necesarios para optimizar costos operativos.', pts: 0, fb: 'Grave error. Le estás priorizando la eficiencia interna sobre su experiencia. El cliente no paga tu costo operativo — paga por confiabilidad.' }
+    ]
+  },
+  {
+    cliente: 'Doña Carmen — Minisuper La Esperanza',
+    queja: '"Me llegaron 3 de los 8 productos que pedí. El resto "no había en almacén". Pero nadie me avisó antes de la entrega."',
+    opciones: [
+      { txt: 'Reprogramar la entrega del faltante para la próxima semana.', pts: 1, fb: 'Resuelve el faltante pero no la comunicación. Doña Carmen perdió ventas esta semana que ya no recupera.' },
+      { txt: 'Implementar un aviso automático cuando hay desabasto, antes de que salga el camión.', pts: 3, fb: '¡Exacto! La solución estructural es dar visibilidad al cliente antes, no después. Así puede tomar decisiones a tiempo.' },
+      { txt: 'Ofrecerle un producto sustituto del mismo precio.', pts: 1, fb: 'Iniciativa válida, pero solo funciona si el cliente lo acepta. El problema de fondo — sin aviso previo — sigue sin resolverse.' }
+    ]
+  }
+];
+
+const CRITERIOS_EXCELENCIA = [
+  { id:'c1', txt:'Reducir el costo por entrega 15% trimestral', correcto: false },
+  { id:'c2', txt:'Cero quiebres de anaquel en clientes activos', correcto: true },
+  { id:'c3', txt:'Aumentar utilización de flota al 90%', correcto: false },
+  { id:'c4', txt:'100% de avisos proactivos ante cambios de fecha o faltantes', correcto: true },
+  { id:'c5', txt:'Fill rate percibido por cliente ≥ 95%', correcto: true },
+  { id:'c6', txt:'Reducir rechazos en almacén a menos del 2%', correcto: false },
+  { id:'c7', txt:'Resolución de quejas en primera llamada ≥ 90%', correcto: true },
+  { id:'c8', txt:'Incrementar volumen por ruta 20% anual', correcto: false }
+];
+
+let simState = {};
+
+function abrirSimulador() {
+  simState = { fase: 1, clasificaciones: {}, fase2pts: 0, fase2idx: 0, criteriosSelec: new Set(), pts: 0 };
+
+  const prev = document.getElementById('sim-modal');
+  if (prev) prev.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'sim-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(8,10,18,0.97);z-index:9999;overflow-y:auto;';
+  modal.innerHTML = `
+    <div style="max-width:680px;margin:0 auto;padding:28px 20px 60px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+        <div>
+          <span class="badge badge-purple">Connected Customer · Día 1</span>
+          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">Simulador · ¿Eficiente o Excelente? · 5 pts</div>
+        </div>
+        <button onclick="cerrarSimulador()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:16px;">✕</button>
+      </div>
+      <!-- Fases progress -->
+      <div style="display:flex;gap:4px;margin-bottom:28px;">
+        <div style="flex:1;height:4px;border-radius:2px;background:var(--purple);" id="sim-prog-1"></div>
+        <div style="flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,0.1);" id="sim-prog-2"></div>
+        <div style="flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,0.1);" id="sim-prog-3"></div>
+      </div>
+      <div id="sim-contenido"></div>
+    </div>`;
+  document.body.appendChild(modal);
+  document.body.style.overflow = 'hidden';
+  simRenderFase1();
 }
+
+function cerrarSimulador() {
+  const modal = document.getElementById('sim-modal');
+  if (modal) modal.remove();
+  document.body.style.overflow = '';
+}
+
+function simRenderFase1() {
+  const shuffled = [...INDICADORES].sort(() => Math.random() - 0.5);
+  simState.fase1Indicadores = shuffled;
+  const cont = document.getElementById('sim-contenido');
+  cont.innerHTML = `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;color:var(--purple);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Fase 1 de 3 — El diagnóstico</div>
+      <h3 style="font-size:18px;font-weight:700;line-height:1.4;margin-bottom:8px;">Lunes por la mañana. Operaciones celebra. El cliente se queja.</h3>
+      <p style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:20px;">El Director te pide separar qué indicadores miden éxito real y cuáles son espejismos internos. Clasifica todos y luego revisa tus resultados.</p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;" id="sim-indicadores">
+      ${shuffled.map(ind => `
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;" id="sim-ind-${ind.id}">
+          <div style="flex:1;min-width:180px;">
+            <div style="font-size:13px;font-weight:700;margin-bottom:2px;">${ind.nombre}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.35);">${ind.desc}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button onclick="simSeleccionar('${ind.id}','FALSO',this)" data-id="${ind.id}" data-tipo="FALSO"
+              style="padding:6px 10px;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(248,0,250,0.3);background:transparent;color:rgba(248,0,250,0.7);">
+              Falso
+            </button>
+            <button onclick="simSeleccionar('${ind.id}','REAL',this)" data-id="${ind.id}" data-tipo="REAL"
+              style="padding:6px 10px;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(0,255,136,0.3);background:transparent;color:rgba(0,255,136,0.7);">
+              Real
+            </button>
+            <button onclick="simSeleccionar('${ind.id}','DISTRACTOR',this)" data-id="${ind.id}" data-tipo="DISTRACTOR"
+              style="padding:6px 10px;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid rgba(255,200,0,0.3);background:transparent;color:rgba(255,200,0,0.7);">
+              Depende
+            </button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:12px;">Clasificados: <span id="sim-clasificados-count" style="color:var(--purple);font-weight:700;">0</span> / ${INDICADORES.length}</div>
+
+    <button id="btn-sim-verificar" class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;opacity:0.35;cursor:not-allowed;" disabled onclick="simVerificarTodos()">
+      Ver resultados <i class="fas fa-chart-bar"></i>
+    </button>`;
+}
+
+function simSeleccionar(id, tipo, btn) {
+  // Desmarcar botón previo de este indicador
+  document.querySelectorAll(`button[data-id="${id}"]`).forEach(b => {
+    b.style.background = 'transparent';
+    b.style.opacity = '1';
+  });
+
+  // Marcar seleccionado
+  const colores = { FALSO: 'rgba(248,0,250,0.2)', REAL: 'rgba(0,255,136,0.2)', DISTRACTOR: 'rgba(255,200,0,0.2)' };
+  btn.style.background = colores[tipo];
+
+  simState.clasificaciones[id] = tipo;
+
+  const count = Object.keys(simState.clasificaciones).length;
+  const countEl = document.getElementById('sim-clasificados-count');
+  if (countEl) countEl.textContent = count;
+
+  if (count === INDICADORES.length) {
+    const btnV = document.getElementById('btn-sim-verificar');
+    if (btnV) { btnV.disabled = false; btnV.style.opacity = '1'; btnV.style.cursor = 'pointer'; }
+  }
+}
+
+function simVerificarTodos() {
+  let ptsGanados = 0;
+  INDICADORES.forEach(ind => {
+    const elegido = simState.clasificaciones[ind.id];
+    const correcto = elegido === ind.tipo;
+    if (correcto) ptsGanados += 0.5;
+    const card = document.getElementById('sim-ind-' + ind.id);
+    if (!card) return;
+    const label = ind.tipo === 'FALSO' ? 'Falso' : ind.tipo === 'REAL' ? 'Real' : 'Depende';
+    const colorBorde = correcto ? '#00ff88' : 'var(--magenta)';
+    card.style.borderColor = colorBorde;
+    card.style.marginBottom = '4px';
+    // Mostrar feedback compacto
+    const fb = document.createElement('div');
+    fb.style.cssText = `font-size:11px;color:rgba(255,255,255,0.45);margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);line-height:1.5;`;
+    fb.innerHTML = correcto
+      ? `<span style="color:#00ff88;font-weight:700;">✅ Correcto (${label}).</span> ${ind.exp}`
+      : `<span style="color:var(--magenta);font-weight:700;">❌ Era: ${label}.</span> ${ind.exp}`;
+    card.appendChild(fb);
+    // Deshabilitar botones
+    document.querySelectorAll(`button[data-id="${ind.id}"]`).forEach(b => { b.style.cursor='default'; b.onclick=null; b.style.opacity='0.4'; });
+  });
+
+  simState.pts += ptsGanados;
+
+  // Reemplazar botón
+  const btnV = document.getElementById('btn-sim-verificar');
+  if (btnV) {
+    btnV.textContent = '';
+    btnV.innerHTML = `Continuar a Fase 2 <i class="fas fa-arrow-right"></i>`;
+    btnV.onclick = simIrFase2;
+  }
+}
+
+function simIrFase2() {
+  document.getElementById('sim-prog-2').style.background = 'var(--purple)';
+  simState.fase = 2;
+  simState.fase2idx = 0;
+  simRenderFase2();
+}
+
+function simRenderFase2() {
+  const llamada = FASE2_LLAMADAS[simState.fase2idx];
+  const cont = document.getElementById('sim-contenido');
+  cont.innerHTML = `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;color:var(--purple);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Fase 2 de 3 — La llamada del cliente (${simState.fase2idx+1}/${FASE2_LLAMADAS.length})</div>
+      <h3 style="font-size:18px;font-weight:700;line-height:1.4;margin-bottom:16px;">Suena el teléfono.</h3>
+    </div>
+    <div style="background:rgba(117,114,233,0.08);border:1px solid rgba(117,114,233,0.25);border-radius:12px;padding:20px;margin-bottom:24px;">
+      <div style="font-size:11px;font-weight:700;color:var(--purple);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em;">📞 ${llamada.cliente}</div>
+      <div style="font-size:15px;font-style:italic;color:rgba(255,255,255,0.85);line-height:1.6;">${llamada.queja}</div>
+    </div>
+    <p style="font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:16px;">¿Cómo respondes como consultor interno?</p>
+    <div style="display:flex;flex-direction:column;gap:10px;" id="sim-opciones">
+      ${llamada.opciones.map((op, i) => `
+        <div onclick="simResponder(${i})" style="padding:14px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);cursor:pointer;font-size:14px;line-height:1.5;transition:border-color 0.15s;" id="sim-op-${i}"
+          onmouseover="if(!this.dataset.locked)this.style.borderColor='rgba(117,114,233,0.5)'"
+          onmouseout="if(!this.dataset.locked)this.style.borderColor='rgba(255,255,255,0.1)'">
+          ${op.txt}
+        </div>`).join('')}
+    </div>
+    <div id="sim-fase2-fb" style="margin-top:16px;min-height:20px;"></div>`;
+}
+
+function simResponder(idx) {
+  const llamada = FASE2_LLAMADAS[simState.fase2idx];
+  const op = llamada.opciones[idx];
+  document.querySelectorAll('[id^="sim-op-"]').forEach(el => { el.style.cursor='default'; el.dataset.locked='1'; el.onclick=null; });
+
+  const el = document.getElementById('sim-op-' + idx);
+  const color = op.pts === 3 ? '#00ff88' : op.pts === 1 ? 'orange' : 'var(--magenta)';
+  el.style.borderColor = color;
+  el.style.background = op.pts === 3 ? 'rgba(0,255,136,0.08)' : op.pts === 1 ? 'rgba(255,165,0,0.08)' : 'rgba(248,0,250,0.08)';
+
+  simState.fase2pts += op.pts;
+  simState.pts += op.pts === 3 ? 1 : op.pts === 1 ? 0.5 : 0;
+
+  const fb = document.getElementById('sim-fase2-fb');
+  fb.innerHTML = `
+    <div style="padding:12px 16px;border-radius:8px;border-left:3px solid ${color};background:rgba(255,255,255,0.03);font-size:13px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:16px;">
+      ${op.fb}
+    </div>
+    <button class="btn btn-primary" style="width:100%;padding:12px;" onclick="simSiguienteLlamada()">
+      ${simState.fase2idx + 1 < FASE2_LLAMADAS.length ? 'Siguiente llamada <i class="fas fa-arrow-right"></i>' : 'Continuar a Fase 3 <i class="fas fa-arrow-right"></i>'}
+    </button>`;
+}
+
+function simSiguienteLlamada() {
+  simState.fase2idx++;
+  if (simState.fase2idx < FASE2_LLAMADAS.length) {
+    simRenderFase2();
+  } else {
+    document.getElementById('sim-prog-3').style.background = 'var(--purple)';
+    simRenderFase3();
+  }
+}
+
+function simRenderFase3() {
+  const shuffled = [...CRITERIOS_EXCELENCIA].sort(() => Math.random() - 0.5);
+  const cont = document.getElementById('sim-contenido');
+  cont.innerHTML = `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;color:var(--purple);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Fase 3 de 3 — La propuesta al Director</div>
+      <h3 style="font-size:18px;font-weight:700;line-height:1.4;margin-bottom:8px;">El Director te pide el nuevo estándar de excelencia.</h3>
+      <p style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;">Selecciona los <strong style="color:white;">4 criterios</strong> que formarán el nuevo estándar de excelencia centrado en el cliente.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;" id="sim-criterios">
+      ${shuffled.map(c => `
+        <div onclick="simToggleCriterio('${c.id}',this)" data-id="${c.id}" style="padding:12px 16px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);cursor:pointer;display:flex;align-items:center;gap:12px;font-size:13px;transition:all 0.15s;">
+          <div style="width:20px;height:20px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;" id="chk-${c.id}"></div>
+          ${c.txt}
+        </div>`).join('')}
+    </div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:16px;">Seleccionados: <span id="sim-criterios-count" style="color:var(--purple);font-weight:700;">0</span> / 4</div>
+    <button class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;opacity:0.35;cursor:not-allowed;" id="btn-sim-finalizar" disabled onclick="simFinalizar()">
+      Entregar propuesta al Director <i class="fas fa-check"></i>
+    </button>`;
+}
+
+function simToggleCriterio(id, el) {
+  if (simState.criteriosSelec.has(id)) {
+    simState.criteriosSelec.delete(id);
+    el.style.borderColor = 'rgba(255,255,255,0.1)';
+    el.style.background = 'rgba(255,255,255,0.03)';
+    const chk = document.getElementById('chk-' + id);
+    if (chk) { chk.innerHTML = ''; chk.style.background = ''; chk.style.borderColor = 'rgba(255,255,255,0.2)'; }
+  } else {
+    if (simState.criteriosSelec.size >= 4) return;
+    simState.criteriosSelec.add(id);
+    el.style.borderColor = 'rgba(117,114,233,0.5)';
+    el.style.background = 'rgba(117,114,233,0.08)';
+    const chk = document.getElementById('chk-' + id);
+    if (chk) { chk.innerHTML = '✓'; chk.style.background = 'var(--purple)'; chk.style.borderColor = 'var(--purple)'; chk.style.color = '#fff'; }
+  }
+  const count = simState.criteriosSelec.size;
+  document.getElementById('sim-criterios-count').textContent = count;
+  const btn = document.getElementById('btn-sim-finalizar');
+  if (count === 4) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+  else { btn.disabled = true; btn.style.opacity = '0.35'; btn.style.cursor = 'not-allowed'; }
+}
+
+function simFinalizar() {
+  const correctosSelec = [...simState.criteriosSelec].filter(id => CRITERIOS_EXCELENCIA.find(c => c.id === id && c.correcto)).length;
+  simState.pts += correctosSelec;
+  const totalPts = Math.min(5, Math.round(simState.pts));
+  const pct = Math.round((correctosSelec / 4) * 100);
+  const color = pct === 100 ? '#00ff88' : pct >= 75 ? 'var(--cyan)' : 'orange';
+  const msg = pct === 100 ? '¡Propuesta impecable! El Director la aprueba.' : pct >= 75 ? 'Buena propuesta, con un ajuste menor.' : 'Revisa tu selección — incluiste criterios internos.';
+
+  const correctosTodos = CRITERIOS_EXCELENCIA.filter(c => c.correcto);
+  const incorrectos = [...simState.criteriosSelec].filter(id => CRITERIOS_EXCELENCIA.find(c => c.id === id && !c.correcto));
+
+  const cont = document.getElementById('sim-contenido');
+  cont.innerHTML = `
+    <div style="text-align:center;padding:20px 0 28px;">
+      <div style="font-size:64px;font-weight:900;color:${color};line-height:1;">${correctosSelec}/4</div>
+      <div style="font-size:22px;font-weight:700;margin:10px 0 6px;">+${totalPts} pts</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.45);">${msg}</div>
+    </div>
+
+    ${incorrectos.length > 0 ? `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:700;color:var(--magenta);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">Criterios que no deberían estar:</div>
+      ${incorrectos.map(id => {
+        const c = CRITERIOS_EXCELENCIA.find(x => x.id === id);
+        return `<div style="padding:10px 14px;border-radius:8px;border-left:3px solid var(--magenta);background:rgba(248,0,250,0.05);font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:8px;">${c.txt}</div>`;
+      }).join('')}
+    </div>` : ''}
+
+    <div style="margin-bottom:28px;">
+      <div style="font-size:11px;font-weight:700;color:#00ff88;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;">El nuevo estándar correcto:</div>
+      ${correctosTodos.map(c => `<div style="padding:10px 14px;border-radius:8px;border-left:3px solid #00ff88;background:rgba(0,255,136,0.05);font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:8px;">${c.txt}</div>`).join('')}
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;" onclick="cerrarSimulador();marcarRecurso('simulador');showFloatingPoints(${totalPts});">
+      Cerrar y continuar <i class="fas fa-check"></i>
+    </button>`;
+}
+
+function completarDia() {
+  const siguienteDia = currentDia + 1;
+  if (siguienteDia <= 9) {
+    setTimeout(() => { renderDia(siguienteDia); window.scrollTo(0, 0); }, 400);
+  } else if (siguienteDia === 10) {
+    setTimeout(() => { renderDia10(); window.scrollTo(0, 0); }, 400);
+  } else {
+    setTimeout(() => navigate('screen-journey'), 400);
+  }
+}
+
+// ── DÍA 10: EVALUACIÓN FINAL ─────────────────────────────────────
+function renderDia10() {
+  currentDia = 10;
+
+  const bc = document.getElementById('dia-breadcrumb');
+  if (bc) bc.textContent = 'Día 10: Evaluación Final del Módulo';
+  const badge = document.getElementById('dia-badge');
+  if (badge) badge.textContent = '🏁 Evaluación Final';
+  const pctLbl = document.getElementById('dia-pct-label');
+  if (pctLbl) pctLbl.textContent = '100% completado';
+  const fill = document.getElementById('dia-progress-fill');
+  if (fill) fill.style.width = '100%';
+
+  const btnComp = document.getElementById('btn-completar-dia');
+  if (btnComp) { btnComp.style.display = 'none'; }
+
+  renderSidebarDia(10);
+  actualizarPtsDisplay(10);
+
+  const preScore = parseInt(localStorage.getItem('kirkpatrick_pre_score') || '0');
+  const prePct   = parseInt(localStorage.getItem('kirkpatrick_pre_pct')   || '0');
+
+  // Repaso dinámico desde Día 9
+  const repasoHecho10 = !!(diasEstado[10] && diasEstado[10].repaso);
+  const prevWrong10 = wrongQuestionsByDay[9];
+  let htmlRepaso10 = '';
+  if (repasoHecho10) {
+    htmlRepaso10 = `
+    <div style="background:rgba(117,114,233,0.08);border:1px solid rgba(117,114,233,0.25);border-left:3px solid var(--purple);border-radius:10px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:18px;">✅</span>
+      <div>
+        <div style="font-size:10px;color:var(--purple);font-weight:700;letter-spacing:0.08em;">REPASO DEL DÍA ANTERIOR</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px;">Completado</div>
+      </div>
+    </div>`;
+  } else if (prevWrong10 === undefined) {
+    htmlRepaso10 = '';
+  } else if (prevWrong10.length === 0) {
+    htmlRepaso10 = `
+    <div style="background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-left:3px solid #00ff88;border-radius:10px;padding:12px 16px;margin-bottom:18px;">
+      <div style="font-size:10px;color:#00ff88;font-weight:700;letter-spacing:0.08em;">REPASO DEL DÍA ANTERIOR</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.65);margin-top:4px;">🎉 No tuviste errores el día anterior — ¡Excelente!</div>
+    </div>`;
+  } else {
+    htmlRepaso10 = `
+    <div style="background:rgba(117,114,233,0.08);border:1px solid rgba(117,114,233,0.3);border-left:3px solid var(--purple);border-radius:10px;padding:16px;margin-bottom:18px;">
+      <div style="font-size:10px;color:var(--purple);font-weight:700;letter-spacing:0.08em;margin-bottom:6px;">REPASO DEL DÍA ANTERIOR</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:12px;">${prevWrong10.length} pregunta${prevWrong10.length > 1 ? 's' : ''} fallada${prevWrong10.length > 1 ? 's' : ''} — revisalas antes de continuar (sin puntos)</div>
+      <button class="btn" style="width:100%;font-size:13px;padding:10px;background:rgba(117,114,233,0.15);border:1px solid rgba(117,114,233,0.4);color:var(--purple);font-weight:700;" onclick="abrirRepaso(10)">
+        <i class="fas fa-redo"></i> Iniciar Repaso
+      </button>
+    </div>`;
+  }
+
+  // Simulador Día 10
+  const sim10Hecho = !!(diasEstado[10] && diasEstado[10].simulador);
+  const sim10Data = DIAS_CC[9] && DIAS_CC[9].sim;
+  const htmlSim10 = sim10Hecho ? `
+    <div class="card" style="border-color:rgba(0,255,136,0.3);margin-bottom:20px;background:rgba(0,255,136,0.04);text-align:center;padding:20px 24px;">
+      <div style="font-size:28px;margin-bottom:6px;">✅</div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#00ff88;margin-bottom:4px;">SIMULADOR COMPLETADO</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.5);">${sim10Data ? sim10Data.titulo : 'Caso 10'}</div>
+    </div>` : `
+    <div class="card" style="border-color:rgba(117,114,233,0.4);margin-bottom:20px;background:rgba(117,114,233,0.04);text-align:center;padding:28px 24px;">
+      <div style="font-size:36px;margin-bottom:10px;">🎮</div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--purple);margin-bottom:6px;">SIMULADOR DE CASO · ODYSSEY · 8 PTS</div>
+      <h4 style="margin-bottom:6px;font-size:17px;">${sim10Data ? sim10Data.titulo : 'El balance final'}</h4>
+      <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;">${sim10Data ? sim10Data.subtitulo : 'Integración del módulo · Caso 10'}</p>
+      <button class="btn" style="width:100%;font-size:15px;padding:13px;background:rgba(117,114,233,0.15);border:1px solid rgba(117,114,233,0.5);color:var(--purple);font-weight:700;" onclick="abrirSimuladorCaso(10)">
+        <i class="fas fa-gamepad"></i> Iniciar Simulador
+      </button>
+    </div>`;
+
+  // Post-evaluación
+  const postEvalHecho = !!(diasEstado[10] && diasEstado[10].postEval);
+  const htmlPostEval = postEvalHecho ? `
+    <div class="card" style="border-color:rgba(0,255,136,0.3);margin-bottom:20px;background:rgba(0,255,136,0.04);text-align:center;padding:20px 24px;">
+      <div style="font-size:28px;margin-bottom:6px;">🏆</div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#00ff88;margin-bottom:4px;">EVALUACIÓN FINAL COMPLETADA</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);">Ya registrado · Consulta tu Kirkpatrick en el Journey</div>
+    </div>` : `
+    <div class="card" style="border-color:rgba(0,255,136,0.3);margin-bottom:20px;text-align:center;padding:28px 24px;">
+      <div style="font-size:36px;margin-bottom:10px;">🎯</div>
+      <h4 style="color:#00ff88;font-size:17px;margin-bottom:6px;">Evaluación Final · 10 preguntas</h4>
+      <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;">Misma base de preguntas · 1 pt por respuesta correcta · 10 minutos</p>
+      <button class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;background:linear-gradient(135deg,#00ff88,#00d8da);color:#000;font-weight:800;" onclick="abrirPostQuiz()">
+        <i class="fas fa-trophy"></i> Iniciar Evaluación Final
+      </button>
+    </div>`;
+
+  const cont = document.getElementById('dia-contenido');
+  if (!cont) return;
+  cont.innerHTML = `
+    ${htmlRepaso10}
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.35);margin-bottom:4px;">DÍA 10</div>
+      <h2 style="font-size:22px;font-weight:800;margin-bottom:10px;">Evaluación Final del Módulo</h2>
+      <div style="background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.2);border-radius:10px;padding:12px 16px;margin-bottom:14px;">
+        <div style="font-size:11px;color:#00ff88;font-weight:700;margin-bottom:3px;">OBJETIVO</div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:0;">Medir el aprendizaje real del módulo comparando tu resultado con la evaluación diagnóstica inicial (Kirkpatrick Nivel 2).</p>
+      </div>
+    </div>
+
+    <!-- Diagnóstico previo -->
+    <div class="card" style="margin-bottom:20px;border-color:rgba(0,216,218,0.25);">
+      <div style="font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:0.06em;margin-bottom:10px;">TU DIAGNÓSTICO INICIAL (DÍA 1)</div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="font-size:44px;font-weight:900;color:${prePct>=80?'#00ff88':prePct>=60?'var(--cyan)':'var(--magenta)'};">${preScore}<span style="font-size:22px;color:rgba(255,255,255,0.3);">/10</span></div>
+        <div>
+          <div style="font-size:14px;font-weight:600;">${prePct}% de respuestas correctas</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:2px;">${prePct>=80?'Nivel experto al inicio':'Espacio de crecimiento identificado'}</div>
+        </div>
+      </div>
+    </div>
+
+    ${htmlSim10}
+    ${htmlPostEval}`;
+}
+
+function abrirPostQuiz() {
+  const banco = (typeof BANCO_CC !== 'undefined') ? BANCO_CC : [];
+  const shuffled = [...banco].sort(() => Math.random() - 0.5);
+  quizState = { preguntas: shuffled.slice(0, 10).map(shuffleOptsPreg), actual: 0, respuestas: [], ptsGanados: 0, timerSeg: 600, timerInterval: null, esPostQuiz: true };
+
+  const prev = document.getElementById('quiz-modal');
+  if (prev) prev.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'quiz-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(8,10,18,0.97);z-index:9999;overflow-y:auto;';
+  modal.innerHTML = `
+    <div style="max-width:600px;margin:0 auto;padding:28px 20px 60px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+        <div>
+          <span class="badge badge-cyan">Connected Customer · Evaluación Final</span>
+          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">Post-evaluación · 10 preguntas · 10 pts</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:18px;">
+          <div style="display:flex;align-items:center;gap:7px;">
+            <i class="fas fa-clock" style="font-size:13px;color:rgba(255,255,255,0.3);"></i>
+            <span id="quiz-timer" style="font-size:22px;font-weight:800;color:var(--cyan);font-variant-numeric:tabular-nums;min-width:46px;">10:00</span>
+          </div>
+          <button onclick="cerrarQuiz()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:16px;line-height:1;">✕</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:32px;" id="quiz-progress-dots"></div>
+      <div id="quiz-question-area"></div>
+      <div id="quiz-results-area" style="display:none;"></div>
+    </div>`;
+  document.body.appendChild(modal);
+  document.body.style.overflow = 'hidden';
+  renderQuizPregunta();
+  iniciarTimerQuiz();
+}
+
+// ══════════════════════════════════════
+//  SISTEMA MULTI-DÍA — Connected Customer & Product
+// ══════════════════════════════════════
+
+let currentDia = 1;
+let diasPreQuizDone = {};
+let diasEstado = {}; // { diaNum: { quiz: bool, simulador: bool, repaso: bool } }
+let wrongQuestionsByDay = {}; // { diaNum: [question, ...] } — preguntas falladas por día
+
+function marcarEstadoDia(dia, tipo) {
+  if (!diasEstado[dia]) diasEstado[dia] = {};
+  diasEstado[dia][tipo] = true;
+  saveState();
+  renderDia(dia); // re-render para mostrar estado completado
+}
+
+// ── BANCO COMPLETO 50 PREGUNTAS ──
+const BANCO_CC = [
+  {q:'Una distribuidora logra entregar el 98% de sus pedidos a tiempo, pero su NPS cayó 15 puntos en el último trimestre. ¿Cuál es la explicación más probable?',opts:['La distribuidora tiene problemas de capacidad operativa','El OTIF no captura la experiencia completa del cliente conectado','Los clientes tienen expectativas irracionales','El problema está en servicio al cliente, no en la cadena'],c:1,exp:'El OTIF mide eficiencia operativa, pero el cliente conectado valida también visibilidad, comunicación proactiva y facilidad de interacción.'},
+  {q:'¿Cuál representa mejor el nuevo estándar de excelencia en cadena de suministro?',opts:['Minimizar costos de inventario y maximizar rotación','Garantizar disponibilidad en todos los canales con visibilidad end-to-end','Cumplir con el OTIF acordado en contrato','Reducir lead times sin incrementar costos logísticos'],c:1,exp:'La excelencia moderna requiere visibilidad, disponibilidad multicanal y capacidad de respuesta, no solo velocidad o costo.'},
+  {q:'¿Qué distingue a una empresa de clase mundial de una operacionalmente eficiente?',opts:['Uso de tecnología de punta en almacenes automatizados','Capacidad de anticipar y responder a las necesidades del cliente antes de que las exprese','Menores costos de transporte y distribución','Mayor número de SKUs disponibles'],c:1,exp:'La anticipación (demand sensing, personalización) es el diferenciador. La eficiencia es condición necesaria pero no suficiente.'},
+  {q:'Una empresa tiene perfecta disponibilidad de producto pero sus clientes reportan "no saber cuándo llegará su pedido". ¿Qué palanca debe activar?',opts:['Incrementar stock de seguridad','Implementar visibilidad y comunicación proactiva del estatus del pedido','Reducir lead time de producción','Ampliar la red de distribución'],c:1,exp:'La visibilidad del pedido es un diferenciador crítico para el cliente conectado que espera información en tiempo real.'},
+  {q:'¿Por qué el concepto de "cadena de suministro" está siendo reemplazado por "red de suministro"?',opts:['Porque el término "red" es más moderno y atractivo','Porque las relaciones son lineales y secuenciales','Porque refleja mejor la naturaleza multidireccional, colaborativa y tecnológica de las operaciones actuales','Porque elimina intermediarios en la distribución'],c:2,exp:'Una cadena implica relaciones lineales. La red captura ecosistemas interconectados con múltiples actores y flujos bidireccionales.'},
+  {q:'¿Cuál métrica es más relevante para evaluar si una cadena genera valor al cliente conectado?',opts:['Costo total de la cadena como % de ventas','Tasa de llenado (fill rate) del almacén','Customer Effort Score (CES) en el proceso pedido-entrega','Rotación de inventario'],c:2,exp:'El CES mide el esfuerzo del cliente para recibir su pedido. Reducir ese esfuerzo es el objetivo central.'},
+  {q:'¿Cuál de las siguientes fuerzas tuvo mayor impacto en la transformación hacia un modelo centrado en el cliente?',opts:['El incremento en costos de combustible','La proliferación del e-commerce y el comportamiento del consumidor digital','La presión sindical por mejores condiciones laborales','La consolidación de grandes retailers globales'],c:1,exp:'El e-commerce democratizó la comparación de precios, aceleró expectativas de entrega y puso el poder en manos del consumidor.'},
+  {q:'Una empresa B2B detecta que sus clientes ahora exigen visibilidad en tiempo real, entregas más frecuentes y flexibilidad. ¿Qué fenómeno explica este cambio?',opts:['La influencia del modelo B2C en las expectativas B2B ("consumerización")','Un cambio en la regulación sectorial','La presión de accionistas por mayor rentabilidad','La incorporación de nuevos proveedores globales'],c:0,exp:'Los compradores B2B trasladan sus expectativas como consumidores (Amazon, Netflix) a sus interacciones comerciales.'},
+  {q:'¿Cuál es la principal consecuencia operativa de los silos funcionales?',opts:['Mayor especialización y eficiencia por área','Reducción de costos administrativos','Pérdida de visibilidad end-to-end y respuesta lenta al cliente','Mayor control sobre los procesos internos'],c:2,exp:'Los silos generan información fragmentada, KPIs locales desalineados y tiempos de respuesta lentos.'},
+  {q:'Una empresa pasa de modelo "push" a "pull". ¿Qué impacto tiene en la experiencia del cliente?',opts:['Incrementa el inventario disponible en todos los puntos','Reduce la variedad de productos','Alinea producción y distribución con demanda real, mejorando disponibilidad y reduciendo quiebres','Aumenta costos sin beneficio visible para el cliente'],c:2,exp:'El modelo pull conecta la señal de demanda real con la operación, reduciendo sobrestock y quiebres.'},
+  {q:'¿Qué caracteriza a una organización que completó la transformación hacia cadena de valor?',opts:['Tiene los costos logísticos más bajos del sector','Sus funciones comparten objetivos orientados al cliente y colaboran en tiempo real','Ha eliminado intermediarios en distribución','Produce exclusivamente bajo pedido'],c:1,exp:'La cadena de valor implica alineación interfuncional con el cliente como norte compartido.'},
+  {q:'¿Por qué la digitalización no garantiza por sí sola mejor experiencia al cliente?',opts:['Porque la tecnología es demasiado costosa','Porque sin rediseño de procesos y cultura orientada al cliente, solo se automatizan ineficiencias existentes','Porque los clientes prefieren interacción humana','Porque aumenta la complejidad operativa'],c:1,exp:'"Digitalizar el caos es caos digital." La transformación real requiere procesos + tecnología + cultura.'},
+  {q:'¿Qué característica define mejor al "cliente conectado"?',opts:['El que compra exclusivamente por canales digitales','El que espera consistencia, visibilidad y respuesta inmediata independientemente del canal','El cliente corporativo que usa sistemas electrónicos para sus pedidos','El que tiene acceso a múltiples proveedores globales'],c:1,exp:'El cliente conectado no es solo el que compra en línea; espera experiencia consistente, transparente y sin esfuerzo en cualquier canal.'},
+  {q:'Una empresa mapea su Customer Journey y descubre que la mayor frustración ocurre 3 días post-pedido sin información. ¿Cuál es la intervención más efectiva?',opts:['Reducir el lead time a 2 días','Implementar notificaciones proactivas automáticas con visibilidad en tiempo real','Asignar un ejecutivo dedicado para ese cliente','Incrementar el stock de seguridad'],c:1,exp:'La ansiedad post-pedido se resuelve con visibilidad proactiva, no necesariamente con velocidad o inventario.'},
+  {q:'¿Qué implica Logística 4.0 en términos de capacidades para atender al cliente conectado?',opts:['Automatización de almacenes con robots','Integración de IoT, big data, IA y automatización para visibilidad, predicción y personalización en tiempo real','Subcontratación total a un 3PL especializado','Implementación de un sistema de planeación de última generación'],c:1,exp:'Logística 4.0 es la convergencia de tecnologías para crear una cadena inteligente y capaz de personalizar la experiencia del cliente conectado.'},
+  {q:'Un supervisor debe "reescribir la promesa de entrega". ¿Cuál debe ser su punto de partida?',opts:['Los tiempos actuales de picking y despacho','Las expectativas reales del cliente, los momentos de verdad del Customer Journey y la capacidad operativa real','Los estándares del sector y KPIs de la competencia','Las restricciones del contrato con el transportista'],c:1,exp:'Reescribir la promesa parte de entender qué valora el cliente y contrastar con lo que la operación puede cumplir.'},
+  {q:'¿Por qué las exigencias del cliente conectado impactan el diseño de los procesos logísticos internos?',opts:['Porque los clientes participan en el diseño de procesos','Porque las expectativas de velocidad, visibilidad y personalización requieren rediseñar flujos desde la demanda hacia atrás','Porque la regulación exige adaptar procesos al cliente','Porque los clientes comparan precios y esto afecta márgenes'],c:1,exp:'El diseño "demand-back" es el principio central: los procesos internos deben configurarse para cumplir las expectativas del cliente.'},
+  {q:'Una empresa mexicana implementa nearshoring. ¿Cuál es el principal beneficio para el cliente conectado?',opts:['Reducción de aranceles','Reducción de lead times y mayor capacidad de respuesta ante variaciones de demanda','Acceso a mano de obra más barata','Eliminación de riesgos de tipo de cambio'],c:1,exp:'El nearshoring acorta distancias y tiempos, permitiendo mayor agilidad para responder a cambios en la demanda.'},
+  {q:'¿Cuál es la diferencia entre resiliencia y eficiencia en cadena de suministro?',opts:['La eficiencia maximiza recursos; la resiliencia es sinónimo de redundancia costosa','La eficiencia optimiza el estado actual; la resiliencia asegura absorber disrupciones sin perder nivel de servicio','La resiliencia aplica solo a cadenas globales','Son sinónimos que buscan reducir costos'],c:1,exp:'Una cadena hiperoptimizada puede ser frágil. La resiliencia agrega capacidad de respuesta ante eventos inesperados.'},
+  {q:'¿Qué expectativa del cliente conectado es más difícil de cumplir para una distribuidora B2B tradicional en la última milla?',opts:['Precio competitivo de flete','Entrega en ventana horaria acordada con comunicación proactiva en tiempo real','Disponibilidad de producto en almacén','Facturación electrónica'],c:1,exp:'Ventanas de entrega precisas y notificaciones en tiempo real requieren tecnología de rastreo avanzada.'},
+  {q:'¿Qué distingue a una cadena "visible" de una simplemente "digitalizada"?',opts:['La visibilidad requiere más inversión','Una cadena visible permite a todos los actores acceder a información en tiempo real; la digitalización puede ser solo interna','La digitalización aplica a procesos administrativos; la visibilidad a físicos','No hay diferencia práctica'],c:1,exp:'La visibilidad comparte información con todos los actores de la cadena, incluyendo el cliente final.'},
+  {q:'¿Cómo impacta la sostenibilidad en la cadena al cliente conectado moderno?',opts:['Encarece el producto sin beneficio perceptible','Genera diferenciación y lealtad, ya que el cliente conectado valora el impacto ambiental y social','Solo aplica para segmento premium','Es requisito regulatorio sin impacto en decisión de compra'],c:1,exp:'El cliente conectado incorpora criterios de sostenibilidad en sus decisiones de compra.'},
+  {q:'¿Cuál es el principal reto del nearshoring para empresas mexicanas?',opts:['Falta de proveedores locales calificados en todos los sectores y alta inversión inicial','Resistencia de clientes a productos locales','Incompatibilidad de estándares de calidad','Restricciones arancelarias del T-MEC'],c:0,exp:'El nearshoring enfrenta escasez de proveedores especializados y requiere inversión en desarrollo de capacidades locales.'},
+  {q:'¿Cuál es la diferencia fundamental entre estrategia multicanal y omnicanal?',opts:['El omnicanal usa más canales','En omnicanal todos los canales están integrados y comparten información para experiencia consistente; en multicanal operan independientes','El multicanal es para B2C y el omnicanal para B2B','El omnicanal requiere eliminar canales físicos'],c:1,exp:'La integración es la clave. El omnicanal garantiza la misma experiencia independientemente del canal.'},
+  {q:'Una empresa tiene tiendas físicas, e-commerce y app, pero el inventario no está integrado. ¿Cuál es el impacto?',opts:['El cliente aprovecha diferencias de precio entre canales','El cliente experimenta quiebres en un canal aunque el producto exista en otro, generando frustración','La empresa reduce costos al gestionar inventarios por separado','Solo afecta al canal e-commerce'],c:1,exp:'Sin inventario unificado, el cliente puede encontrar "sin stock" cuando hay disponibilidad en otro canal.'},
+  {q:'¿Por qué la personalización por IA es diferenciador crítico en cadenas omnicanal?',opts:['Reduce costos de marketing digital','Permite ofrecer a cada cliente la oferta y experiencia relevantes en el momento y canal correcto, aumentando conversión y lealtad','Elimina la intervención humana en servicio','Es requisito para operar en plataformas de venta en línea'],c:1,exp:'La IA procesa señales de comportamiento en tiempo real para personalizar la experiencia, incrementando relevancia y valor de vida del cliente.'},
+  {q:'En contexto B2B, ¿cómo se manifiesta la omnicanalidad diferente al B2C?',opts:['En B2B no aplica la omnicanalidad porque los pedidos siempre son automatizados','Integra portales de autoservicio, ejecutivos de cuenta, y visitas presenciales en experiencia coherente con historial compartido','Se limita a tener un portal web y un equipo de ventas','No requiere omnicanalidad porque los clientes son pocos'],c:1,exp:'El comprador B2B usa múltiples canales y espera que todos compartan su historial, precios y preferencias.'},
+  {q:'¿Cuál es el mayor reto operativo para implementar omnicanalidad en una distribuidora con red física?',opts:['Convencer a clientes de usar canales digitales','Unificar inventario, sistemas de información y procesos de cumplimiento para servir desde cualquier nodo de la red','Incrementar SKUs disponibles por canal','Capacitar a la fuerza de ventas en tecnología'],c:1,exp:'El reto central es operativo: unificar inventario y procesos para que cualquier canal pueda prometer y cumplir.'},
+  {q:'El 30% de los SKUs genera el 2% de ventas pero el 40% de los costos de gestión. ¿Qué decisión se justifica?',opts:['Incrementar marketing para aumentar su rotación','Racionalización del portafolio: eliminar SKUs de bajo valor que generan complejidad desproporcionada','Reducir precio para ganar volumen','Transferir esos SKUs a un distribuidor externo'],c:1,exp:'La racionalización de SKUs elimina la complejidad que no genera valor al cliente ni rentabilidad para la empresa.'},
+  {q:'¿Cuál es el criterio más relevante para decidir qué productos permanecen en el portafolio?',opts:['El margen bruto individual del producto','La combinación de valor percibido por el cliente, rentabilidad estratégica y complejidad operativa','El volumen de ventas histórico','La antigüedad del producto en el catálogo'],c:1,exp:'La decisión de portafolio no es solo financiera: un producto de bajo margen puede ser crítico para retener un cliente clave.'},
+  {q:'¿Qué riesgo genera un portafolio excesivamente amplio mal gestionado para el cliente conectado?',opts:['Mayor disponibilidad de opciones que mejora su experiencia','Quiebres frecuentes, tiempos inconsistentes y errores de pedido por exceso de complejidad operativa','Precios más altos por complejidad de gestión','Ninguno, el cliente prefiere más opciones'],c:1,exp:'La complejidad de un portafolio inflado se traslada al cliente en forma de ineficiencias y errores.'},
+  {q:'¿Cómo debe una empresa adaptar su portafolio ante cambios en las necesidades del cliente conectado?',opts:['Lanzar nuevos productos cada trimestre','Monitorear señales de demanda, rentabilidad y feedback para hacer ajustes dinámicos','Mantener el portafolio estable para no generar confusión','Copiar el portafolio de los competidores líderes'],c:1,exp:'La gestión dinámica del portafolio requiere revisión continua basada en datos. No es un ejercicio anual.'},
+  {q:'¿Cuál es el impacto de racionalizar el portafolio en la cadena de suministro?',opts:['Reduce variedad sin beneficio operativo claro','Simplifica gestión de inventario, mejora fill rate y libera capital para invertir en SKUs estratégicos','Incrementa dependencia de pocos proveedores','Reduce rentabilidad a corto plazo sin beneficio sostenido'],c:1,exp:'Menos SKUs = menos complejidad en compras, almacenamiento y distribución.'},
+  {q:'Un cliente debe llamar, enviar correo, esperar confirmación y verificar disponibilidad por separado para hacer un pedido. ¿Cómo se clasifica este problema?',opts:['Problema de capacidad de producción','Alta fricción en el proceso de pedido que destruye valor y aumenta el CES','Problema de pricing','Deficiencia del sistema de gestión de relaciones con clientes'],c:1,exp:'Cada paso adicional incrementa el esfuerzo del cliente y el riesgo de perderlo.'},
+  {q:'¿Cuál elemento es más crítico para órdenes sin fricción en B2B?',opts:['Precios más bajos que la competencia','Portal de autoservicio con disponibilidad de inventario en tiempo real, historial de pedidos y confirmación automática','Ejecutivo disponible 24/7','Catálogos físicos actualizados mensualmente'],c:1,exp:'El portal integrado elimina las fricciones del proceso manual y da al cliente B2B la autonomía que espera.'},
+  {q:'Una empresa e-commerce tiene 68% de abandono de carrito en el paso de selección de envío. ¿Cuál es la causa raíz más probable?',opts:['Precio del producto demasiado alto','Fricción en el checkout: demasiados pasos o falta de transparencia en costos y tiempos de entrega','Falta de variedad de productos','El cliente no confía en la marca'],c:1,exp:'El abandono en checkout está directamente correlacionado con la fricción del proceso.'},
+  {q:'¿Qué papel juegan las devoluciones sin fricción en la fidelización del cliente conectado?',opts:['Son un costo que debe minimizarse limitando políticas de devolución','Una política simple y transparente es factor de compra y generador de confianza que incrementa la recompra','Son irrelevantes si el producto tiene buena calidad','Solo importan para B2C, no para B2B'],c:1,exp:'El cliente conectado evalúa la facilidad de devolución antes de comprar.'},
+  {q:'¿Cuál es la relación entre órdenes sin fricción y rentabilidad?',opts:['Siempre incrementan costos operativos sin garantizar mayor rentabilidad','Reducen costos de gestión (re-trabajo, errores, soporte) y aumentan retención, mejorando rentabilidad a largo plazo','La rentabilidad depende exclusivamente del precio','Solo impacta satisfacción, no rentabilidad'],c:1,exp:'Cada error de pedido y llamada de soporte tiene costo. La simplificación reduce estos costos y mejora retención.'},
+  {q:'¿Qué capacidad es más habilitadora para lograr un proceso de pedido sin fricción en una distribuidora B2B?',opts:['Un sistema de gestión de relaciones con clientes (CRM)','Integración entre los sistemas del cliente y del proveedor para automatizar la generación y confirmación de pedidos sin intervención manual','Un sistema de gestión de almacén para optimizar el picking','Software de planificación de rutas de transporte'],c:1,exp:'La integración de sistemas elimina la entrada manual de pedidos, automatiza confirmaciones y conecta el inventario del proveedor en tiempo real.'},
+  {q:'¿Cuál es la diferencia fundamental entre "servicio al cliente" y "experiencia del cliente"?',opts:['El servicio al cliente es más costoso','El servicio al cliente es reactivo; la experiencia es el resultado de todas las interacciones a lo largo del Customer Journey','La experiencia es responsabilidad de marketing; el servicio de operaciones','Son sinónimos con diferente enfoque departamental'],c:1,exp:'El servicio al cliente es un componente de la experiencia, pero no la totalidad.'},
+  {q:'Una empresa tiene NPS de 72 pero CES de 5.8/7 (alto esfuerzo). ¿Qué conclusión se extrae?',opts:['La empresa tiene excelente experiencia en todos los aspectos','Los clientes recomendarían la empresa pero el proceso genera demasiado esfuerzo; hay riesgo latente de abandono','El CES es irrelevante con NPS alto','Los datos son contradictorios; hay error de medición'],c:1,exp:'NPS alto + CES alto = los clientes valoran la marca pero el proceso los desgasta, erosionando lealtad a mediano plazo.'},
+  {q:'¿Cuál es el indicador más adecuado para medir calidad de servicio al cliente en cadena B2B?',opts:['Volumen de ventas por cliente','Combinación de OTIF, tasa de resolución en primer contacto y Customer Effort Score (CES)','Número de quejas por mes','Tiempo promedio de atención de llamadas'],c:1,exp:'No existe un único indicador suficiente. La combinación ofrece visión completa del servicio en la cadena.'},
+  {q:'Un equipo resuelve el 95% de problemas en primera llamada pero los clientes siguen insatisfechos. ¿Cuál es la causa más probable?',opts:['El equipo no tiene habilidades técnicas adecuadas','Se están resolviendo síntomas sin atacar las causas raíz que generan problemas recurrentes','Los clientes tienen expectativas irracionales','El sistema de registro de casos no funciona correctamente'],c:1,exp:'Alta resolución + insatisfacción persistente = los mismos problemas se repiten. Hay que eliminar causas raíz.'},
+  {q:'¿Por qué las métricas de servicio al cliente deben integrarse al tablero de gestión de la cadena?',opts:['Para cumplir con certificaciones de calidad','Porque la voz del cliente señala dónde la cadena falla en generar valor e informa las decisiones operativas','Para justificar el presupuesto del área','Es práctica estándar sin impacto real en decisiones'],c:1,exp:'Las métricas de servicio son el termómetro de la experiencia. Integrarlas cierra el loop entre operación y percepción del cliente.'},
+  {q:'¿Cuál es la diferencia clave entre servicio de campo tradicional y conectado?',opts:['El conectado usa técnicos más especializados','El conectado integra IoT, datos en tiempo real y sistemas para anticipar fallas y resolver antes de que impacten al cliente','El conectado opera solo en entornos industriales','La diferencia es solo usar tabletas en lugar de papel'],c:1,exp:'La conectividad transforma el servicio de reactivo a predictivo/proactivo.'},
+  {q:'Una empresa implementa mantenimiento predictivo mediante IoT. ¿Cuál es el impacto directo en el cliente?',opts:['Incrementa el costo del servicio','Reduce el tiempo de inactividad al anticipar fallas, mejorando productividad y satisfacción del cliente','Elimina la necesidad de técnicos especializados','Solo beneficia al proveedor, no al cliente'],c:1,exp:'El mantenimiento predictivo cambia la ecuación: en vez de reaccionar ante fallas, el proveedor las anticipa y previene.'},
+  {q:'¿Cómo contribuye el principio de "primera visita resuelta" al valor del ciclo de vida del cliente?',opts:['Reduce el costo de la visita para el proveedor','Elimina el costo y la frustración del cliente por visitas repetidas, fortaleciendo confianza y retención','Permite al técnico gestionar más visitas por día','Solo aplica para servicios de garantía'],c:1,exp:'Cada visita no resuelta incrementa el CES y erosiona la confianza. Es KPI crítico para retención y NPS.'},
+  {q:'¿Qué habilita directamente una alta tasa de "primera visita resuelta" en servicios de campo?',opts:['GPS para optimización de rutas','Acceso en tiempo real al historial del equipo, diagnóstico remoto previo y gestión dinámica de refacciones','Uniformes y herramientas estandarizadas','Sistema de calificación post-visita'],c:1,exp:'Resolver en la primera visita requiere saber exactamente qué falla antes de llegar y tener la refacción correcta.'},
+  {q:'¿Por qué el servicio de campo conectado es diferenciador estratégico en contratos B2B de largo plazo?',opts:['Permite reducir el precio del contrato','Genera datos continuos del equipo del cliente, habilitando mejoras de producto y modelos de servicio predictivos','Elimina la necesidad de renovar contratos anualmente','Reduce el número de técnicos requeridos'],c:1,exp:'Los datos del servicio de campo son un activo estratégico: informan desarrollo de producto y crean barreras de salida.'},
+  {q:'¿Cómo integra el servicio de campo conectado todos los elementos del módulo?',opts:['Es simplemente el último eslabón de la cadena de distribución física','Cierra el ciclo de valor: conecta la cadena con la experiencia post-venta, generando visibilidad y datos que alimentan de nuevo el diseño de la oferta y la operación','Es un módulo independiente sin conexión con los temas anteriores','Solo aplica para empresas manufactureras'],c:1,exp:'El servicio de campo conectado integra cliente conectado, omnicanalidad, órdenes sin fricción y métricas en un modelo donde la post-venta genera valor continuo.'}
+];
+
+// ── CONFIGURACIÓN POR DÍA ──
+const DIAS_CC = [
+  {
+    dia:1, titulo:'La mejor cadena de suministro centrada en el cliente',
+    objetivo:'Distinguir la nueva definición de excelencia en cadena de suministro para identificar los elementos que hoy generan valor al cliente.',
+    esPreQuiz:true,
+    recursos:{
+      video1:{ url:'https://scimexiconet.sharepoint.com/sites/ACADEMIALOGISTICA687/Documentos%20compartidos/Archivos%20generales/../../../../:v:/s/ACADEMIALOGISTICA687/ETq6Mc-2uCVFupURSy3L3EEBiUoe335euNt1E21hUWSUVQ?e=ETcWwp', titulo:'Cliente conectado: cuando el 97% de OTIF no es suficiente', duracion:'8 min', reflexion:'En tu operación actual, ¿cómo defines si un cliente está satisfecho? ¿Qué indicadores monitoras hoy y cuáles podrían estar ocultando insatisfacción real?', claves:['cliente conectado','OTIF','NPS','CES','cadena de valor','brecha','experiencia del cliente','percepcion','insatisfaccion'] },
+      lectura1:{ url:'https://icttm.org/case-study-the-supply-chain-success-story-of-amazon/', titulo:'Closing the Delivery Experience Gap: métricas internas vs. perspectiva del cliente', duracion:'12 min', reflexion:'¿Cuál es la diferencia entre medir la entrega desde la perspectiva de tu operación versus desde la perspectiva del cliente? Escribe un ejemplo concreto de tu industria o empresa donde esta diferencia haya generado un problema real.', claves:['metricas internas','perspectiva del cliente','expectativa','promesa','insatisfaccion','insatisfacción','first mile','last mile','brecha'] }
+    },
+    sim:{ titulo:'¿Eficiente o excelente?', subtitulo:'El diagnóstico que nadie quería ver — Odyssey · Caso 1', contexto:'Odyssey alcanzó OTIF del 97% este trimestre. Sin embargo, el NPS cayó de 68 a 51 puntos. El Director de Operaciones te pide entender por qué la eficiencia interna no garantiza satisfacción del cliente. Datos clave: 67% de quejas por falta de visibilidad · E-commerce: solo 61% entregas en ventana · CES global: 5.4/7.', guia:'¿En qué áreas concretas está fallando Odyssey para un cliente que ya recibió su pedido a tiempo?',
+      preguntas:[
+        { tipo:'texto', enunciado:'Calcula el volumen semanal en hl que representa cada canal (base 720 hl/sem: Cadena Norte 40%, Distribuidores 35%, E-commerce 25%). ¿Qué canal tiene la mayor brecha entre exigencia y cumplimiento actual?', claves:['288','252','180','ecommerce','e-commerce','cadena norte','visibilidad','brecha'] },
+        { tipo:'opciones', enunciado:'¿Cuál es la causa más probable de que el NPS haya caído 17 puntos aunque el OTIF es del 97%?', opciones:['El OTIF cayó en realidad y los datos están mal reportados','El OTIF mide solo si el pedido llegó a tiempo, pero no la visibilidad, comunicación proactiva ni la facilidad del proceso para el cliente','El problema es únicamente en el canal e-commerce','Los clientes de Odyssey tienen expectativas anormalmente altas comparado con el mercado'], correcta:1 },
+        { tipo:'texto', enunciado:'Identifica los 2 problemas más críticos que tiene Odyssey hoy según los datos del escenario. Para cada uno: ¿qué indicador lo evidencia y qué impacto tiene en el cliente?', claves:['visibilidad','comunicacion','comunicación','ecommerce','e-commerce','ventana','NPS','CES','queja'] },
+        { tipo:'texto', enunciado:'¿Qué acción prioritaria recomendarías a Rodrigo Vidal para los próximos 30 días? Justifica por qué tiene el mayor impacto al menor costo.', claves:['notificacion','notificación','visibilidad','tracking','tiempo real','proactiva','sistema','cliente','impacto'] }
+      ]
+    }
+  },
+  {
+    dia:2, titulo:'La cadena que ya no funciona',
+    objetivo:'Identificar las fuerzas externas que hacen obsoleto el modelo operativo actual y priorizar la transformación con base en datos.',
+    repaso:'📌 Día 1 — Odyssey logró 97% OTIF pero su NPS cayó de 68 a 51. La eficiencia interna no garantiza experiencia del cliente. El nuevo estándar se mide desde la perspectiva del cliente, no de la operación.',
+    recursos:{
+      video1:{ url:'https://scimexiconet.sharepoint.com/sites/ACADEMIALOGISTICA687/Documentos%20compartidos/Archivos%20generales/../../../../:v:/s/ACADEMIALOGISTICA687/IQCp8aeqnaR2QqvFUphllfVTAdOhfx5LlC2wUa4ZIc8kEf8?e=sP7EeA', titulo:'La cadena de suministro del cliente digital: por qué lo que funcionaba ayer no alcanza hoy', duracion:'8 min', reflexion:'Identifica 2 fuerzas externas que estén presionando el modelo de cadena de suministro en tu industria o empresa hoy. Para cada una: ¿qué dato o señal te indica que la presión es real y no solo tendencia?', claves:['transformación digital','canal digital','fuerzas externas','mix de canales','ventana de entrega','visibilidad en tiempo real','modelos obsoletos','omnicanal','ecommerce'] },
+      lectura1:{ url:'https://hbr.org/2016/01/the-omnichannel-approach', titulo:'Omnichannel Fulfillment: From Promise to Reality', duracion:'10 min', reflexion:'¿Tu organización tiene capacidades diferenciadas para atender a cada canal con sus propias exigencias de velocidad, visibilidad y variabilidad? ¿Dónde está la mayor brecha entre lo que exige el canal más exigente y lo que puedes entregar hoy?', claves:['omnicanalidad','fulfillment diferenciado','capacidad de respuesta','lead time por canal','promesa de entrega','transformación operativa','canal','velocidad'] }
+    },
+    sim:{ titulo:'La cadena que ya no funciona', subtitulo:'Fuerzas externas · Odyssey · Caso 2', contexto:'E-commerce de Odyssey creció de 8% a 25% del volumen en 4 años (+33% anual). Solo 34% de pedidos e-com confirmados en <2h; 61% entregados en ventana de 4h. Refresco Ágil (competidor) tiene NPS 74, 98% confirmaciones <2h y costo de atención $5.80/hl vs $12.40/hl de Odyssey.', guia:'¿El modelo operativo actual de Odyssey es sostenible para atender la cadena que viene, o hay que transformarlo de raíz?',
+      preguntas:[
+        { tipo:'texto', enunciado:'Si la tasa de crecimiento del e-commerce (+33%/año) se mantiene, ¿en cuántos años superará el 50% del volumen total? ¿Qué volumen en hl/semana representaría eso (base 720 hl/sem)?', claves:['3','tres','360','50%','crecimiento','años','hl'] },
+        { tipo:'opciones', enunciado:'Refresco Ágil tiene un costo de atención al cliente de $5.80/hl vs. $12.40/hl de Odyssey. ¿Cuál es la causa más probable?', opciones:['Refresco Ágil tiene menos clientes, por lo que el costo unitario es menor naturalmente','Refresco Ágil automatizó la gestión de pedidos y visibilidad, eliminando trabajo manual y re-trabajo','Refresco Ágil utiliza empaques más baratos que reducen el costo logístico','Refresco Ágil subcontrata toda la distribución, transfiriendo el costo al tercero'], correcta:1 },
+        { tipo:'texto', enunciado:'Identifica las 3 fuerzas externas principales que hacen obsoleto el modelo de Odyssey. Para cada una: dato del escenario que la evidencia + capacidad que le falta a Odyssey.', claves:['digital','ecommerce','e-commerce','competidor','visibilidad','velocidad','confirmacion','confirmación','transformacion','transformación'] },
+        { tipo:'texto', enunciado:'¿El modelo actual de Odyssey es sostenible a 2 años? ¿Qué transformación prioritaria recomendarías iniciar primero y por qué?', claves:['sostenible','transformacion','transformación','visibilidad','notificacion','notificación','prioridad','urgencia','primero'] }
+      ]
+    }
+  },
+  {
+    dia:3, titulo:'El cliente que Odyssey no conoce',
+    objetivo:'Aplicar Customer Journey Mapping para identificar momentos de quiebre y priorizar intervenciones que reducen el esfuerzo del cliente.',
+    repaso:'📌 Día 2 — Cinco fuerzas hacen obsoleto el modelo actual: e-commerce (+33%/año), omnicanalidad, trazabilidad exigida, volatilidad y servicio postventa conectado. Refresco Ágil opera a $5.80/hl vs $12.40/hl de Odyssey.',
+    recursos:{
+      video1:{ url:'#sharepoint-d3', titulo:'Customer Journey Mapping en cadenas B2B: 7 touchpoints, 7 oportunidades', duracion:'8 min', reflexion:'Si tuvieras que mapear el journey de tu cliente más importante desde que coloca un pedido hasta que cierra el ciclo de pago, ¿en qué touchpoint crees que está la mayor fricción? ¿Lo has medido o es una suposición?', claves:['customer journey','touchpoint','momento de la verdad','CES','fricción','friccion','mapeo','esfuerzo del cliente','quiebre','B2B'] },
+      lectura1:{ url:'https://hbr.org/2010/07/stop-trying-to-delight-your-customers', titulo:'Stop Trying to Delight Your Customers — Harvard Business Review', duracion:'12 min', reflexion:'El CES propone que reducir el esfuerzo del cliente es más poderoso que intentar "deleitarlo". ¿Estás de acuerdo con esa premisa en el contexto B2B de tu industria? Argumenta con un ejemplo concreto de tu experiencia.', claves:['Customer Effort Score','CES','lealtad','esfuerzo','deleite','retención','retencion','resolución','resolución en primer contacto','automatización','touchpoints'] }
+    },
+    sim:{ titulo:'El cliente que Odyssey no conoce', subtitulo:'Customer Journey Mapping · Odyssey · Caso 3', contexto:'Taller de mapeo con Cadena Norte reveló 7 touchpoints. CES promedio del journey: 3.27/7. Peor CES: TP3 Notificación de despacho (1.9/7) y TP5 Gestión de discrepancia (1.6/7). Esfuerzo del cliente: 3.1 h/sem = $136,760/año. Discrepancias en entrega: 23%. Errores en factura: 18%.', guia:'¿Dónde están los dos momentos de mayor quiebre en el journey de Cadena Norte y qué debería hacer Odyssey primero?',
+      preguntas:[
+        { tipo:'texto', enunciado:'Cadena Norte coloca 3 pedidos/semana, 23% con discrepancia, cada discrepancia 68 min, costo-hora $850. ¿Cuánto le cuesta al cliente mensualmente solo el TP5 (gestión de discrepancias)? Muestra el cálculo.', claves:['2660','2,660','12','2.76','68','850','costo','mensual'] },
+        { tipo:'opciones', enunciado:'El CES del TP3 (Notificación de despacho) es 1.9/7. ¿Qué intervención tiene mayor impacto inmediato?', opciones:['Contratar un ejecutivo dedicado a Cadena Norte para llamar cuando sale el pedido','Implementar notificación automática por WhatsApp o correo al momento del despacho con número de guía y hora estimada','Reducir el lead time de entrega de 48h a 24h','Crear un portal web donde el cliente consulta el estado de su pedido manualmente'], correcta:1 },
+        { tipo:'texto', enunciado:'Identifica los 2 touchpoints con mayor impacto negativo. Para cada uno: (a) por qué es un "momento de quiebre", (b) qué proceso interno de Odyssey lo genera, (c) qué métrica mejoraría.', claves:['TP3','TP5','quiebre','notificacion','notificación','discrepancia','CES','proceso','metrica','métrica'] },
+        { tipo:'texto', enunciado:'Si Odyssey solo puede intervenir un touchpoint en 30 días, ¿cuál sería y por qué? Considera impacto en cliente y viabilidad operativa.', claves:['TP3','notificacion','notificación','automatica','automática','viabilidad','impacto','CES','queja','visibilidad'] }
+      ]
+    }
+  },
+  {
+    dia:4, titulo:'Preparada para lo que viene',
+    objetivo:'Evaluar vulnerabilidades de la cadena ante disrupciones de proveedores y diseñar estrategias de resiliencia con criterio costo-riesgo-tiempo.',
+    repaso:'📌 Día 3 — El Customer Journey de Cadena Norte tiene 7 touchpoints. Los dos quiebres críticos: TP3 Notificación (CES 1.9/7) y TP5 Discrepancias (CES 1.6/7). Costo del esfuerzo del cliente: $136,760/año. Reducir fricción = retención.',
+    recursos:{
+      video1:{ url:'#sharepoint-d4', titulo:'Resiliencia operativa: de la cadena eficiente a la cadena robusta', duracion:'8 min', reflexion:'¿Cuántos insumos o proveedores críticos en tu cadena no tienen alternativa hoy? ¿Tienes calculado el costo de una disrupción de 4 semanas en el proveedor más crítico?', claves:['resiliencia de cadena','proveedor único','proveedor unico','nearshoring','dual sourcing','inventario de seguridad','disrupción','disrupcion','tiempo de recuperación','riesgo'] },
+      lectura1:{ url:'https://www.mckinsey.com/capabilities/operations/our-insights/supply-chain-resilience', titulo:'Building Supply Chain Resilience After COVID', duracion:'10 min', reflexion:'¿Cuál es el balance correcto entre eficiencia (inventario mínimo, proveedor único de menor costo) y resiliencia (dual sourcing, buffer de seguridad)? ¿Cómo justificarías invertir en resiliencia a un CFO que ve solo el costo incremental?', claves:['gestión de riesgos','costo de disrupción','buffer estratégico','eficiencia vs resiliencia','concentración de riesgo','plan de contingencia','lead time geográfico','nearshoring','dual'] }
+    },
+    sim:{ titulo:'Preparada para lo que viene', subtitulo:'Resiliencia de cadena · Odyssey · Caso 4', contexto:'Proveedor de tapas de aluminio (Guangdong, 34% costo empaque, lead time 110 días) se interrumpió 6 semanas. Resultado: 3 semanas producción al 40%, pérdida $1,456,888 + riesgo $9.16M en contratos. 3 de 4 insumos críticos con proveedor único importado. Opciones: A=Nearshoring tapas $340k/6 meses/90% reducción riesgo vs B=Buffer inventario $156k/año/60% reducción.', guia:'¿Cuánto le cuesta la vulnerabilidad a Odyssey y cuál estrategia maximiza la protección al menor costo en el menor tiempo?',
+      preguntas:[
+        { tipo:'texto', enunciado:'La disrupción costó $1,456,888 directo + riesgo de $9.16M en contratos. Si la probabilidad de una nueva disrupción es del 30% anual, ¿cuál es el costo esperado anual del riesgo (costo × probabilidad)? ¿Justifica esto la inversión en Opción A ($340k)?', claves:['436','437','30%','costo esperado','riesgo','justifica','340'] },
+        { tipo:'opciones', enunciado:'¿Cuál es la diferencia estratégica fundamental entre aumentar buffer de inventario (B) vs nearshoring de tapas (A)?', opciones:['La Opción A es siempre mejor porque el nearshoring elimina el riesgo en vez de solo postergarlo','La Opción B es preferible porque tiene costo menor y no requiere tiempo de transición','La Opción A elimina la fuente del riesgo (dependencia de proveedor único lejano); la Opción B solo amplía el tiempo para reaccionar','La diferencia es financiera: la Opción B tiene menor ROI a largo plazo'], correcta:2 },
+        { tipo:'texto', enunciado:'Si la próxima disrupción fuera el concentrado de saborizante (28% costo, 90 días lead time, proveedor único). ¿Cómo diferiría el impacto vs. la disrupción de tapas? Identifica 2 diferencias específicas en la magnitud.', claves:['28%','saborizante','mayor','impacto','producto','produccion','producción','costo','lead time','diferencia'] },
+        { tipo:'texto', enunciado:'Propón la estrategia de resiliencia para los próximos 18 meses: ¿qué primero y por qué? Considera costo, tiempo y criticidad.', claves:['tapas','nearshoring','primero','18','secuencia','criticidad','costo','buffer','dual','concentrado'] }
+      ]
+    }
+  },
+  {
+    dia:5, titulo:'Vender en todos lados, cumplir en todos lados',
+    objetivo:'Cuantificar el costo de canales desintegrados y evaluar modelos de inventario omnicanal que maximicen la disponibilidad al menor costo.',
+    repaso:'📌 Día 4 — Una disrupción de proveedor único (tapas de aluminio, Guangdong) costó $1.46M + riesgo de $9.16M en contratos. Costo esperado anual del riesgo: ~$436k. La resiliencia se justifica financieramente antes de que ocurra la próxima crisis.',
+    recursos:{
+      video1:{ url:'#sharepoint-d5', titulo:'Inventario integrado: la base del fulfillment omnicanal', duracion:'8 min', reflexion:'En una operación con múltiples canales que comparten inventario, ¿cómo se asigna el stock disponible cuando la demanda supera la disponibilidad? ¿Existe una política clara en tu operación o se resuelve caso por caso?', claves:['inventario integrado','visibilidad en tiempo real','asignación por canal','asignacion por canal','quiebre de stock','OMS','priorización','disponibilidad comprometida','omnicanal'] },
+      lectura1:{ url:'https://hbr.org/2014/05/when-to-consider-moving-to-unified-commerce', titulo:'Unified Commerce: The Next Step Beyond Omnichannel', duracion:'10 min', reflexion:'¿Qué cambio mínimo en tecnología o proceso permitiría a tu operación evitar que dos canales reclamen el mismo stock simultáneamente? ¿Quién en tu organización sería el dueño de ese proceso?', claves:['unified commerce','reserva de inventario','ATP','available to promise','integración de sistemas','conflicto de canales','visibilidad transversal','canal','inventario'] }
+    },
+    sim:{ titulo:'Vender en todos lados, cumplir en todos lados', subtitulo:'Inventario omnicanal · Odyssey · Caso 5', contexto:'Lanzamiento e-commerce día 1-30: éxito. Día 31: 340 pedidos pendientes porque el inventario estaba comprometido para Cadena Norte. Tasa de quiebre e-commerce: 11.4% (vs 2.1% Cadena Norte). Pérdida semanal por quiebres e-com: $24,190 = $1,257,880/año. Integración (Opción A): $420k inversión, payback 5.7 meses.', guia:'¿Cuánto le cuesta a Odyssey operar canales desintegrados y qué modelo justifica la inversión?',
+      preguntas:[
+        { tipo:'texto', enunciado:'El e-commerce tiene 11.4% tasa de quiebre. Si el volumen semanal es 180 hl y el margen perdido es $1,180/hl, ¿cuántos hl se pierden por semana y cuál es la pérdida anual? ¿En cuántos meses se recupera la inversión de $420k?', claves:['20','180','1180','24','1257','420','meses','payback','semana','anual'] },
+        { tipo:'opciones', enunciado:'¿Cuál es la diferencia fundamental entre modelo multicanal y omnicanal?', opciones:['Multicanal = varios canales con el mismo precio; omnicanal = canales con diferentes precios','Multicanal = canales con operaciones independientes; omnicanal = inventario, datos y experiencia integrados entre todos los canales','Omnicanal = versión más sofisticada con más SKUs en todos los canales','La diferencia es tecnológica: multicanal usa sistemas distintos y omnicanal usa un solo ERP'], correcta:1 },
+        { tipo:'texto', enunciado:'Compara Opción A (integración total) vs. Opción B (buffer segmentado) en: (a) impacto en experiencia e-commerce, (b) flexibilidad si demanda de un canal cae, (c) escalabilidad a 40% e-commerce.', claves:['integracion','integración','buffer','ecommerce','e-commerce','escalabilidad','flexibilidad','experiencia','disponibilidad'] },
+        { tipo:'texto', enunciado:'¿Qué modelo recomiendas y en qué plazo? Considera costo, costo de oportunidad de no actuar y dirección estratégica.', claves:['Opcion A','Opción A','integración','integracion','recomiendo','plazo','costo','estrategia','e-commerce'] }
+      ]
+    }
+  },
+  {
+    dia:6, titulo:'El portafolio que nos cuesta',
+    objetivo:'Aplicar análisis Pareto y criterios multicriterio para racionalizar el portafolio de productos y liberar capacidad operativa.',
+    repaso:'📌 Día 5 — Canales desintegrados generan 11.4% de quiebres en e-commerce vs 2.1% en Cadena Norte. Pérdida anual: $1.26M. La integración de inventario omnicanal tiene payback de 5.7 meses: el costo de no actuar supera la inversión.',
+    recursos:{
+      video1:{ url:'#sharepoint-d6', titulo:'El portafolio invisible: cuando más SKUs significa menos rentabilidad', duracion:'8 min', reflexion:'¿Cuántos SKUs de tu portafolio generan el 80% de las ventas? ¿Has calculado el costo operativo de mantener los SKUs que generan el 20% restante de ingresos?', claves:['racionalización de SKUs','racionalizacion de SKUs','Pareto 80/20','cola larga','complejidad de portafolio','margen por SKU','costo de variedad','rentabilidad por producto','SKU','portafolio'] },
+      lectura1:{ url:'https://hbr.org/2009/06/killing-your-products-before-th', titulo:'SKU Rationalization: A Step-by-Step Guide', duracion:'12 min', reflexion:'Si tuvieras que tomar la decisión hoy sobre qué criterios usar para eliminar un SKU de tu portafolio, ¿cuáles serían los 3 criterios no negociables? ¿Cómo equilibrarías la perspectiva financiera con la perspectiva del cliente?', claves:['criterios de eliminación','criterios de eliminacion','volumen vs margen','canibalización','SKU de cola','pedido especial','segmentación de portafolio','simplificación operativa','fill rate'] }
+    },
+    sim:{ titulo:'El portafolio que nos cuesta', subtitulo:'Racionalización de SKUs · Odyssey · Caso 6', contexto:'De 180 SKUs activos, 54 (Tier C, 30%) generan solo 2% de ventas pero consumen 38% de los costos de gestión. Margen neto de Tier C: -$688,800/año. Costo promedio por SKU Tier C: $67,200/año (vs $18,400 Tier A). Fill rate Tier C: 71% (vs 94% resto). Corridas cortas, setup elevado, rotación 0.4x.', guia:'¿Cuánto pierde Odyssey por mantener los 54 SKUs de baja rotación y qué criterio correcto usa para decidir qué hacer con ellos?',
+      preguntas:[
+        { tipo:'texto', enunciado:'Si se eliminan los 54 SKUs Tier C: (a) ¿Cuánto se ahorra en costos de gestión al año? (b) Si el fill rate promedio general sube de 88% a 94%, ¿cuál es el impacto estimado en quejas por quiebre? Justifica con los datos del caso.', claves:['688','54','67200','ahorro','fill rate','quiebre','impacto','costo'] },
+        { tipo:'opciones', enunciado:'¿Cuál afirmación sobre racionalización de portafolio es correcta?', opciones:['Eliminar SKUs siempre reduce ingresos; solo se justifica si costos superan el triple de ingresos','La decisión debe basarse únicamente en contribución de margen; fill rate de otros SKUs no es criterio válido','La racionalización puede aumentar ingreso neto aunque reduzca ventas brutas, liberando capacidad para SKUs de mayor margen','Los SKUs de baja rotación siempre deben convertirse en estacionales antes de eliminarse'], correcta:2 },
+        { tipo:'texto', enunciado:'Define los 3 criterios para clasificar un SKU Tier C como: (a) eliminar, (b) reconvertir, (c) mantener como nicho. Para cada criterio, señala qué dato del caso lo sustenta.', claves:['eliminar','reconvertir','nicho','criterio','volumen','margen','cliente','estrategico','estratégico','fill rate','dato'] },
+        { tipo:'texto', enunciado:'Si se racionalizan 27 SKUs (50% del Tier C), ¿cuál sería el impacto esperado en costos, fill rate y capacidad? ¿Es suficiente o debería ir más lejos?', claves:['27','50%','costo','fill rate','capacidad','produccion','producción','suficiente','impacto','ahorro'] }
+      ]
+    }
+  },
+  {
+    dia:7, titulo:'El pedido que nadie quiere hacer',
+    objetivo:'Cuantificar el costo de la fricción en el proceso de pedido B2B y diseñar el rediseño de flujo que habilita órdenes sin fricción.',
+    repaso:'📌 Día 6 — 54 SKUs Tier C (30% del portafolio) generan solo 2% de ventas y un margen neto de -$688,800/año. Menos SKUs = mejor fill rate (88%→94%), menor costo operativo y mayor foco en lo que realmente vende.',
+    recursos:{
+      video1:{ url:'#sharepoint-d7', titulo:'La digitalización del proceso comercial B2B: del correo al portal de autoservicio', duracion:'8 min', reflexion:'¿Cuánto tiempo le toma a un cliente B2B hacer un pedido contigo hoy, desde que decide comprar hasta que recibe la confirmación? ¿Has medido ese tiempo desde la perspectiva del cliente o solo desde la tuya?', claves:['portal de autoservicio B2B','digitalización del pedido','tasa de error en pedido','automatización comercial','tiempo de proceso del cliente','re-trabajo','rework','fricción','friccion','portal'] },
+      lectura1:{ url:'https://hbr.org/2019/03/the-b2b-elements-of-value', titulo:'B2B Self-Service Portals: What Buyers Actually Want', duracion:'10 min', reflexion:'Hay una diferencia fundamental entre automatizar un proceso malo y rediseñarlo antes de automatizarlo. ¿Puedes pensar en un proceso en tu operación que, si se automatizara sin rediseño previo, generaría los mismos problemas pero más rápido?', claves:['rediseño de proceso','rediseno de proceso','autoservicio digital','experiencia del comprador B2B','eliminación de fricción','confirmación automática','integración ERP','NPS del distribuidor','portal'] }
+    },
+    sim:{ titulo:'El pedido que nadie quiere hacer', subtitulo:'Órdenes sin fricción · Odyssey · Caso 7', contexto:'Proceso de pedido distribuidores: 6 pasos, 47 minutos activos + 3.8h espera, 42% tasa de error acumulada. Costo de fricción: $1,082,120/año. NPS distribuidores: 44 (el más bajo de los 3 canales). Competidor ofrece portal: proceso toma 8 minutos. 2 distribuidores no renovaron contrato citando el proceso como razón principal.', guia:'¿Cuánto le cuesta a Odyssey el proceso actual y cuál es el ahorro real de rediseñarlo?',
+      preguntas:[
+        { tipo:'texto', enunciado:'35 distribuidores × 1 pedido/sem × 47 min activos + rework de 42% errores. Si el costo-hora del distribuidor es $450, ¿cuánto cuesta el tiempo activo por semana para todos los distribuidores? (No incluyas el rework, solo el tiempo base de 47 min × 35 dist.).', claves:['35','47','450','12,250','12250','semana','costo','tiempo','distribuidores'] },
+        { tipo:'opciones', enunciado:'¿Cuál enfoque de rediseño aplica directamente a este caso?', opciones:['Contratar más ejecutivos para acelerar cada paso sin cambiar la estructura','Mejorar cada paso de forma incremental hasta reducir el tiempo total a menos de 30 minutos','Digitalizar los pasos existentes tal como están para que el distribuidor los haga desde su celular','Eliminar los pasos que generan espera y los sistemas que obligan a reingresar información, rediseñando el flujo desde cero'], correcta:3 },
+        { tipo:'texto', enunciado:'De los 6 pasos del proceso actual, identifica los 2 que deberían eliminarse completamente (no optimizarse). Explica por qué la eliminación es posible con un portal integrado y qué capacidad técnica se necesita.', claves:['paso 1','paso 2','eliminar','portal','integrado','disponibilidad','precio','consulta','automatico','automático','tiempo real'] },
+        { tipo:'texto', enunciado:'¿Cuál es el argumento de retención de clientes para priorizar este rediseño? Conecta con el NPS de distribuidores (44 pts) y la pérdida de contratos al competidor.', claves:['NPS','44','retencion','retención','contrato','competidor','portal','distribuidor','abandono','prioridad'] }
+      ]
+    }
+  },
+  {
+    dia:8, titulo:'Medir lo que importa',
+    objetivo:'Diseñar un tablero de métricas CX que conecte la voz del cliente con la operación para pasar de servicio reactivo a proactivo.',
+    repaso:'📌 Día 7 — El proceso de pedido B2B cuesta $1.08M/año en fricción: 47 min activos, 42% de errores, NPS distribuidores 44 pts. El competidor hace lo mismo en 8 minutos. Dos distribuidores no renovaron contrato por este motivo.',
+    recursos:{
+      video1:{ url:'#sharepoint-d8', titulo:'Del OTIF al NPS al CLV: métricas que cuentan la historia del cliente', duracion:'8 min', reflexion:'¿Cuáles de las métricas que mide hoy tu operación reflejan la perspectiva del cliente y cuáles reflejan solo eficiencia interna? ¿Hay alguna métrica que deberías estar midiendo y no estás?', claves:['NPS','CES','FCR','tasa de resolución en primer contacto','OTIF','CLV','Customer Lifetime Value','métricas de promesa','tablero de CX','cliente'] },
+      lectura1:{ url:'https://hbr.org/2021/01/the-value-of-customer-experience-quantified', titulo:'The Right Metrics for Customer Experience in B2B', duracion:'10 min', reflexion:'Si tuvieras que diseñar un tablero de 3 métricas que te digan cada semana si tu cadena está cumpliendo o rompiendo la promesa al cliente, ¿qué 3 métricas elegirías y por qué? ¿Son leading o lagging indicators?', claves:['leading','lagging','jerarquía de métricas','jerarquia de metricas','métricas accionables','metricas accionables','correlación NPS','frecuencia de medición','causa raíz de insatisfacción','cierre del loop','NPS'] }
+    },
+    sim:{ titulo:'Medir lo que importa', subtitulo:'Métricas CX · Odyssey · Caso 8', contexto:'9 meses después del diagnóstico: NPS subió de 51 a 58 (objetivo: 70). Notificaciones proactivas: 23%→81%. Portal piloto con 8/35 distribuidores. Pero las mismas 3 quejas persisten: quiebres/faltantes 33.9%, discrepancias de factura 26.6%, falta de visibilidad 13%. Costo del servicio reactivo: $1,260,040/año. FCR faltantes: 48% (el peor). FCR factura: 71%. FCR visibilidad: 97%.', guia:'¿Por qué las mismas quejas persisten a pesar de las mejoras y cómo diseña Odyssey su tablero para ser proactivo?',
+      preguntas:[
+        { tipo:'texto', enunciado:'Las 3 quejas representan el 73.5% del total. Si el costo anual de servicio reactivo es $1,260,040 y se redujera el 50% de estas quejas, ¿cuánto se ahorraría al año? ¿Qué queja atacarías primero dado el FCR más bajo (faltantes: 48%)?', claves:['451','460','50%','faltante','factura','FCR','ahorro','primero','costo'] },
+        { tipo:'opciones', enunciado:'¿Por qué las 3 quejas recurrentes persisten a pesar de las mejoras?', opciones:['Son inevitables en consumo masivo; el objetivo debe ser resolverlas rápido, no eliminarlas','Odyssey no tiene suficiente personal de servicio al cliente','Las mejoras atacaron síntomas (velocidad, notificaciones) sin resolver las causas raíz (conciliación de factura, integración de inventario)','Los clientes no han percibido las mejoras aún; solo hay que esperar más tiempo'], correcta:2 },
+        { tipo:'texto', enunciado:'Para cada una de las 3 quejas recurrentes, identifica la causa raíz probable y en cuál caso anterior (Casos 3–7) se trabajó o debería trabajarse la solución.', claves:['faltante','factura','visibilidad','causa raiz','raíz','caso','proceso','integracion','integración','sistema'] },
+        { tipo:'texto', enunciado:'Propón los 5 indicadores clave del tablero de servicio al cliente de Odyssey. Para cada uno: (a) qué mide, (b) umbral de alerta, (c) proceso o área conectado.', claves:['NPS','CES','FCR','OTIF','fill rate','umbral','alerta','tablero','proceso','area','área'] }
+      ]
+    }
+  },
+  {
+    dia:9, titulo:'El técnico que nunca regresa',
+    objetivo:'Calcular el ROI del mantenimiento predictivo y construir el argumento estratégico para migrar de modelo reactivo a conectado.',
+    repaso:'📌 Día 8 — El NPS subió de 51→58 pero las mismas 3 quejas persisten: quiebres (33.9%), facturas (26.6%), visibilidad (13%). Las intervenciones atacaron síntomas. Las causas raíz —conciliación de factura, integración de inventario— siguen abiertas.',
+    recursos:{
+      video1:{ url:'#sharepoint-d9', titulo:'Del servicio reactivo al predictivo: el equipo de frío como activo estratégico', duracion:'8 min', reflexion:'¿Cómo se mide hoy la efectividad del servicio postventa en tu empresa? ¿Existe una conexión visible entre la disponibilidad del equipo en el punto de venta y la satisfacción del cliente final?', claves:['mantenimiento predictivo','tiempo de respuesta técnica','disponibilidad de equipo','SLA de servicio','cadena de frío','cadena de frio','servicio postventa','activo estratégico en punto de venta','IoT','reactivo'] },
+      lectura1:{ url:'https://hbr.org/2018/09/why-connected-products-open-a-new-path-to-competitive-advantage', titulo:'IoT and Predictive Maintenance in Cold Chain', duracion:'10 min', reflexion:'¿Cuál es el costo invisible de un equipo de frío que falla en el punto de venta? Piensa más allá del costo de la reparación: considera el impacto en la disponibilidad del producto, en la percepción del cliente y en las ventas del canal.', claves:['costo de falla','mantenimiento preventivo','mantenimiento predictivo','IoT en cadena de frío','confiabilidad de equipo','impacto en ventas','tiempo de inactividad','modelo de servicio proactivo','falla'] }
+    },
+    sim:{ titulo:'El técnico que nunca regresa', subtitulo:'Servicio de campo conectado · Odyssey · Caso 9', contexto:'240 equipos de frío en Cadena Norte ($28.8M activos). Modelo reactivo: 38% fallas/año, FVR 62%, 126 visitas/año. Costo anual reactivo: $379,562. Modelo predictivo IoT: FVR mejora a 94%, fallas bajan a 8%, solo 20 visitas/año. Costo año 1: $560,537. Cuando falla un equipo: -60% ventas del punto de venta = $360/equipo/día de impacto.', guia:'¿Cuánto le cuesta el modelo reactivo a Odyssey y cuál es el ROI real de migrar al predictivo conectado?',
+      preguntas:[
+        { tipo:'texto', enunciado:'Con modelo reactivo: 91 fallas/año × promedio 3 días sin equipo × $360/día = ¿cuánto se pierde en ventas por inactividad del equipo? ¿Este monto justifica la inversión incremental del modelo predictivo ($560,537 - $379,562 = $180,975 adicional en año 1)?', claves:['91','3','360','98280','98,280','180975','180,975','justifica','ROI','ventas','inactividad'] },
+        { tipo:'opciones', enunciado:'¿Por qué es correcto analizar este proyecto como inversión a pesar de aumentar costos operativos?', opciones:['Toda inversión en tecnología es estratégicamente correcta independientemente del ROI','Protege activos de $28.8M y la relación con Cadena Norte (40% del volumen); el costo de perder esa relación supera el incremento operativo','Las regulaciones del sector obligan a migrar a mantenimiento preventivo','El costo preventivo es fijo, haciendo el modelo siempre más eficiente'], correcta:1 },
+        { tipo:'texto', enunciado:'La FVR mejora de 62% a 94%. ¿Cuál es el mecanismo operativo que explica esta mejora? Identifica los 3 cambios concretos en el proceso de despacho de técnicos que habilita el sistema IoT.', claves:['IoT','diagnóstico','diagnostico','refaccion','refacción','historial','remoto','anticipar','falla','despacho','técnico','tecnico'] },
+        { tipo:'texto', enunciado:'Más allá del ROI financiero, ¿cuál es el argumento de experiencia del cliente para justificar este proyecto ante la dirección? Conecta con el impacto en ventas de Cadena Norte y la posición estratégica de los equipos como diferenciador.', claves:['cliente','Cadena Norte','diferenciador','40%','activo','estratégico','estrategico','confianza','experiencia','ventas','falla'] }
+      ]
+    }
+  },
+  // ── DÍA 10 — Caso final de integración ──
+  {
+    dia:10,
+    sim:{ titulo:'El balance final', subtitulo:'Integración del módulo · Odyssey · Caso 10', contexto:'Han pasado 12 meses desde el diagnóstico inicial. Rodrigo Vidal presenta los resultados de transformación a la dirección: NPS pasó de 51→72 (objetivo: 80). Costo de atención: $12.40→$7.20/hl. Quiebres e-commerce: 11.4%→3.1%. Portal distribuidores: 35/35 activos. Costo de fricción total reducido en 68%. El equipo directivo pregunta: ¿cuál fue la intervención de mayor ROI y qué sigue?', guia:'¿Qué intervención tuvo el mayor impacto medible durante el año y cuál debería ser la prioridad de la siguiente fase de transformación?',
+      preguntas:[
+        { tipo:'texto', enunciado:'Con base en los resultados: NPS +21pts, costo -$5.20/hl, quiebres e-com -8.3pp, portal 100% activo. ¿Cuál de las intervenciones de los 9 meses tuvo el mayor ROI combinado (costo + satisfacción)? Justifica con datos específicos del caso.', claves:['portal','notificacion','notificación','distribuidor','NPS','ROI','costo','quiebre','mayor'] },
+        { tipo:'opciones', enunciado:'El NPS llegó a 72 pero la meta es 80. ¿Qué dimensión del journey tiene mayor potencial de mejora dado el avance actual?', opciones:['Velocidad de entrega: reducir de 48h a 24h en todos los canales','Resolución de discrepancias y facturación: generan el 60% de las quejas residuales','Ampliar el portafolio de productos disponibles en e-commerce','Reducir el precio para mejorar la percepción de valor'], correcta:1 },
+        { tipo:'texto', enunciado:'El equipo propone dos proyectos para la siguiente fase: (A) Mantenimiento predictivo para los 240 equipos de frío, (B) Integración de conciliación automática de facturas. Con un presupuesto de $400k disponible, ¿cuál priorizas y por qué? Considera ROI, impacto en cliente y reducción de riesgo.', claves:['factura','conciliacion','conciliación','predictivo','IoT','queja','ROI','cliente','impacto','riesgo','prioridad'] },
+        { tipo:'texto', enunciado:'¿Qué aprendizaje del módulo cambiaría la forma en que diseñarías una cadena de suministro desde cero? Identifica el principio más importante y un ejemplo concreto de cómo lo aplicarías en tu operación actual.', claves:['cliente','centrada','demand','visibilidad','friccion','fricción','promesa','journey','valor','diseño','aplica'] }
+      ]
+    }
+  }
+];
+
+// ── RENDER DÍA ──────────────────────────────────────────────────
+function renderDia(n) {
+  currentDia = n;
+  const d = DIAS_CC[n - 1];
+  if (!d) return;
+
+  // Restore tracking from persisted state
+  const _rec = (diasEstado[n] && diasEstado[n].recursos) || {};
+  diaRecursos = {
+    video1:    !!_rec.video1,
+    lectura1:  !!_rec.lectura1,
+    simulador: d.esPreQuiz ? true : !!(diasEstado[n] && diasEstado[n].simulador),
+    quiz:      !!(diasEstado[n] && diasEstado[n].quiz),
+    nps:       !!(diasEstado[n] && diasEstado[n].nps)
+  };
+
+  // Actualizar breadcrumb y progreso
+  const bc = document.getElementById('dia-breadcrumb');
+  if (bc) bc.textContent = 'Día ' + n + ': ' + d.titulo;
+  const badge = document.getElementById('dia-badge');
+  if (badge) badge.textContent = '🔥 En curso — Día ' + n + ' de 9';
+  const pct = Math.round((n - 1) * 100 / 9);
+  const pctLbl = document.getElementById('dia-pct-label');
+  if (pctLbl) pctLbl.textContent = pct + '% completado';
+  const fill = document.getElementById('dia-progress-fill');
+  if (fill) fill.style.width = pct + '%';
+
+  // Reset botón completar
+  const btnComp = document.getElementById('btn-completar-dia');
+  if (btnComp) {
+    btnComp._desbloqueado = false;
+    btnComp.disabled = true;
+    btnComp.style.opacity = '0.35';
+    btnComp.style.cursor = 'not-allowed';
+    btnComp.innerHTML = '<i class="fas fa-lock" style="font-size:12px;"></i> Completa el quiz para continuar';
+  }
+
+  // Actualizar sidebar y pts
+  renderSidebarDia(n);
+  actualizarPtsDisplay(n);
+
+  // Construir contenido del día
+  const preLocked = d.esPreQuiz && !diasPreQuizDone[n];
+  const quizHecho = !!(diasEstado[n] && diasEstado[n].quiz);
+  const simHecho  = !!(diasEstado[n] && diasEstado[n].simulador);
+  const quizLabel = d.esPreQuiz
+    ? 'Pre-evaluación · 10 preguntas (Diagnóstico Kirkpatrick)'
+    : 'Evaluación de la Sesión · 5 preguntas';
+  const quizSub = d.esPreQuiz
+    ? 'Completa esta evaluación diagnóstica para desbloquear el contenido del módulo'
+    : 'Responde correctamente para ganar hasta 5 pts · Tienes 5 minutos';
+
+  // Repaso dinámico (días 2+) — preguntas que fallaste el día anterior
+  let htmlRepaso = '';
+  if (n > 1) {
+    const repasoHecho = !!(diasEstado[n] && diasEstado[n].repaso);
+    const prevWrong = wrongQuestionsByDay[n - 1];
+    if (repasoHecho) {
+      htmlRepaso = `
+      <div style="background:rgba(117,114,233,0.08);border:1px solid rgba(117,114,233,0.25);border-left:3px solid var(--purple);border-radius:10px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:18px;">✅</span>
+        <div>
+          <div style="font-size:10px;color:var(--purple);font-weight:700;letter-spacing:0.08em;">REPASO DEL DÍA ANTERIOR</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-top:2px;">Completado</div>
+        </div>
+      </div>`;
+    } else if (prevWrong === undefined) {
+      htmlRepaso = ''; // Quiz del día anterior aún no realizado
+    } else if (prevWrong.length === 0) {
+      htmlRepaso = `
+      <div style="background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.2);border-left:3px solid #00ff88;border-radius:10px;padding:12px 16px;margin-bottom:18px;">
+        <div style="font-size:10px;color:#00ff88;font-weight:700;letter-spacing:0.08em;">REPASO DEL DÍA ANTERIOR</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.65);margin-top:4px;">🎉 No tuviste errores el día anterior — ¡Excelente!</div>
+      </div>`;
+    } else {
+      htmlRepaso = `
+      <div style="background:rgba(117,114,233,0.08);border:1px solid rgba(117,114,233,0.3);border-left:3px solid var(--purple);border-radius:10px;padding:16px;margin-bottom:18px;">
+        <div style="font-size:10px;color:var(--purple);font-weight:700;letter-spacing:0.08em;margin-bottom:6px;">REPASO DEL DÍA ANTERIOR</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:12px;">${prevWrong.length} pregunta${prevWrong.length > 1 ? 's' : ''} fallada${prevWrong.length > 1 ? 's' : ''} — revisalas antes de continuar (sin puntos)</div>
+        <button class="btn" style="width:100%;font-size:13px;padding:10px;background:rgba(117,114,233,0.15);border:1px solid rgba(117,114,233,0.4);color:var(--purple);font-weight:700;" onclick="abrirRepaso(${n})">
+          <i class="fas fa-redo"></i> Iniciar Repaso
+        </button>
+      </div>`;
+    }
+  }
+
+  const htmlVideo = `
+    <!-- Video -->
+    <div class="card" style="margin-bottom:20px;">
+      <h4 style="color:var(--cyan);margin-bottom:14px;font-size:15px;"><i class="fas fa-video" style="margin-right:8px;"></i>Video del día</h4>
+      <div style="position:relative;">
+        <div id="check-video1" style="position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);background:transparent;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;z-index:1;transition:all 0.3s;"></div>
+        <div class="video-placeholder" style="margin-bottom:0;height:140px;cursor:pointer;" onclick="abrirRecurso('video1')">
+          <div class="play-btn" style="width:44px;height:44px;font-size:16px;">▶</div>
+          <p style="color:rgba(255,255,255,0.5);font-size:13px;margin-top:6px;">${d.recursos.video1.titulo} — ${d.recursos.video1.duracion}</p>
+          <p style="font-size:11px;color:rgba(0,216,218,0.6);margin-top:2px;"><i class="fas fa-external-link-alt"></i> Abrir en SharePoint</p>
+        </div>
+      </div>
+      <div id="reflexion-video1" style="display:none;margin-top:10px;">
+        <p style="font-size:12px;color:var(--cyan);font-weight:600;margin-bottom:6px;">💬 ¿Cuál fue la idea principal de este recurso?</p>
+        <textarea id="txt-video1" rows="3" placeholder="Escribe con tus propias palabras..." style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:13px;resize:none;outline:none;font-family:inherit;box-sizing:border-box;"></textarea>
+        <button onclick="calificarReflexion('video1')" class="btn btn-sm" style="margin-top:8px;background:rgba(0,216,218,0.1);border:1px solid rgba(0,216,218,0.3);color:var(--cyan);width:100%;">Enviar <i class="fas fa-paper-plane"></i></button>
+        <div id="fb-video1" style="margin-top:8px;font-size:12px;min-height:16px;"></div>
+      </div>
+    </div>`;
+
+  const htmlLectura = `
+    <!-- Lectura -->
+    <div class="card" style="margin-bottom:20px;">
+      <h4 style="margin-bottom:14px;font-size:15px;">📎 Lectura del día</h4>
+      <div onclick="abrirRecurso('lectura1')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,165,0,0.06);border:1px solid rgba(255,165,0,0.2);border-radius:8px;cursor:pointer;">
+        <span style="font-size:13px;color:rgba(255,255,255,0.8);">📄 ${d.recursos.lectura1.titulo}</span>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <span style="font-size:11px;color:orange;">${d.recursos.lectura1.duracion} <i class="fas fa-external-link-alt"></i></span>
+          <div id="check-lectura1" style="width:20px;height:20px;border-radius:50%;border:1px solid rgba(255,165,0,0.4);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;transition:all 0.3s;"></div>
+        </div>
+      </div>
+      <div id="reflexion-lectura1" style="display:none;margin-top:10px;">
+        <p style="font-size:12px;color:orange;font-weight:600;margin-bottom:6px;">💬 ¿Cuál fue la idea principal de este recurso?</p>
+        <textarea id="txt-lectura1" rows="3" placeholder="Escribe con tus propias palabras..." style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,165,0,0.2);border-radius:8px;color:#fff;font-size:13px;resize:none;outline:none;font-family:inherit;box-sizing:border-box;"></textarea>
+        <button onclick="calificarReflexion('lectura1')" class="btn btn-sm" style="margin-top:8px;background:rgba(255,165,0,0.08);border:1px solid rgba(255,165,0,0.3);color:orange;width:100%;">Enviar <i class="fas fa-paper-plane"></i></button>
+        <div id="fb-lectura1" style="margin-top:8px;font-size:12px;min-height:16px;"></div>
+      </div>
+    </div>`;
+
+  const htmlSimulador = simHecho ? `
+    <!-- Simulador completado -->
+    <div class="card" style="border-color:rgba(0,255,136,0.3);margin-bottom:20px;background:rgba(0,255,136,0.04);text-align:center;padding:20px 24px;">
+      <div style="font-size:28px;margin-bottom:6px;">✅</div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#00ff88;margin-bottom:4px;">SIMULADOR COMPLETADO</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.5);">${d.sim.titulo}</div>
+    </div>` : `
+    <!-- Simulador -->
+    <div class="card" style="border-color:rgba(117,114,233,0.4);margin-bottom:20px;background:rgba(117,114,233,0.04);text-align:center;padding:28px 24px;">
+      <div style="font-size:36px;margin-bottom:10px;">🎮</div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--purple);margin-bottom:6px;">SIMULADOR DE CASO · ODYSSEY · 8 PTS</div>
+      <h4 style="margin-bottom:6px;font-size:17px;">${d.sim.titulo}</h4>
+      <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;">${d.sim.subtitulo}</p>
+      <button class="btn" style="width:100%;font-size:15px;padding:13px;background:rgba(117,114,233,0.15);border:1px solid rgba(117,114,233,0.5);color:var(--purple);font-weight:700;" onclick="abrirSimuladorCaso(${n})">
+        <i class="fas fa-gamepad"></i> Iniciar Simulador
+      </button>
+    </div>`;
+
+  const htmlQuiz = quizHecho ? `
+    <!-- Quiz completado -->
+    <div class="card" style="border-color:rgba(0,255,136,0.3);margin-bottom:20px;background:rgba(0,255,136,0.04);text-align:center;padding:20px 24px;">
+      <div style="font-size:28px;margin-bottom:6px;">✅</div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#00ff88;margin-bottom:4px;">${d.esPreQuiz ? 'PRE-EVALUACIÓN COMPLETADA' : 'QUIZ COMPLETADO'}</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.4);">Ya registrado · Solo se puede hacer una vez</div>
+    </div>` : `
+    <!-- Quiz -->
+    <div class="card" style="border-color:rgba(0,216,218,0.3);margin-bottom:20px;text-align:center;padding:28px 24px;">
+      <div style="font-size:36px;margin-bottom:10px;">⚡</div>
+      <h4 style="color:var(--cyan);font-size:17px;margin-bottom:6px;">${quizLabel}</h4>
+      <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:20px;">${quizSub}</p>
+      <button class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;" onclick="abrirQuiz()">
+        <i class="fas fa-bolt"></i> Iniciar ${d.esPreQuiz ? 'Pre-evaluación' : 'Quiz'}
+      </button>
+    </div>`;
+
+  const cont = document.getElementById('dia-contenido');
+  if (!cont) return;
+  cont.innerHTML = `
+    ${htmlRepaso}
+    <!-- Header -->
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.35);margin-bottom:4px;">DÍA ${n}</div>
+      <h2 style="font-size:22px;font-weight:800;margin-bottom:10px;">${d.titulo}</h2>
+      <div style="background:rgba(117,114,233,0.07);border:1px solid rgba(117,114,233,0.2);border-radius:10px;padding:12px 16px;margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--purple);font-weight:700;margin-bottom:3px;">OBJETIVO DE APRENDIZAJE</div>
+        <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:0;">${d.objetivo}</p>
+      </div>
+    </div>
+    <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:20px;">
+      ${d.esPreQuiz
+        ? `<i class="fas fa-bolt" style="color:var(--cyan);"></i> Pre-evaluación &nbsp;·&nbsp;
+           <i class="fas fa-video" style="color:var(--cyan);"></i> 1 video &nbsp;·&nbsp;
+           <i class="fas fa-file-alt" style="color:orange;"></i> 1 lectura &nbsp;·&nbsp;
+           <i class="fas fa-clock" style="color:rgba(255,255,255,0.4);"></i> ~40 min`
+        : `<i class="fas fa-video" style="color:var(--cyan);"></i> 1 video &nbsp;·&nbsp;
+           <i class="fas fa-file-alt" style="color:orange;"></i> 1 lectura &nbsp;·&nbsp;
+           <i class="fas fa-tasks" style="color:var(--magenta);"></i> Evaluación &nbsp;·&nbsp;
+           <i class="fas fa-gamepad" style="color:var(--purple);"></i> Simulador &nbsp;·&nbsp;
+           <i class="fas fa-clock" style="color:rgba(255,255,255,0.4);"></i> ~35 min`}
+    </p>
+
+    ${preLocked ? `
+      ${htmlQuiz}
+      <div style="background:rgba(0,216,218,0.05);border:1px solid rgba(0,216,218,0.15);border-radius:12px;padding:16px;margin-bottom:16px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:6px;">🔒</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.4);">El resto del contenido se desbloqueará al completar la pre-evaluación</div>
+      </div>
+      <div style="opacity:0.25;pointer-events:none;filter:blur(1px);">
+        ${htmlVideo}${htmlLectura}
+      </div>
+    ` : `
+      ${htmlVideo}${htmlLectura}${htmlQuiz}${d.esPreQuiz ? '' : htmlSimulador}
+    `}
+
+    <!-- NPS + Comentarios -->
+    <div class="card" style="border-color:rgba(117,114,233,0.3);text-align:center;" id="nps-card">
+      <h4 style="margin-bottom:8px;font-size:15px;">¿Qué tan útil fue este día?</h4>
+      <p style="font-size:13px;color:rgba(255,255,255,0.4);margin-bottom:16px;">Selecciona para poder avanzar al siguiente día &nbsp;·&nbsp; 1 = Nada útil &nbsp;·&nbsp; 10 = Muy útil</p>
+      <div class="nps-scale" id="nps-modulo">
+        ${[1,2,3,4,5,6,7,8,9,10].map(v=>`<button class="nps-btn" data-v="${v}" onclick="selectNPS(this,${n})">${v}</button>`).join('')}
+      </div>
+      <div id="comentarios-section-${n}" style="display:none;margin-top:14px;text-align:left;">
+        <textarea id="txt-comentarios-${n}" rows="3" placeholder="Comentarios opcionales sobre el contenido del día..." style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:13px;resize:none;outline:none;font-family:inherit;box-sizing:border-box;"></textarea>
+      </div>
+      <button id="btn-comentarios-${n}" onclick="toggleComentarios(${n})" style="display:none;margin-top:10px;background:rgba(117,114,233,0.1);border:1px solid rgba(117,114,233,0.3);color:var(--purple);border-radius:8px;padding:7px 16px;cursor:pointer;font-size:12px;">💬 Agregar comentario</button>
+    </div>
+  `;
+
+  // Verificar si ya todo estaba completado (para restaurar estado del botón)
+  setTimeout(() => verificarCompletarDia(), 50);
+}
+
+// ── SIDEBAR DÍAS ─────────────────────────────────────────────────
+// Puntos acumulados en memoria (sesión actual)
+let ptsAcumulados = 0;
+
+function saveState() {
+  try {
+    localStorage.setItem('selfSci_diasEstado', JSON.stringify(diasEstado));
+    localStorage.setItem('selfSci_diasPreQuizDone', JSON.stringify(diasPreQuizDone));
+    localStorage.setItem('selfSci_ptsAcumulados', ptsAcumulados);
+    localStorage.setItem('selfSci_currentDia', currentDia);
+    localStorage.setItem('selfSci_wrongQuestions', JSON.stringify(wrongQuestionsByDay));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const de = localStorage.getItem('selfSci_diasEstado');
+    if (de) diasEstado = JSON.parse(de);
+    const dp = localStorage.getItem('selfSci_diasPreQuizDone');
+    if (dp) diasPreQuizDone = JSON.parse(dp);
+    const pa = localStorage.getItem('selfSci_ptsAcumulados');
+    if (pa) ptsAcumulados = parseInt(pa) || 0;
+    const wq = localStorage.getItem('selfSci_wrongQuestions');
+    if (wq) wrongQuestionsByDay = JSON.parse(wq);
+    const cd = localStorage.getItem('selfSci_currentDia');
+    if (cd) currentDia = parseInt(cd) || 1;
+  } catch(e) {}
+}
+
+function actualizarPtsDisplay(diaNum) {
+  const d = (typeof DIAS_CC !== 'undefined') ? DIAS_CC[diaNum - 1] : null;
+  let ptsDia = 0;
+  const partes = [];
+
+  if (d && d.esPreQuiz) {
+    // Día 1: pre-evaluación, sin puntos
+    partes.push('<span style="color:rgba(255,255,255,0.4);">Pre-evaluación diagnóstica · sin puntos</span>');
+  } else {
+    // Quiz/Evaluación de sesión (días 2-9): 5 preguntas × 1 pt
+    if (d && !d.esPreQuiz && diaNum < 10) {
+      const ptsQuiz = 5;
+      ptsDia += ptsQuiz;
+      partes.push(`<i class="fas fa-tasks" style="color:var(--magenta);"></i> Evaluación ${ptsQuiz} pts`);
+    }
+    // Simulador (días 2-10): 4 preguntas × 2 pts máx = 8 pts
+    if (d && d.sim) {
+      const ptsSim = d.sim.preguntas ? d.sim.preguntas.length * 2 : 8;
+      ptsDia += ptsSim;
+      partes.push(`<i class="fas fa-gamepad" style="color:var(--purple);"></i> Simulador ${ptsSim} pts`);
+    }
+    // Evaluación final (día 10): 10 preguntas × 1 pt
+    if (diaNum === 10) {
+      const ptsEval = 10;
+      ptsDia += ptsEval;
+      partes.push(`<i class="fas fa-trophy" style="color:#00ff88;"></i> Eval final ${ptsEval} pts`);
+    }
+  }
+
+  const dispEl = document.getElementById('pts-dia-display');
+  const detEl  = document.getElementById('pts-dia-detalle');
+  const acumEl = document.getElementById('pts-acumulados-display');
+  if (dispEl) dispEl.textContent = '+' + ptsDia + ' pts';
+  if (detEl)  detEl.innerHTML = partes.join(' &nbsp;·&nbsp; ');
+  if (acumEl) acumEl.textContent = ptsAcumulados + ' pts';
+}
+
+function renderSidebarDia(current) {
+  const nombres = ['La mejor cadena de suministro','La cadena que ya no funciona','El cliente que Odyssey no conoce','Preparada para lo que viene','Vender en todos lados','El portafolio que nos cuesta','El pedido que nadie quiere hacer','Medir lo que importa','El técnico que nunca regresa'];
+  const sb = document.getElementById('dias-sidebar');
+  if (!sb) return;
+  sb.innerHTML = nombres.map((nombre, i) => {
+    const n = i + 1;
+    const isActive = n === current;
+    const isDone = n < current;
+    const isLast = n === 10;
+    const dot = isDone
+      ? `<div style="width:20px;height:20px;border-radius:50%;background:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;">✓</div>`
+      : isActive
+        ? `<div style="width:20px;height:20px;border-radius:50%;background:var(--magenta);box-shadow:0 0 8px rgba(248,0,250,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:white;">${n}</div>`
+        : `<div style="width:20px;height:20px;border-radius:50%;border:1px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:9px;color:rgba(255,255,255,0.5);">${n}</div>`;
+    const line = n < 9 ? `<div style="width:1px;height:20px;background:rgba(255,255,255,0.08);"></div>` : '';
+    const label = isActive
+      ? `<div style="padding-top:1px;"><div style="font-size:10px;color:var(--magenta);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1px;">En curso</div><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.95);">${nombre}</div></div>`
+      : isDone
+        ? `<div style="padding-top:3px;font-size:12px;color:var(--cyan);">${nombre}</div>`
+        : `<div style="padding-top:3px;font-size:12px;color:rgba(255,255,255,0.6);">${nombre}</div>`;
+    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:4px 0;${!isActive && !isDone ? 'opacity:0.35;' : ''}">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">${dot}${line}</div>${label}</div>`;
+  }).join('') + (() => {
+    const isD10Active = current === 10;
+    const isD10Done = current > 10;
+    const d10Dot = isD10Done
+      ? `<div style="width:20px;height:20px;border-radius:50%;background:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;">✓</div>`
+      : isD10Active
+        ? `<div style="width:20px;height:20px;border-radius:50%;background:#00ff88;box-shadow:0 0 8px rgba(0,255,136,0.5);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:900;color:#000;">10</div>`
+        : `<div style="width:20px;height:20px;border-radius:50%;border:1px solid rgba(117,114,233,0.4);display:flex;align-items:center;justify-content:center;font-size:8px;color:rgba(117,114,233,0.6);">10</div>`;
+    const d10Label = isD10Active
+      ? `<div style="padding-top:1px;"><div style="font-size:10px;color:#00ff88;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:1px;">En curso</div><div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.95);">Evaluación final</div></div>`
+      : `<div style="padding-top:3px;font-size:12px;color:rgba(117,114,233,0.7);font-weight:600;">Evaluación final</div>`;
+    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:4px 0;${!isD10Active && !isD10Done ? 'opacity:0.3;' : ''}">
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">${d10Dot}</div>${d10Label}</div>`;
+  })();
+}
+
+// ── SIMULADOR DE CASO ────────────────────────────────────────────
+function abrirSimuladorCaso(diaNum) {
+  const d = DIAS_CC[diaNum - 1];
+  if (!d) return;
+  const sim = d.sim;
+
+  const prev = document.getElementById('caso-modal');
+  if (prev) prev.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'caso-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(8,10,18,0.97);z-index:9999;overflow-y:auto;';
+  modal.innerHTML = `
+    <div style="max-width:680px;margin:0 auto;padding:28px 20px 80px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+          <span class="badge badge-purple">Connected Customer · Día ${diaNum} · Caso ${diaNum} de 9</span>
+          <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:5px;text-transform:uppercase;letter-spacing:0.06em;">Simulador de caso · Odyssey · hasta 8 pts</div>
+        </div>
+        <button onclick="cerrarSimuladorCaso()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:16px;">✕</button>
+      </div>
+
+      <!-- Sobre Odyssey -->
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px 16px;margin-bottom:16px;">
+        <div style="font-size:10px;color:rgba(255,255,255,0.35);font-weight:700;letter-spacing:0.08em;margin-bottom:5px;">LA EMPRESA — ODYSSEY</div>
+        <p style="font-size:12px;color:rgba(255,255,255,0.5);line-height:1.6;margin:0;">Odyssey es una empresa de consumo masivo (bebidas) con operaciones en 3 canales: <strong style="color:rgba(255,255,255,0.7);">Cadena Norte</strong> (40% volumen, 288 hl/sem), <strong style="color:rgba(255,255,255,0.7);">Distribuidores</strong> (35%, 252 hl/sem) y <strong style="color:rgba(255,255,255,0.7);">E-commerce</strong> (25%, 180 hl/sem). Demanda base: 720 hl/sem. A lo largo del módulo resolverás 9 casos de un arco narrativo continuo que parte de un diagnóstico de NPS caído y termina con un modelo de servicio conectado.</p>
+      </div>
+
+      <!-- Contexto del caso -->
+      <div style="background:rgba(0,216,218,0.06);border:1px solid rgba(0,216,218,0.2);border-radius:12px;padding:16px 18px;margin-bottom:16px;">
+        <div style="font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:0.08em;margin-bottom:10px;">📋 ESCENARIO — ${sim.subtitulo.toUpperCase()}</div>
+        <p style="font-size:14px;color:rgba(255,255,255,0.85);line-height:1.8;margin:0;">${sim.contexto}</p>
+      </div>
+
+      <!-- Pregunta guía -->
+      <div style="background:rgba(117,114,233,0.08);border:1px solid rgba(117,114,233,0.3);border-left:3px solid var(--purple);border-radius:10px;padding:14px 16px;margin-bottom:28px;">
+        <div style="font-size:10px;color:var(--purple);font-weight:700;letter-spacing:0.08em;margin-bottom:6px;">🎯 PREGUNTA GUÍA DEL CASO</div>
+        <p style="font-size:15px;font-weight:700;color:rgba(255,255,255,0.95);margin:0;line-height:1.5;">${sim.guia}</p>
+      </div>
+
+      <!-- Preguntas -->
+      <div style="font-size:11px;color:rgba(255,255,255,0.3);font-weight:700;letter-spacing:0.08em;margin-bottom:14px;">RESPONDE LAS 4 PREGUNTAS A CONTINUACIÓN</div>
+      ${sim.preguntas.map((p, i) => renderPreguntaCaso(p, i, diaNum)).join('')}
+
+      <!-- Botón enviar -->
+      <button onclick="simCasoSubmit(${diaNum})" class="btn btn-primary" style="width:100%;font-size:15px;padding:14px;margin-top:8px;">
+        <i class="fas fa-paper-plane"></i> Enviar respuestas y autoevaluar
+      </button>
+    </div>`;
+  document.body.appendChild(modal);
+  document.body.style.overflow = 'hidden';
+}
+
+function renderPreguntaCaso(p, i, diaNum) {
+  const label = ['Análisis numérico', 'Opción múltiple', 'Análisis crítico', 'Decisión y justificación'][i];
+  if (p.tipo === 'opciones') {
+    return `<div class="card" style="margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--magenta);font-weight:700;letter-spacing:0.06em;margin-bottom:8px;">PREGUNTA ${i+1} · ${label.toUpperCase()}</div>
+      <p style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.9);margin-bottom:14px;line-height:1.5;">${p.enunciado}</p>
+      ${p.opciones.map((op, j) => `
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin-bottom:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;cursor:pointer;">
+          <input type="radio" name="caso-q${i}" value="${j}" style="margin-top:2px;flex-shrink:0;">
+          <span style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.5;">${['A','B','C','D'][j]}) ${op}</span>
+        </label>`).join('')}
+    </div>`;
+  }
+  return `<div class="card" style="margin-bottom:16px;">
+    <div style="font-size:11px;color:var(--cyan);font-weight:700;letter-spacing:0.06em;margin-bottom:8px;">PREGUNTA ${i+1} · ${label.toUpperCase()}</div>
+    <p style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.9);margin-bottom:12px;line-height:1.5;">${p.enunciado}</p>
+    <textarea id="caso-txt-${i}" rows="4" placeholder="Escribe tu respuesta aquí..." style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:13px;resize:vertical;outline:none;font-family:inherit;box-sizing:border-box;"></textarea>
+  </div>`;
+}
+
+function cerrarSimuladorCaso() {
+  const modal = document.getElementById('caso-modal');
+  if (modal) modal.remove();
+  document.body.style.overflow = '';
+}
+
+function simCasoSubmit(diaNum) {
+  const d = DIAS_CC[diaNum - 1];
+  const sim = d.sim;
+  const labels = ['Análisis numérico','Opción múltiple','Análisis crítico','Decisión y justificación'];
+  const opts = ['A','B','C','D'];
+
+  // Validar que todas las preguntas estén respondidas
+  let allAnswered = true;
+  sim.preguntas.forEach((p, i) => {
+    if (p.tipo === 'opciones') {
+      const sel = document.querySelector(`input[name="caso-q${i}"]:checked`);
+      if (!sel) allAnswered = false;
+    } else {
+      const txt = document.getElementById('caso-txt-' + i);
+      if (!txt || txt.value.trim().length < 5) allAnswered = false;
+    }
+  });
+  if (!allAnswered) {
+    showToast('⚠️ Responde todas las preguntas antes de enviar', 'info');
+    return;
+  }
+
+  // Auto-calificar todo
+  let totalScore = 0;
+  const resultados = [];
+
+  sim.preguntas.forEach((p, i) => {
+    if (p.tipo === 'opciones') {
+      const sel = document.querySelector(`input[name="caso-q${i}"]:checked`);
+      const elegidaIdx = sel ? parseInt(sel.value) : -1;
+      const correcto = elegidaIdx === p.correcta;
+      const pts = correcto ? 2 : 0;
+      totalScore += pts;
+      resultados.push({ tipo:'opciones', correcto, pts, elegidaIdx, correctaIdx:p.correcta });
+    } else {
+      const txt = document.getElementById('caso-txt-' + i);
+      const respRaw = txt ? txt.value.trim() : '';
+      const respNorm = respRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const mencionadas = p.claves.filter(c => respNorm.includes(c.normalize('NFD').replace(/[\u0300-\u036f]/g,'')));
+      const pts = mencionadas.length >= 4 ? 2 : mencionadas.length >= 2 ? 1 : 0;
+      totalScore += pts;
+      resultados.push({ tipo:'texto', pts, resp:respRaw, mencionadas, totalClaves:p.claves.length });
+    }
+  });
+
+  // Mostrar resultados directamente
+  const cont = document.querySelector('#caso-modal > div');
+  if (!cont) return;
+
+  const ptsColor = totalScore >= 7 ? '#00ff88' : totalScore >= 5 ? 'var(--cyan)' : 'orange';
+  const msg = totalScore >= 7 ? 'Dominio experto demostrado 🎯' : totalScore >= 5 ? 'Comprensión sólida 👍' : totalScore >= 3 ? 'Comprensión básica 📚' : 'Refuerzo recomendado 🔄';
+  const dots = resultados.map(r => {
+    const bg = r.pts >= 2 ? '#00ff88' : r.pts >= 1 ? 'var(--cyan)' : 'var(--magenta)';
+    return `<div style="flex:1;height:6px;border-radius:3px;background:${bg}"></div>`;
+  }).join('');
+
+  cont.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <span class="badge badge-purple">Connected Customer · Día ${diaNum} · Resultado</span>
+      <button onclick="cerrarSimuladorCaso();marcarRecurso('simulador');marcarEstadoDia(${diaNum},'simulador');if(${totalScore}>0)showFloatingPoints(${totalScore});" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="font-size:64px;font-weight:900;color:${ptsColor};line-height:1;">${totalScore}<span style="font-size:28px;color:rgba(255,255,255,0.3);">/8</span></div>
+      <div style="font-size:16px;color:rgba(255,255,255,0.6);margin-top:4px;">${msg}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;">${dots}</div>
+
+    ${sim.preguntas.map((p, i) => {
+      const r = resultados[i];
+      const label = labels[i] || ('Pregunta ' + (i+1));
+      const ptsBadge = r.pts === 2 ? '✅ 2 PTS' : r.pts === 1 ? '⚡ 1 PT' : '❌ 0 PTS';
+      const borderColor = r.pts >= 2 ? 'rgba(0,255,136,0.35)' : r.pts >= 1 ? 'rgba(0,216,218,0.35)' : 'rgba(248,0,250,0.35)';
+      const headerColor = r.pts >= 2 ? '#00ff88' : r.pts >= 1 ? 'var(--cyan)' : 'var(--magenta)';
+      if (p.tipo === 'opciones') {
+        return `<div class="card" style="margin-bottom:12px;border-color:${borderColor};">
+          <div style="font-size:11px;color:${headerColor};font-weight:700;letter-spacing:0.06em;margin-bottom:6px;">PREGUNTA ${i+1} · ${label.toUpperCase()} · ${ptsBadge}</div>
+          <p style="font-size:13px;font-weight:600;margin-bottom:8px;">${p.enunciado}</p>
+          ${r.elegidaIdx >= 0 ? `<div style="font-size:12px;color:${r.correcto?'#00ff88':'var(--magenta)'};margin-bottom:4px;">Tu respuesta: ${opts[r.elegidaIdx]}) ${p.opciones[r.elegidaIdx]}</div>` : ''}
+          ${!r.correcto ? `<div style="font-size:12px;color:#00ff88;">✓ Correcta: ${opts[r.correctaIdx]}) ${p.opciones[r.correctaIdx]}</div>` : ''}
+        </div>`;
+      } else {
+        const guia = p.guiaRespuesta || ('Una respuesta completa debe incluir: ' + p.claves.slice(0, 6).join(', ') + '.');
+        return `<div class="card" style="margin-bottom:12px;border-color:${borderColor};">
+          <div style="font-size:11px;color:${headerColor};font-weight:700;letter-spacing:0.06em;margin-bottom:6px;">PREGUNTA ${i+1} · ${label.toUpperCase()} · ${ptsBadge}</div>
+          <p style="font-size:13px;font-weight:600;margin-bottom:8px;">${p.enunciado}</p>
+          <div style="background:rgba(255,255,255,0.03);border-left:2px solid rgba(255,255,255,0.1);padding:8px 12px;margin-bottom:8px;border-radius:4px;">
+            <div style="font-size:10px;color:rgba(255,255,255,0.3);font-weight:700;margin-bottom:2px;">TU RESPUESTA</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.6);font-style:italic;">${r.resp.length > 0 ? (r.resp.length > 200 ? r.resp.substring(0,200)+'…' : r.resp) : '(sin respuesta)'}</div>
+          </div>
+          <div style="background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.15);border-radius:8px;padding:10px 12px;">
+            <div style="font-size:10px;color:#00ff88;font-weight:700;margin-bottom:4px;">RESPUESTA ESPERADA</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.7);line-height:1.7;">${guia}</div>
+          </div>
+        </div>`;
+      }
+    }).join('')}
+
+    <button onclick="cerrarSimuladorCaso();marcarRecurso('simulador');marcarEstadoDia(${diaNum},'simulador');if(${totalScore}>0)showFloatingPoints(${totalScore});" class="btn btn-primary" style="width:100%;font-size:15px;padding:13px;margin-top:8px;">
+      <i class="fas fa-check"></i> Cerrar y continuar — +${totalScore} pts
+    </button>`;
+}
+
+
