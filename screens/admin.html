@@ -651,6 +651,32 @@
 
 
 <!-- ══════════════════════════════════════
+     ADMIN 3b: EDITOR DE MÓDULO
+══════════════════════════════════════ -->
+<section id="screen-admin-editor-modulo" class="screen">
+  <nav class="navbar" style="border-bottom-color:rgba(248,0,250,0.2);">
+    <div class="navbar-brand">
+      <img src="assets/logo-self.svg" alt="SELF" style="height:30px;width:auto;"/>
+      <img src="assets/sci-logo.png" alt="SCI" style="height:22px;width:auto;opacity:0.7;"/>
+      <span style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--magenta);background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);border-radius:6px;padding:2px 8px;margin-left:4px;">ADMIN</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="navigate('screen-admin-modulos')" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left"></i> Biblioteca</button>
+      <button class="btn btn-primary btn-sm" onclick="guardarEditorModulo()"><i class="fas fa-save"></i> Guardar</button>
+      <button onclick="navigate('screen-login')" class="btn btn-sm" style="background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.3);color:var(--magenta);"><i class="fas fa-right-from-bracket"></i></button>
+    </div>
+  </nav>
+
+  <div style="padding:32px 20px;flex:1;">
+    <div class="container-wide">
+      <!-- Contenido renderizado por JS -->
+      <div id="editor-modulo-content"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════
      ADMIN 4: BIBLIOTECA DE MÓDULOS
 ══════════════════════════════════════ -->
 <section id="screen-admin-modulos" class="screen">

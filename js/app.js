@@ -2750,62 +2750,267 @@ let _moduloEditIdx = null;
 function editarModulo(idx) {
   _moduloEditIdx = idx;
   const m = mockModulosGrid[idx];
-  let modal = document.getElementById('modal-editar-modulo');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'modal-editar-modulo';
-    modal.style.cssText = 'position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(6px);';
-    document.body.appendChild(modal);
-    modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
-  }
-  modal.innerHTML = `
-    <div style="background:#0d0d1a;border:1.5px solid rgba(248,0,250,0.3);border-radius:20px;padding:32px;max-width:500px;width:100%;position:relative;">
-      <button onclick="document.getElementById('modal-editar-modulo').style.display='none'"
-              style="position:absolute;top:14px;right:14px;background:rgba(255,255,255,0.07);border:none;color:rgba(255,255,255,0.5);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:15px;">✕</button>
-      <h3 style="font-weight:700;margin-bottom:20px;font-size:17px;color:var(--white);">Editar Módulo</h3>
-      <div class="form-group">
-        <label class="form-label">Nombre del módulo</label>
-        <input class="form-input" id="em-nombre" value="${m.nombre}"/>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-        <div class="form-group">
-          <label class="form-label">Nivel</label>
-          <select class="form-select" id="em-nivel">
-            ${['Nivel 1 — Novato','Nivel 2 — Principiante','Nivel 3 — Competente','Nivel 4 — Avanzado','Nivel 5 — Experto']
-              .map(n => `<option ${m.nivel===n?'selected':''}>${n}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Duración</label>
-          <input class="form-input" id="em-duracion" value="${m.duracion}" placeholder="Ej: 4h"/>
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Temas (separados por coma)</label>
-        <input class="form-input" id="em-temas" value="${m.temas.join(', ')}" placeholder="Liderazgo, Comunicación, Delegación"/>
-      </div>
-      <div style="display:flex;gap:10px;margin-top:8px;">
-        <button class="btn btn-primary" style="flex:1;" onclick="guardarEdicionModulo()"><i class="fas fa-save"></i> Guardar cambios</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('modal-editar-modulo').style.display='none'">Cancelar</button>
-      </div>
-    </div>`;
-  modal.style.display = 'flex';
+  navigate('screen-admin-contenido');
+  setTimeout(() => renderEditorModulo(m.id), 80);
 }
 
-function guardarEdicionModulo() {
-  if (_moduloEditIdx === null) return;
-  const nombre   = document.getElementById('em-nombre')?.value?.trim();
-  const nivel    = document.getElementById('em-nivel')?.value;
-  const duracion = document.getElementById('em-duracion')?.value?.trim();
-  const temasStr = document.getElementById('em-temas')?.value;
-  if (nombre)   mockModulosGrid[_moduloEditIdx].nombre   = nombre;
-  if (nivel)    mockModulosGrid[_moduloEditIdx].nivel    = nivel;
-  if (duracion) mockModulosGrid[_moduloEditIdx].duracion = duracion;
-  if (temasStr) mockModulosGrid[_moduloEditIdx].temas    = temasStr.split(',').map(t => t.trim()).filter(Boolean);
-  document.getElementById('modal-editar-modulo').style.display = 'none';
-  renderModulosGrid();
-  showToast('✅ Módulo actualizado', 'success');
+// ── Iconos por tipo de recurso ──
+const TIPO_ICONOS = { video:'fa-play-circle', articulo:'fa-file-alt', podcast:'fa-headphones', infografia:'fa-image', actividad:'fa-tasks', evaluacion:'fa-clipboard-check' };
+
+function renderEditorModulo(idx) {
+  const m = mockModulosGrid[idx];
+  const el = document.getElementById('editor-modulo-content');
+  if (!el) return;
+
+  el.innerHTML = `
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;flex-wrap:wrap;">
+      <div style="width:54px;height:54px;border-radius:14px;background:rgba(0,216,218,0.1);border:1px solid rgba(0,216,218,0.25);display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;" title="Cambiar icono" onclick="cambiarIconoModulo()">${m.icono}</div>
+      <div style="flex:1;">
+        <h1 class="page-title" style="margin-bottom:2px;">${m.nombre}</h1>
+        <p class="page-subtitle">${m.nivel} · ${m.duracion}</p>
+      </div>
+    </div>
+
+    <!-- Datos generales -->
+    <div class="card" style="margin-bottom:20px;">
+      <h4 style="font-size:14px;font-weight:700;color:var(--cyan);margin-bottom:16px;letter-spacing:0.05em;text-transform:uppercase;">Datos generales</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Nombre del módulo</label>
+          <input class="form-input" id="ed-nombre" value="${m.nombre}"/>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Nivel Dreyfus</label>
+          <select class="form-select" id="ed-nivel">
+            ${['Nivel 1 — Novato','Nivel 2 — Principiante','Nivel 3 — Competente','Nivel 4 — Avanzado','Nivel 5 — Experto']
+              .map(n=>`<option ${m.nivel===n?'selected':''}>${n}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px;">
+        <label class="form-label">Descripción / objetivo general del módulo</label>
+        <textarea class="form-input" id="ed-descripcion" rows="3" style="resize:vertical;">${m.descripcion||''}</textarea>
+      </div>
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Temas clave (separados por coma)</label>
+        <input class="form-input" id="ed-temas" value="${(m.temas||[]).join(', ')}"/>
+      </div>
+    </div>
+
+    <!-- Journey de días -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+      <h4 style="font-size:14px;font-weight:700;color:var(--purple);letter-spacing:0.05em;text-transform:uppercase;margin:0;">
+        <i class="fas fa-route" style="margin-right:6px;"></i>Journey del módulo — ${m.duracion}
+      </h4>
+      <button class="btn btn-sm btn-outline" onclick="agregarDiaModulo(${idx})"><i class="fas fa-plus"></i> Agregar día</button>
+    </div>
+    <div id="ed-dias-container" style="display:flex;flex-direction:column;gap:12px;">
+      ${(m.contenido||[]).map((d,di) => renderDiaEditor(idx,di,d)).join('')}
+    </div>`;
 }
+
+function renderDiaEditor(modIdx, diaIdx, d) {
+  const m = mockModulosGrid[modIdx];
+  const esUltimo = diaIdx === (m.contenido||[]).length - 1;
+  const recursosHtml = (d.recursos||[]).map((r,ri) => `
+    <div id="recurso-${modIdx}-${diaIdx}-${ri}" style="display:grid;grid-template-columns:120px 1fr 80px 1fr 32px;gap:8px;align-items:center;margin-bottom:8px;">
+      <select class="form-select" style="font-size:11px;padding:6px 8px;" onchange="actualizarRecurso(${modIdx},${diaIdx},${ri},'tipo',this.value)">
+        ${['video','articulo','podcast','infografia'].map(t=>`<option value="${t}" ${r.tipo===t?'selected':''}>${t}</option>`).join('')}
+      </select>
+      <input class="form-input" style="font-size:12px;padding:6px 10px;" placeholder="Título del recurso" value="${r.titulo||''}" onchange="actualizarRecurso(${modIdx},${diaIdx},${ri},'titulo',this.value)"/>
+      <input class="form-input" style="font-size:12px;padding:6px 8px;" placeholder="5 min" value="${r.duracion||''}" onchange="actualizarRecurso(${modIdx},${diaIdx},${ri},'duracion',this.value)"/>
+      <input class="form-input" style="font-size:12px;padding:6px 10px;" placeholder="https://... o #sharepoint" value="${r.url||''}" onchange="actualizarRecurso(${modIdx},${diaIdx},${ri},'url',this.value)"/>
+      <button style="background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.2);color:var(--magenta);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:12px;" onclick="eliminarRecurso(${modIdx},${diaIdx},${ri})" title="Eliminar recurso">✕</button>
+    </div>`).join('');
+
+  return `
+    <div class="card" id="dia-card-${modIdx}-${diaIdx}" style="border-color:rgba(0,216,218,0.12);padding:0;overflow:hidden;">
+      <!-- Header del día (clickable para expand/collapse) -->
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;background:rgba(255,255,255,0.02);" onclick="toggleDiaEditor('dia-body-${modIdx}-${diaIdx}',this)">
+        <div style="min-width:32px;height:32px;border-radius:8px;background:rgba(0,216,218,0.12);border:1px solid rgba(0,216,218,0.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--cyan);">D${d.dia}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:14px;">${d.titulo||'Sin título'}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px;">${(d.recursos||[]).length} recurso${(d.recursos||[]).length!==1?'s':''} · Actividad: ${d.actividad?.titulo||'—'}</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          ${!esUltimo?`<button style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;" onclick="event.stopPropagation();moverDia(${modIdx},${diaIdx},1)"><i class="fas fa-arrow-down"></i></button>`:''}
+          ${diaIdx>0?`<button style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:11px;" onclick="event.stopPropagation();moverDia(${modIdx},${diaIdx},-1)"><i class="fas fa-arrow-up"></i></button>`:''}
+          <i class="fas fa-chevron-down" style="color:rgba(255,255,255,0.3);font-size:12px;"></i>
+        </div>
+      </div>
+
+      <!-- Cuerpo del día (expandible) -->
+      <div id="dia-body-${modIdx}-${diaIdx}" style="display:none;padding:16px 18px;border-top:1px solid rgba(255,255,255,0.05);">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-size:11px;">Título del día</label>
+            <input class="form-input" style="font-size:13px;" value="${d.titulo||''}" onchange="actualizarDia(${modIdx},${diaIdx},'titulo',this.value)"/>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-size:11px;">Pregunta detonadora</label>
+            <input class="form-input" style="font-size:13px;" value="${d.pregunta||''}" onchange="actualizarDia(${modIdx},${diaIdx},'pregunta',this.value)"/>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label" style="font-size:11px;">Objetivo de aprendizaje del día</label>
+          <textarea class="form-input" style="font-size:13px;resize:vertical;" rows="2" onchange="actualizarDia(${modIdx},${diaIdx},'objetivo',this.value)">${d.objetivo||''}</textarea>
+        </div>
+
+        <!-- Recursos -->
+        <div style="margin-bottom:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <label class="form-label" style="font-size:11px;margin:0;">Recursos</label>
+            <button class="btn btn-sm btn-outline" style="font-size:11px;padding:4px 10px;" onclick="agregarRecurso(${modIdx},${diaIdx})"><i class="fas fa-plus"></i> Agregar recurso</button>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);display:grid;grid-template-columns:120px 1fr 80px 1fr 32px;gap:8px;margin-bottom:6px;padding:0 2px;">
+            <span>Tipo</span><span>Título</span><span>Duración</span><span>URL / Link</span><span></span>
+          </div>
+          <div id="recursos-list-${modIdx}-${diaIdx}">
+            ${recursosHtml}
+          </div>
+        </div>
+
+        <!-- Actividad -->
+        <div style="background:rgba(117,114,233,0.06);border:1px solid rgba(117,114,233,0.15);border-radius:10px;padding:12px 14px;">
+          <label class="form-label" style="font-size:11px;color:var(--purple);margin-bottom:8px;">Actividad / Evaluación</label>
+          <div style="display:grid;grid-template-columns:1fr 70px 1fr;gap:8px;">
+            <input class="form-input" style="font-size:12px;padding:6px 10px;" placeholder="Título de la actividad" value="${d.actividad?.titulo||''}" onchange="actualizarActividad(${modIdx},${diaIdx},'titulo',this.value)"/>
+            <input class="form-input" style="font-size:12px;padding:6px 8px;" placeholder="Pts" type="number" value="${d.actividad?.puntos||10}" onchange="actualizarActividad(${modIdx},${diaIdx},'puntos',parseInt(this.value))"/>
+            <input class="form-input" style="font-size:12px;padding:6px 10px;" placeholder="https://... o #sharepoint" value="${d.actividad?.url||''}" onchange="actualizarActividad(${modIdx},${diaIdx},'url',this.value)"/>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleDiaEditor(bodyId, header) {
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  const icon = header.querySelector('.fa-chevron-down,.fa-chevron-up');
+  if (icon) { icon.className = open ? 'fas fa-chevron-down' : 'fas fa-chevron-up'; }
+}
+
+function actualizarDia(modIdx, diaIdx, campo, valor) {
+  const m = mockModulosGrid[modIdx];
+  if (!m.contenido[diaIdx]) return;
+  m.contenido[diaIdx][campo] = valor;
+  // Actualizar header sin colapsar
+  const header = document.querySelector(`#dia-card-${modIdx}-${diaIdx} > div:first-child div:nth-child(2)`);
+  if (header && campo === 'titulo') header.querySelector('div:first-child').textContent = valor || 'Sin título';
+}
+
+function actualizarRecurso(modIdx, diaIdx, recursoIdx, campo, valor) {
+  const m = mockModulosGrid[modIdx];
+  if (!m.contenido[diaIdx]?.recursos[recursoIdx]) return;
+  m.contenido[diaIdx].recursos[recursoIdx][campo] = valor;
+}
+
+function actualizarActividad(modIdx, diaIdx, campo, valor) {
+  const m = mockModulosGrid[modIdx];
+  if (!m.contenido[diaIdx]) return;
+  if (!m.contenido[diaIdx].actividad) m.contenido[diaIdx].actividad = {};
+  m.contenido[diaIdx].actividad[campo] = valor;
+}
+
+function agregarRecurso(modIdx, diaIdx) {
+  const m = mockModulosGrid[modIdx];
+  if (!m.contenido[diaIdx]) return;
+  if (!m.contenido[diaIdx].recursos) m.contenido[diaIdx].recursos = [];
+  const ri = m.contenido[diaIdx].recursos.length;
+  m.contenido[diaIdx].recursos.push({ tipo:'articulo', titulo:'', duracion:'', url:'' });
+  const container = document.getElementById(`recursos-list-${modIdx}-${diaIdx}`);
+  if (!container) return;
+  const div = document.createElement('div');
+  div.id = `recurso-${modIdx}-${diaIdx}-${ri}`;
+  div.style.cssText = 'display:grid;grid-template-columns:120px 1fr 80px 1fr 32px;gap:8px;align-items:center;margin-bottom:8px;';
+  div.innerHTML = `
+    <select class="form-select" style="font-size:11px;padding:6px 8px;" onchange="actualizarRecurso(${modIdx},${diaIdx},${ri},'tipo',this.value)">
+      ${['video','articulo','podcast','infografia'].map(t=>`<option value="${t}">${t}</option>`).join('')}
+    </select>
+    <input class="form-input" style="font-size:12px;padding:6px 10px;" placeholder="Título del recurso" onchange="actualizarRecurso(${modIdx},${diaIdx},${ri},'titulo',this.value)"/>
+    <input class="form-input" style="font-size:12px;padding:6px 8px;" placeholder="5 min" onchange="actualizarRecurso(${modIdx},${diaIdx},${ri},'duracion',this.value)"/>
+    <input class="form-input" style="font-size:12px;padding:6px 10px;" placeholder="https://... o #sharepoint" onchange="actualizarRecurso(${modIdx},${diaIdx},${ri},'url',this.value)"/>
+    <button style="background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.2);color:var(--magenta);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:12px;" onclick="eliminarRecurso(${modIdx},${diaIdx},${ri})" title="Eliminar">✕</button>`;
+  container.appendChild(div);
+}
+
+function eliminarRecurso(modIdx, diaIdx, recursoIdx) {
+  const m = mockModulosGrid[modIdx];
+  if (!m.contenido[diaIdx]?.recursos) return;
+  m.contenido[diaIdx].recursos.splice(recursoIdx, 1);
+  // Re-render solo el bloque de recursos
+  const container = document.getElementById(`recursos-list-${modIdx}-${diaIdx}`);
+  if (container) {
+    container.innerHTML = m.contenido[diaIdx].recursos.map((r,ri) => `
+      <div id="recurso-${modIdx}-${diaIdx}-${ri}" style="display:grid;grid-template-columns:120px 1fr 80px 1fr 32px;gap:8px;align-items:center;margin-bottom:8px;">
+        <select class="form-select" style="font-size:11px;padding:6px 8px;" onchange="actualizarRecurso(${modIdx},${diaIdx},${ri},'tipo',this.value)">
+          ${['video','articulo','podcast','infografia'].map(t=>`<option value="${t}" ${r.tipo===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+        <input class="form-input" style="font-size:12px;padding:6px 10px;" placeholder="Título" value="${r.titulo||''}" onchange="actualizarRecurso(${modIdx},${diaIdx},${ri},'titulo',this.value)"/>
+        <input class="form-input" style="font-size:12px;padding:6px 8px;" placeholder="5 min" value="${r.duracion||''}" onchange="actualizarRecurso(${modIdx},${diaIdx},${ri},'duracion',this.value)"/>
+        <input class="form-input" style="font-size:12px;padding:6px 10px;" placeholder="https://..." value="${r.url||''}" onchange="actualizarRecurso(${modIdx},${diaIdx},${ri},'url',this.value)"/>
+        <button style="background:rgba(248,0,250,0.1);border:1px solid rgba(248,0,250,0.2);color:var(--magenta);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:12px;" onclick="eliminarRecurso(${modIdx},${diaIdx},${ri})">✕</button>
+      </div>`).join('');
+  }
+}
+
+function agregarDiaModulo(modIdx) {
+  const m = mockModulosGrid[modIdx];
+  if (!m.contenido) m.contenido = [];
+  const nuevoDia = {
+    dia: m.contenido.length + 1,
+    titulo: 'Nuevo día ' + (m.contenido.length + 1),
+    pregunta: '', objetivo: '', recursos: [],
+    actividad: { titulo: '', puntos: 10, url: '' }
+  };
+  m.contenido.push(nuevoDia);
+  const container = document.getElementById('ed-dias-container');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.innerHTML = renderDiaEditor(modIdx, m.contenido.length - 1, nuevoDia);
+  container.appendChild(div.firstElementChild);
+  showToast('➕ Día agregado', 'success');
+}
+
+function moverDia(modIdx, diaIdx, direccion) {
+  const m = mockModulosGrid[modIdx];
+  const arr = m.contenido;
+  const nuevoIdx = diaIdx + direccion;
+  if (nuevoIdx < 0 || nuevoIdx >= arr.length) return;
+  [arr[diaIdx], arr[nuevoIdx]] = [arr[nuevoIdx], arr[diaIdx]];
+  // Recalcular números de día
+  arr.forEach((d, i) => { d.dia = i + 1; });
+  renderEditorModulo(modIdx);
+}
+
+function cambiarIconoModulo() {
+  const iconos = ['🌐','🔄','⚙️','🚀','🎯','📊','💡','🧠','🤝','🏆','📦','🔗','⚡','🌱','🔑'];
+  const m = mockModulosGrid[_moduloEditIdx];
+  const idx = iconos.indexOf(m.icono);
+  m.icono = iconos[(idx + 1) % iconos.length];
+  renderEditorModulo(_moduloEditIdx);
+}
+
+function guardarEditorModulo() {
+  if (_moduloEditIdx === null) return;
+  const m = mockModulosGrid[_moduloEditIdx];
+  const nombre = document.getElementById('ed-nombre')?.value?.trim();
+  const nivel  = document.getElementById('ed-nivel')?.value;
+  const desc   = document.getElementById('ed-descripcion')?.value?.trim();
+  const temas  = document.getElementById('ed-temas')?.value;
+  if (nombre) m.nombre = nombre;
+  if (nivel)  m.nivel  = nivel;
+  if (desc !== undefined) m.descripcion = desc;
+  if (temas)  m.temas  = temas.split(',').map(t => t.trim()).filter(Boolean);
+  renderModulosGrid();
+  showToast('✅ Módulo guardado correctamente', 'success');
+  navigate('screen-admin-modulos');
+}
+
+function guardarEdicionModulo() { guardarEditorModulo(); }
 
 // ── Duplicar módulo ──
 function duplicarModulo(idx) {
@@ -3697,8 +3902,12 @@ function calGlobalNext() {
 //  GESTIÓN DE CONTENIDO (CMS)
 // ══════════════════════════════════════
 
-const TIPO_ICONO = { video:'fas fa-video', podcast:'fas fa-headphones', articulo:'fas fa-file-alt', infografia:'fas fa-image', actividad:'fas fa-tasks' };
-const TIPO_COLOR = { video:'var(--cyan)', podcast:'var(--purple)', articulo:'rgba(255,255,255,0.7)', infografia:'orange', actividad:'var(--magenta)' };
+const TIPO_ICONO  = { video:'fas fa-video', podcast:'fas fa-headphones', lectura:'fas fa-book-open', articulo:'fas fa-file-alt', infografia:'fas fa-image', actividad:'fas fa-tasks', evaluacion:'fas fa-clipboard-check', simulador:'fas fa-flask' };
+const TIPO_COLOR  = { video:'var(--cyan)', podcast:'var(--purple)', lectura:'rgba(255,255,255,0.7)', articulo:'rgba(255,255,255,0.6)', infografia:'orange', actividad:'var(--magenta)', evaluacion:'#00ff88', simulador:'#f0a500' };
+const TIPO_LABEL  = { video:'Video', podcast:'Podcast', lectura:'Lectura', articulo:'Artículo', infografia:'Infografía', evaluacion:'Evaluación', simulador:'Simulador' };
+const TIPOS_TODOS = ['video','lectura','podcast','infografia','evaluacion','simulador'];
+// Alias para compatibilidad con código anterior
+const TIPO_COLOR_MAP = TIPO_COLOR;
 
 let _moduloEditando = null;
 
@@ -3746,97 +3955,546 @@ function cerrarEditorModulo() {
   renderAdminContenido();
 }
 
+// ── Genera el bloque HTML editable de un recurso en el editor ──
+function renderRecursoEditor(moduloId, diaNum, ri, r) {
+  const color  = TIPO_COLOR[r.tipo] || 'rgba(255,255,255,0.5)';
+  const icono  = TIPO_ICONO[r.tipo] || 'fas fa-file';
+  const urlBorderColor = url => url==='#pendiente'?'orange':url==='#sharepoint'?'rgba(248,0,250,0.4)':url&&!url.startsWith('#')?'rgba(0,255,136,0.4)':'rgba(255,255,255,0.1)';
+  const esEval = r.tipo === 'evaluacion';
+  const esSim  = r.tipo === 'simulador';
+
+  // Sección extra según tipo
+  let extraHtml = '';
+
+  if (esEval) {
+    const banco = r.banco || [];
+    const preguntasHtml = banco.map((p,pi) => `
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:12px;margin-bottom:8px;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:flex-start;">
+          <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);min-width:24px;padding-top:4px;">P${pi+1}</span>
+          <textarea class="form-input" style="font-size:12px;padding:6px 8px;resize:vertical;flex:1;" rows="2"
+            onchange="actualizarPreguntaBanco('${moduloId}',${diaNum},${ri},${pi},'enunciado',this.value)">${p.enunciado||''}</textarea>
+          <button style="background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.2);color:var(--magenta);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:11px;flex-shrink:0;" onclick="eliminarPreguntaBanco('${moduloId}',${diaNum},${ri},${pi})">✕</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+          ${['A','B','C','D'].map((letra,oi)=>`
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:11px;font-weight:700;color:${oi===(p.correcta||0)?'#00ff88':'rgba(255,255,255,0.3)'};min-width:16px;cursor:pointer;" onclick="actualizarPreguntaBanco('${moduloId}',${diaNum},${ri},${pi},'correcta',${oi});renderEditorModulo('${moduloId}')" title="Marcar como correcta">${letra}</span>
+              <input class="form-input" style="font-size:11px;padding:5px 8px;border-color:${oi===(p.correcta||0)?'rgba(0,255,136,0.3)':'rgba(255,255,255,0.1)'};" value="${(p.opciones||[])[oi]||''}" placeholder="Opción ${letra}"
+                onchange="actualizarOpcionBanco('${moduloId}',${diaNum},${ri},${pi},${oi},this.value)"/>
+            </div>`).join('')}
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.3);">✓ Correcta: opción <strong style="color:#00ff88;">${['A','B','C','D'][p.correcta||0]}</strong> · Haz clic en la letra para cambiarla</div>
+      </div>`).join('') || '<p style="font-size:12px;color:rgba(255,255,255,0.25);margin:8px 0;">Sin preguntas aún — agrega la primera</p>';
+
+    extraHtml = `
+      <div style="background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.15);border-radius:10px;padding:14px;margin-top:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#00ff88;letter-spacing:0.06em;">BANCO DE PREGUNTAS · OPCIÓN MÚLTIPLE</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;">Preguntas aleatorias por sesión · El participante no ve todas</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <label style="font-size:11px;color:rgba(255,255,255,0.4);">Mostrar</label>
+            <input type="number" min="1" max="${Math.max(banco.length,1)}" value="${r.numPreguntas||3}"
+              style="background:rgba(255,255,255,0.06);border:1px solid rgba(0,255,136,0.3);border-radius:6px;padding:4px 8px;font-size:13px;font-weight:700;color:#00ff88;width:50px;text-align:center;font-family:'Outfit',sans-serif;"
+              onchange="actualizarRecurso('${moduloId}',${diaNum},${ri},'numPreguntas',parseInt(this.value))"/>
+            <label style="font-size:11px;color:rgba(255,255,255,0.4);">de ${banco.length} preguntas</label>
+          </div>
+        </div>
+        <div id="banco-preguntas-${moduloId}-${diaNum}-${ri}">${preguntasHtml}</div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn btn-outline btn-sm" style="font-size:11px;border-color:rgba(0,255,136,0.3);color:#00ff88;" onclick="agregarPreguntaBanco('${moduloId}',${diaNum},${ri})">
+            <i class="fas fa-plus"></i> Agregar pregunta
+          </button>
+          <button class="btn btn-sm" id="btn-ia-${moduloId}-${diaNum}-${ri}" style="font-size:11px;background:linear-gradient(135deg,rgba(117,114,233,0.2),rgba(248,0,250,0.15));border:1px solid rgba(117,114,233,0.4);color:#b8b5ff;font-weight:700;" onclick="generarPreguntasIA('${moduloId}',${diaNum},${ri})">
+            ✨ Generar con IA
+          </button>
+        </div>
+      </div>`;
+  }
+
+  if (esSim) {
+    const sim = r.sim || {};
+    const pregsSim = (sim.preguntas||[]).map((p,pi)=>`
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:10px;margin-bottom:6px;">
+        <div style="display:flex;gap:8px;align-items:flex-start;">
+          <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.3);min-width:22px;padding-top:3px;">Q${pi+1}</span>
+          <textarea class="form-input" style="font-size:12px;padding:5px 8px;resize:vertical;flex:1;" rows="2"
+            onchange="actualizarSimPregunta('${moduloId}',${diaNum},${ri},${pi},'enunciado',this.value)">${p.enunciado||''}</textarea>
+          <button style="background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.2);color:var(--magenta);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:11px;flex-shrink:0;" onclick="eliminarSimPregunta('${moduloId}',${diaNum},${ri},${pi})">✕</button>
+        </div>
+        <div style="margin-top:6px;padding-left:30px;">
+          <label style="font-size:10px;color:rgba(255,255,255,0.3);display:block;margin-bottom:3px;">Claves para evaluación automática (separadas por coma)</label>
+          <input class="form-input" style="font-size:11px;padding:4px 8px;" value="${(p.claves||[]).join(', ')}"
+            onchange="actualizarSimPregunta('${moduloId}',${diaNum},${ri},${pi},'claves',this.value.split(',').map(c=>c.trim()).filter(Boolean))"/>
+        </div>
+      </div>`).join('') || '<p style="font-size:12px;color:rgba(255,255,255,0.25);margin:8px 0;">Sin preguntas aún</p>';
+
+    extraHtml = `
+      <div style="background:rgba(240,165,0,0.05);border:1px solid rgba(240,165,0,0.2);border-radius:10px;padding:14px;margin-top:10px;">
+        <div style="font-size:11px;font-weight:700;color:#f0a500;letter-spacing:0.06em;margin-bottom:12px;">CASO DEL SIMULADOR</div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;display:block;margin-bottom:4px;">TÍTULO DEL CASO</label>
+          <input class="form-input" style="font-size:13px;" value="${sim.titulo||''}" placeholder="Ej: ¿Eficiente o excelente?"
+            onchange="actualizarSim('${moduloId}',${diaNum},${ri},'titulo',this.value)"/>
+        </div>
+        <div class="form-group" style="margin-bottom:10px;">
+          <label style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;display:block;margin-bottom:4px;">CONTEXTO DEL CASO</label>
+          <textarea class="form-input" style="font-size:12px;resize:vertical;" rows="4"
+            onchange="actualizarSim('${moduloId}',${diaNum},${ri},'contexto',this.value)">${sim.contexto||''}</textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;display:block;margin-bottom:4px;">PREGUNTA GUÍA</label>
+          <input class="form-input" style="font-size:12px;" value="${sim.guia||''}" placeholder="Pregunta central que orienta el análisis"
+            onchange="actualizarSim('${moduloId}',${diaNum},${ri},'guia',this.value)"/>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:rgba(255,165,0,0.7);margin-bottom:8px;">PREGUNTAS DEL CASO</div>
+        <div id="sim-preguntas-${moduloId}-${diaNum}-${ri}">${pregsSim}</div>
+        <button class="btn btn-outline btn-sm" style="font-size:11px;margin-top:4px;border-color:rgba(240,165,0,0.3);color:#f0a500;" onclick="agregarSimPregunta('${moduloId}',${diaNum},${ri})">
+          <i class="fas fa-plus"></i> Agregar pregunta
+        </button>
+      </div>`;
+  }
+
+  const ocultarUrl = esEval || esSim;
+
+  return `
+    <div style="border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;margin-bottom:8px;background:rgba(255,255,255,0.02);">
+      <!-- Fila principal del recurso -->
+      <div style="display:grid;grid-template-columns:32px 160px 1fr auto 28px;gap:8px;align-items:center;">
+        <i class="${icono}" style="color:${color};font-size:16px;text-align:center;"></i>
+        <select class="form-select" style="font-size:12px;padding:5px 8px;" onchange="cambiarTipoRecurso('${moduloId}',${diaNum},${ri},this.value)">
+          ${TIPOS_TODOS.map(t=>`<option value="${t}" ${r.tipo===t?'selected':''}>${TIPO_LABEL[t]||t}</option>`).join('')}
+        </select>
+        <input class="form-input" style="font-size:12px;padding:6px 10px;" value="${r.titulo||''}" placeholder="Título del recurso"
+          onchange="actualizarRecurso('${moduloId}',${diaNum},${ri},'titulo',this.value)"/>
+        ${!ocultarUrl ? `<input class="form-input" style="font-size:12px;padding:6px 10px;width:180px;" value="${r.url||''}" placeholder="https://... o #sharepoint"
+          onchange="actualizarRecurso('${moduloId}',${diaNum},${ri},'url',this.value);this.style.borderColor='rgba(0,255,136,0.5)'" />` : `<span style="font-size:11px;color:rgba(255,255,255,0.25);padding:0 8px;">${esEval?'banco de preguntas':'caso editado abajo'}</span>`}
+        <button style="background:rgba(248,0,250,0.08);border:1px solid rgba(248,0,250,0.2);color:var(--magenta);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:11px;" onclick="eliminarRecursoLegacy('${moduloId}',${diaNum},${ri})" title="Eliminar">✕</button>
+      </div>
+      ${extraHtml}
+    </div>`;
+}
+
+// ── Cambiar tipo de recurso (re-renderiza el día) ──
+function cambiarTipoRecurso(moduloId, diaNum, ri, nuevoTipo) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  if (!m) return;
+  const d = m.contenido.find(d=>d.dia===diaNum);
+  if (!d?.recursos[ri]) return;
+  d.recursos[ri].tipo = nuevoTipo;
+  // Inicializar estructuras según tipo
+  if (nuevoTipo === 'evaluacion' && !d.recursos[ri].banco) {
+    d.recursos[ri].banco = [];
+    d.recursos[ri].numPreguntas = 3;
+  }
+  if (nuevoTipo === 'simulador' && !d.recursos[ri].sim) {
+    d.recursos[ri].sim = { titulo:'', contexto:'', guia:'', preguntas:[] };
+  }
+  // Re-renderizar el contenedor de recursos del día
+  const container = document.getElementById(`recursos-legacy-${moduloId}-${diaNum}`);
+  if (container) container.innerHTML = d.recursos.map((r,i) => renderRecursoEditor(moduloId,diaNum,i,r)).join('');
+}
+
+// ── Banco IA por día — Módulo 1 Connected Customer ──
+const BANCO_POR_DIA_CC = {
+  1: [
+    { enunciado:'Odyssey logró 97% de OTIF pero su NPS cayó 15 puntos. ¿Cuál es la conclusión más precisa?', opciones:['El OTIF calculado tiene un error de medición','El OTIF mide cumplimiento operativo, no la experiencia completa del cliente conectado','Los clientes de Odyssey tienen expectativas irracionales','El problema está aislado al área de servicio al cliente'], correcta:1 },
+    { enunciado:'¿Cuál métrica refleja mejor si una cadena está generando valor al cliente conectado?', opciones:['Costo total logístico como % de ventas','Rotación de inventario anualizada','Customer Effort Score (CES) en el proceso pedido-entrega','Tasa de llenado del almacén (fill rate)'], correcta:2 },
+    { enunciado:'Una distribuidora tiene perfecta disponibilidad de producto pero 67% de quejas por "no saber cuándo llega el pedido". ¿Cuál palanca activa primero?', opciones:['Aumentar stock de seguridad en todos los puntos','Implementar notificaciones proactivas con visibilidad en tiempo real','Reducir el lead time de producción en un 30%','Ampliar la red de distribución regional'], correcta:1 },
+    { enunciado:'¿Por qué el término "red de suministro" está desplazando al de "cadena de suministro"?', opciones:['Porque el término "red" es más moderno y atractivo para los clientes','Porque elimina intermediarios y reduce costos de distribución','Porque captura mejor la naturaleza multidireccional, colaborativa y tecnológica de la operación actual','Porque la cadena implica mayor integración vertical que la red'], correcta:2 },
+    { enunciado:'Un gerente redefine el éxito operativo como "entregar lo que el cliente espera, cuando lo espera, con el menor esfuerzo posible". ¿Qué principio está aplicando?', opciones:['Lean manufacturing aplicado a la distribución','La nueva definición de excelencia en cadena centrada en el cliente','Optimización del OTIF contractual','Reducción de costos de última milla'], correcta:1 },
+    { enunciado:'¿Cuál es la diferencia clave entre una empresa "operacionalmente eficiente" y una de "clase mundial" en cadena de suministro?', opciones:['La empresa de clase mundial tiene menores costos de inventario y transporte','La empresa de clase mundial puede anticipar y responder a las necesidades del cliente antes de que las exprese','La empresa de clase mundial opera en más mercados y con mayor volumen','Solo hay diferencia en el tamaño y recursos tecnológicos disponibles'], correcta:1 },
+    { enunciado:'Si el CES de una empresa es 5.8/7 (muy alto esfuerzo) pero su NPS es 72, ¿qué riesgo estratégico existe?', opciones:['Ninguno; el NPS alto indica satisfacción consolidada','Los clientes recomiendan la marca pero el proceso los desgasta, erosionando la lealtad a mediano plazo','El CES es irrelevante cuando el NPS supera 70','Los datos indican error en la metodología de medición'], correcta:1 },
+    { enunciado:'¿Por qué "digitalizar el caos es caos digital" es un principio crítico para la transformación de cadenas?', opciones:['Porque la digitalización siempre incrementa la complejidad operativa','Porque sin rediseño de procesos y cultura centrada en el cliente, solo se automatizan ineficiencias existentes','Porque los sistemas digitales generan más errores que los manuales','Porque la digitalización reduce la flexibilidad de respuesta'], correcta:1 }
+  ],
+  2: [
+    { enunciado:'El e-commerce de Odyssey creció de 8% a 25% del volumen en 4 años (+33%/año). Si la tendencia continúa, ¿qué implicación operativa tiene mayor urgencia?', opciones:['Contratar más personal de ventas para ese canal','Rediseñar la cadena para cumplir los estándares de velocidad, visibilidad y variabilidad que exige ese canal','Reducir el catálogo de productos disponibles en e-commerce para simplificar la operación','Incrementar el precio en e-commerce para regular la demanda'], correcta:1 },
+    { enunciado:'Refresco Ágil opera a $5.80/hl vs. $12.40/hl de Odyssey. ¿Cuál es la explicación más probable?', opciones:['Refresco Ágil tiene menos clientes, reduciendo el costo unitario naturalmente','Refresco Ágil subcontrata toda la distribución','Refresco Ágil automatizó la gestión de pedidos y visibilidad, eliminando retrabajo manual','Refresco Ágil usa envases más baratos que reducen el costo logístico'], correcta:2 },
+    { enunciado:'¿Cuál fuerza externa tiene mayor impacto en hacer obsoleto el modelo operativo de distribución B2B tradicional?', opciones:['El incremento en costos de combustible y transporte internacional','La consolidación de grandes retailers que presionan los márgenes','La proliferación del e-commerce y la "consumerización" de las expectativas B2B','La presión sindical por mejores condiciones laborales'], correcta:2 },
+    { enunciado:'Una empresa tiene presencia en tienda física, e-commerce y distribuidores, pero cada canal opera con sistemas y KPIs independientes. ¿Cómo se clasifica este modelo?', opciones:['Omnicanal avanzado con diferenciación por segmento','Modelo multicanal con silos funcionales que limitan la visibilidad y respuesta','Modelo híbrido que balancea eficiencia y experiencia del cliente','Modelo de canal único con extensiones digitales'], correcta:1 },
+    { enunciado:'¿Por qué los silos funcionales son el principal obstáculo para transformar una cadena de suministro hacia un modelo centrado en el cliente?', opciones:['Porque generan mayor especialización y eficiencia por área','Porque fragmentan la información, alinean KPIs locales y ralentizan la respuesta al cliente','Porque incrementan los costos administrativos de coordinación','Porque reducen la capacidad de innovación tecnológica'], correcta:1 },
+    { enunciado:'¿Cuál es la consecuencia directa de pasar de modelo "push" a modelo "pull" en distribución?', opciones:['Incrementa el inventario disponible en todos los puntos de distribución','Reduce la variedad de productos disponibles para el cliente','Alinea la producción y distribución con la demanda real, mejorando disponibilidad y reduciendo quiebres','Aumenta el costo operativo sin beneficio visible para el cliente'], correcta:2 },
+    { enunciado:'Si una empresa no actúa ante las cinco fuerzas externas que presionan su modelo actual, ¿cuál será el resultado más probable en 3 años?', opciones:['El mercado se estabilizará y las presiones disminuirán naturalmente','La empresa perderá participación de mercado ante competidores que sí transformaron su operación','La empresa podrá compensar con mayor inversión en marketing y fuerza de ventas','Solo afectará al canal e-commerce; el resto del negocio seguirá estable'], correcta:1 },
+    { enunciado:'¿Qué caracteriza a una organización que completó la transformación de cadena de suministro a cadena de valor?', opciones:['Tiene los costos logísticos más bajos del sector','Sus funciones comparten objetivos orientados al cliente y colaboran en tiempo real con visibilidad compartida','Ha eliminado todos los intermediarios en su distribución','Produce exclusivamente bajo pedido para eliminar inventarios'], correcta:1 }
+  ],
+  3: [
+    { enunciado:'El CES del TP3 (Notificación de despacho) es 1.9/7 en el journey de Cadena Norte. ¿Qué intervención tiene mayor impacto inmediato?', opciones:['Asignar un ejecutivo dedicado que llame cuando sale el pedido','Implementar notificación automática por WhatsApp/correo al despacho con número de guía y hora estimada','Reducir el lead time de entrega de 48h a 24h','Crear un portal donde el cliente consulta manualmente el estado del pedido'], correcta:1 },
+    { enunciado:'¿Por qué reducir el esfuerzo del cliente (CES) genera mayor retención que intentar "deleitarlo"?', opciones:['Porque el deleite siempre tiene un costo mayor que la reducción de fricción','Porque los clientes que experimentan bajo esfuerzo tienen 4x menor probabilidad de abandono y mayor probabilidad de recompra','Porque el deleite es subjetivo y no puede medirse ni gestionarse','Porque los clientes B2B valoran el precio por encima de la experiencia'], correcta:1 },
+    { enunciado:'Cadena Norte coloca 3 pedidos/semana, 23% tienen discrepancias, cada gestión de discrepancia toma 68 min y el costo-hora del cliente es $850. ¿Qué afirmación es correcta sobre el costo mensual del TP5?', opciones:['El costo mensual es irrelevante porque las discrepancias son inevitables','Las discrepancias tienen un costo cuantificable para el cliente que debe incluirse en la propuesta de valor de Odyssey','El costo recae solo en el equipo interno de Odyssey, no en el cliente','Solo importa si el cliente lo menciona en una queja formal'], correcta:1 },
+    { enunciado:'Si Odyssey solo puede intervenir un touchpoint en los próximos 30 días, ¿cuál ofrece mayor impacto combinando viabilidad operativa e impacto en el cliente?', opciones:['TP1 Colocación de pedido: rediseñar el proceso para reducir tiempo','TP3 Notificación de despacho: implementar automatización de alertas','TP5 Gestión de discrepancias: contratar personal especializado','TP7 Facturación: migrar a sistema electrónico automático'], correcta:1 },
+    { enunciado:'¿Cuál es la principal diferencia entre un "momento de verdad" y un "touchpoint" en Customer Journey Mapping?', opciones:['Son sinónimos; todo touchpoint es un momento de verdad','Un momento de verdad es el subconjunto de touchpoints donde el cliente forma una impresión que afecta su decisión de continuar o abandonar la relación','Un touchpoint es solo digital; el momento de verdad es siempre presencial','Los touchpoints son internos; los momentos de verdad son externos'], correcta:1 },
+    { enunciado:'El CES promedio del journey de Cadena Norte es 3.27/7. ¿Qué implica para la estrategia de retención de Odyssey?', opciones:['Es un nivel aceptable; no requiere intervención prioritaria','La mayoría del journey genera fricción; Odyssey está creando riesgo de abandono en cada interacción','Solo importan los touchpoints con CES menor a 2','El CES es relevante solo para canales B2C, no B2B'], correcta:1 },
+    { enunciado:'¿Cuál proceso interno de Odyssey genera el TP5 (Gestión de discrepancias) con CES 1.6/7?', opciones:['Falta de personal en servicio al cliente para atender las llamadas','Errores en la conciliación de pedido-entrega-factura por falta de integración entre sistemas de despacho y facturación','Políticas de devolución demasiado estrictas que dificultan las resoluciones','Problemas de calidad del producto que generan reclamos constantes'], correcta:1 },
+    { enunciado:'Una empresa mapea su Customer Journey B2B y descubre que el mayor tiempo de esfuerzo ocurre entre la colocación del pedido y la confirmación. ¿Qué indica esto sobre su operación?', opciones:['Que el volumen de pedidos supera la capacidad de procesamiento temporal','Que hay fricción en la interfaz del proceso de pedido que aumenta el esfuerzo del cliente y el CES','Que los clientes no saben cómo usar el portal de pedidos correctamente','Que el sistema ERP requiere actualización tecnológica'], correcta:1 }
+  ],
+  4: [
+    { enunciado:'La disrupción de tapas de aluminio (Guangdong) costó $1.46M directo. Si la probabilidad de una nueva disrupción similar es 30% anual, ¿cuál es el costo esperado del riesgo y qué implica para la decisión?', opciones:['$436k/año esperado: justifica invertir en nearshoring o dual sourcing si el costo de la estrategia es menor','$1.46M/año esperado: el riesgo es demasiado alto para cualquier estrategia de mitigación','El costo esperado es irrelevante porque los eventos de disrupción son impredecibles','Solo importa si se tiene seguro; el costo esperado no influye en la decisión operativa'], correcta:0 },
+    { enunciado:'¿Cuál es la diferencia estratégica fundamental entre nearshoring de tapas (Opción A) vs. buffer de inventario (Opción B)?', opciones:['La Opción A es siempre mejor porque el nearshoring elimina el riesgo completamente','La Opción B es preferible porque tiene costo menor y no requiere tiempo de transición','La Opción A elimina la fuente del riesgo (dependencia de proveedor único lejano); la Opción B amplía el tiempo de reacción pero no elimina la vulnerabilidad','La diferencia es solo financiera: la Opción B tiene menor ROI a largo plazo'], correcta:2 },
+    { enunciado:'Una empresa tiene 3 de 4 insumos críticos con proveedor único importado (lead time 90-110 días). ¿Cuál es el nivel de riesgo y la prioridad de acción?', opciones:['Riesgo moderado: mientras no haya señales de disrupción, no es urgente actuar','Riesgo crítico: la concentración de dependencia en proveedores únicos de largo lead time hace la cadena extremadamente frágil ante cualquier evento externo','Riesgo bajo: los proveedores establecidos tienen historial confiable que reduce la probabilidad de disrupción','Solo es crítico si los insumos representan más del 50% del costo del producto'], correcta:1 },
+    { enunciado:'¿Por qué una cadena hiperoptimizada para eficiencia puede ser más vulnerable que una con redundancia aparente?', opciones:['Porque la eficiencia siempre reduce los márgenes de ganancia a largo plazo','Porque al eliminar todo buffer o redundancia, no tiene capacidad de absorber disrupciones sin impacto inmediato en el servicio','Porque los sistemas eficientes requieren mayor inversión tecnológica para mantenerse','Porque la eficiencia reduce la flexibilidad de los proveedores para adaptarse a cambios'], correcta:1 },
+    { enunciado:'El nearshoring de un insumo crítico tarda 6 meses en activarse. Durante ese período, ¿cuál debe ser la estrategia complementaria?', opciones:['Suspender la producción de los SKUs que usan ese insumo hasta que el nearshoring esté activo','Mantener un buffer de inventario del insumo específico que cubra el tiempo de transición y posibles retrasos','Renegociar los contratos con clientes para eliminar compromisos de disponibilidad durante el período','Importar el insumo de emergencia a mayor costo por los 6 meses, eliminando la opción de nearshoring'], correcta:1 },
+    { enunciado:'¿Cuál es el criterio correcto para priorizar qué insumo crítico proteger primero en una estrategia de resiliencia?', opciones:['El que tiene mayor costo unitario','El que tiene mayor tiempo de reacción (lead time) combinado con mayor impacto en producción si falla','El que tiene menos proveedores disponibles en el mercado global','El que fue el origen de la última disrupción documentada'], correcta:1 },
+    { enunciado:'Un CFO pregunta: "¿Por qué invertir $340k en nearshoring cuando no hemos tenido disrupción en 5 años?" ¿Cuál es el argumento más sólido?', opciones:['Porque la regulación del sector lo exigirá en los próximos 2 años','Porque el costo esperado anual del riesgo ($436k) supera el costo de la inversión, y el evento anterior ya demostró la vulnerabilidad real','Porque todos los competidores están haciendo nearshoring y debemos seguir la tendencia','Porque reduce el costo de transporte a largo plazo, generando ROI positivo en 3 años'], correcta:1 }
+  ],
+  5: [
+    { enunciado:'El e-commerce de Odyssey tiene 11.4% de tasa de quiebre vs. 2.1% de Cadena Norte. ¿Cuál es la causa raíz más probable?', opciones:['El canal e-commerce tiene peor calidad de servicio de cara al cliente','El inventario no está integrado: cuando el pedido digital llega, el stock ya está comprometido para otro canal','El equipo de e-commerce no coordina con almacén para reservar producto','Los pedidos e-commerce son más urgentes y no pueden planificarse'], correcta:1 },
+    { enunciado:'¿Cuál es la diferencia fundamental entre modelo multicanal y omnicanal?', opciones:['Multicanal = varios canales con el mismo precio; omnicanal = precios diferenciados por canal','Multicanal = canales con operaciones independientes; omnicanal = inventario, datos y experiencia integrados entre todos los canales','Omnicanal = versión más sofisticada con más SKUs en todos los canales simultáneamente','La diferencia es solo tecnológica: multicanal usa sistemas distintos y omnicanal usa un solo ERP'], correcta:1 },
+    { enunciado:'Odyssey pierde $24,190/semana por quiebres en e-commerce ($1.26M/año). La integración de inventario cuesta $420k. ¿Cuál es la decisión financieramente correcta?', opciones:['No invertir: $420k es demasiado para una inversión con retorno incierto','Invertir: el payback es de 5.7 meses y el costo de no actuar ($1.26M/año) supera ampliamente la inversión','Esperar: hacer el piloto en un canal antes de comprometer toda la inversión','Negociar con los clientes de e-commerce para reducir sus expectativas de disponibilidad'], correcta:1 },
+    { enunciado:'En un modelo de inventario omnicanal, ¿cómo se evita que dos canales reclamen el mismo stock simultáneamente?', opciones:['Asignando stock físicamente separado para cada canal en el almacén','Implementando un sistema OMS/ATP que reserva el inventario en tiempo real al momento del pedido, antes de confirmar disponibilidad','Limitando el volumen máximo de pedidos por canal en períodos de alta demanda','Requiriendo aprobación manual de un supervisor antes de confirmar cada pedido digital'], correcta:1 },
+    { enunciado:'Si el canal e-commerce crece de 25% a 40% del volumen en 2 años, ¿qué modelo de inventario es más sostenible?', opciones:['Modelo de buffer segmentado: mayor inventario en almacén asignado exclusivamente a e-commerce','Modelo de inventario unificado con visibilidad en tiempo real y asignación dinámica por canal según demanda','Modelo híbrido: separar solo los 20 SKUs más vendidos en e-commerce','Reducir el portafolio de e-commerce para que sea manejable con el inventario disponible'], correcta:1 },
+    { enunciado:'¿Cuál es el impacto en el cliente de los canales desintegrados, más allá del quiebre de stock?', opciones:['Solo afecta la percepción de precio; el cliente busca siempre la opción más barata','Genera experiencias inconsistentes: diferente disponibilidad, información y servicio según el canal usado, destruyendo la confianza en la marca','El impacto es mínimo si el cliente puede cambiar de canal sin costo','Solo afecta a clientes digitales que compararon precios entre canales'], correcta:1 },
+    { enunciado:'Un cliente B2B coloca un pedido por el portal, recibe confirmación de disponibilidad, pero al día siguiente le informan que el stock se agotó. ¿Qué proceso falló?', opciones:['El sistema de logística de última milla no pudo cumplir la entrega prometida','El sistema no tenía ATP (Available to Promise) real; confirmó disponibilidad sin reservar el inventario en el momento del pedido','El cliente coloca pedidos con demasiada anticipación sin confirmar sus necesidades reales','El equipo de almacén no procesó el pedido dentro del tiempo establecido'], correcta:1 }
+  ],
+  6: [
+    { enunciado:'54 SKUs Tier C (30% del portafolio) generan solo 2% de ventas y margen neto de -$688,800/año. ¿Cuál es la acción estratégicamente correcta?', opciones:['Mantenerlos: representan diversificación que protege ante cambios del mercado','Iniciar racionalización: el costo de gestión desproporcionado ($67,200/SKU Tier C vs $18,400 Tier A) destruye valor sin retorno','Reducir precios para aumentar su rotación (0.4x) y mejorar la contribución','Transferirlos todos a distribuidores externos para eliminar el costo sin perder la presencia en el mercado'], correcta:1 },
+    { enunciado:'¿Cuál afirmación sobre racionalización de portafolio es correcta?', opciones:['Eliminar SKUs siempre reduce ingresos; solo se justifica si los costos triplican los ingresos','La decisión debe basarse únicamente en margen de contribución; el fill rate de otros SKUs no es criterio válido','La racionalización puede aumentar el ingreso neto aunque reduzca las ventas brutas, liberando capacidad para SKUs de mayor margen','Los SKUs de baja rotación siempre deben convertirse en estacionales antes de eliminarlos'], correcta:2 },
+    { enunciado:'El fill rate de SKUs Tier C es 71% vs. 94% del resto. ¿Cuál es el impacto operativo de mantener estos SKUs de baja rotación?', opciones:['El impacto es mínimo porque representan solo 2% de ventas','Generan quiebres frecuentes que dañan la percepción de disponibilidad y consumen capacidad de gestión que podría dedicarse a SKUs estratégicos','Solo afectan al equipo de inventario; no tiene impacto en la experiencia del cliente','El fill rate bajo es esperado para SKUs especializados; no es un indicador de ineficiencia'], correcta:1 },
+    { enunciado:'Un SKU Tier C tiene baja rotación pero es el único que diferencia la oferta de Odyssey ante un cliente clave que representa el 8% de las ventas. ¿Cuál es la decisión correcta?', opciones:['Eliminarlo: las reglas del Pareto deben aplicarse sin excepciones','Mantenerlo como SKU "nicho estratégico": el costo de gestión se justifica por el valor de retención del cliente clave','Transferirlo a un distribuidor tercero que atienda exclusivamente a ese cliente','Negociar con el cliente clave para sustituirlo por un SKU de mayor rotación'], correcta:1 },
+    { enunciado:'Si Odyssey elimina los 54 SKUs Tier C, ¿cuál es el impacto más relevante en la cadena de suministro operativa?', opciones:['Reduce las ventas brutas en 2% sin ningún beneficio compensatorio','Simplifica la gestión de compras, almacenamiento y distribución, liberando hasta $688,800/año y mejorando fill rate general','Incrementa el riesgo de concentración al depender de menos SKUs','Genera rechazo de los clientes que compraban esos SKUs aunque fuera ocasionalmente'], correcta:1 },
+    { enunciado:'¿Cuál es el criterio de mayor peso para decidir entre "eliminar" vs. "reconvertir" un SKU de baja rotación?', opciones:['El volumen histórico de ventas en unidades','La existencia de un cliente estratégico o segmento específico que lo requiera, aunque sea de bajo volumen','El tiempo que el SKU lleva en el catálogo sin actualizaciones de diseño','La opinión del equipo comercial sobre su potencial futuro'], correcta:1 },
+    { enunciado:'¿Por qué la complejidad de un portafolio inflado impacta directamente la experiencia del cliente conectado?', opciones:['Porque el cliente siempre prefiere más opciones disponibles, independientemente de la calidad de gestión','Porque el exceso de SKUs se traslada en ineficiencias: quiebres frecuentes, errores de pedido y tiempos inconsistentes','Solo afecta internamente; el cliente no percibe la complejidad de la gestión de portafolio','Porque dificulta la comunicación de la propuesta de valor al equipo de ventas'], correcta:1 }
+  ],
+  7: [
+    { enunciado:'El proceso de pedido de distribuidores de Odyssey tiene 6 pasos, 47 minutos de tiempo activo y 42% de tasa de error acumulada. ¿Cuánto le cuesta realmente a cada distribuidor hacer un pedido?', opciones:['Solo el tiempo del ejecutivo de ventas que lo procesa; el distribuidor no tiene costo asociado','El tiempo activo del distribuidor (47 min) más el retrabajo por errores del 42%; ambos son costos reales para el cliente','Solo importa el costo de retrabajo; el tiempo de colocación del pedido es parte normal del proceso de ventas','El costo es irrelevante si la relación comercial es sólida y de largo plazo'], correcta:1 },
+    { enunciado:'¿Cuál enfoque de rediseño es correcto para el proceso de pedido de Odyssey?', opciones:['Contratar más ejecutivos para acelerar cada paso sin cambiar la estructura','Mejorar cada paso incrementalmente hasta reducir el tiempo total a menos de 30 minutos','Digitalizar los pasos existentes tal como están para que el distribuidor los haga desde su celular','Eliminar los pasos que generan espera y la reentrada de información, rediseñando el flujo desde cero'], correcta:3 },
+    { enunciado:'El competidor de Odyssey ofrece un portal donde el mismo proceso toma 8 minutos. ¿Qué riesgo inmediato representa esto para Odyssey?', opciones:['Ninguno: los distribuidores priorizan el precio sobre el proceso','Los distribuidores están migrando al competidor y dos ya no renovaron contrato, citando el proceso como razón; la fricción se convierte en pérdida de negocio','El competidor sacrifica control de errores por velocidad; Odyssey tiene mejor calidad de pedido','Es temporal: los distribuidores se adaptarán al proceso actual si se les capacita correctamente'], correcta:1 },
+    { enunciado:'¿Cuál es la diferencia entre "automatizar un proceso" y "rediseñar un proceso antes de automatizarlo"?', opciones:['Son equivalentes si se usa tecnología de última generación','Automatizar sin rediseñar genera "caos digital": los mismos errores y fricciones, pero a mayor velocidad','Rediseñar es innecesario si el volumen de pedidos es bajo','La automatización siempre implica rediseño implícito al implementar el sistema'], correcta:1 },
+    { enunciado:'Un portal de autoservicio B2B elimina pasos de consulta de disponibilidad y precio. ¿Qué capacidad técnica es indispensable para que esto funcione?', opciones:['Un equipo de soporte técnico disponible 24/7 para resolver dudas de los distribuidores','Integración en tiempo real entre el portal, el ERP de inventario y el sistema de precios para mostrar disponibilidad y costo actualizados al momento del pedido','Un catálogo digital actualizado mensualmente con los precios vigentes','Un sistema de gestión de relaciones con clientes (CRM) para registrar cada pedido'], correcta:1 },
+    { enunciado:'El NPS de distribuidores de Odyssey es 44 puntos (el más bajo de los tres canales). ¿Cuál es la intervención con mayor potencial de mejora?', opciones:['Aumentar los descuentos y condiciones de crédito para mejorar la percepción de valor','Reducir la fricción del proceso de pedido: cada punto de esfuerzo adicional reduce la probabilidad de recomendación y de renovación de contrato','Asignar un ejecutivo dedicado exclusivamente a cada distribuidor','Incrementar la frecuencia de visitas comerciales para fortalecer la relación personal'], correcta:1 },
+    { enunciado:'¿Por qué $1,082,120/año en "costo de fricción" es subestimado como métrica para justificar el rediseño del proceso de pedido?', opciones:['Porque no incluye el costo de los distribuidores que decidieron no renovar contrato ni el valor futuro perdido','Porque los costos de fricción son difíciles de medir con precisión y siempre están sobreestimados','Porque solo aplica a distribuidores activos; no captura el costo de nuevos distribuidores potenciales que no se incorporaron','Porque la mayoría de los costos de fricción son recuperables si se mejora la capacitación del equipo'], correcta:0 }
+  ],
+  8: [
+    { enunciado:'Odyssey mejoró notificaciones proactivas de 23% a 81%, pero las mismas 3 quejas (quiebres, facturas, visibilidad) persisten. ¿Cuál es la causa raíz de esta contradicción?', opciones:['Las mejoras de notificación no fueron suficientes; hay que llegar al 100% de notificaciones','Las intervenciones atacaron síntomas (velocidad, comunicación) sin resolver causas raíz (integración de inventario, conciliación de factura)','Los clientes no han tenido suficiente tiempo para percibir las mejoras; solo hay que esperar','El equipo de servicio al cliente no está aplicando correctamente los nuevos procesos'], correcta:1 },
+    { enunciado:'El FCR de faltantes es 48% (el más bajo) vs 97% de visibilidad. ¿Qué implica esta diferencia para priorizar intervenciones?', opciones:['Priorizar visibilidad: tiene el FCR más alto, lo que la convierte en el área de mayor inversión','Priorizar faltantes: FCR bajo indica que hay que resolver el problema varias veces, multiplicando costos y frustrando al cliente en cada interacción','Priorizar factura: tiene tasa de ocurrencia del 26.6%, lo que la convierte en el área de mayor impacto en volumen','Las tres tienen la misma prioridad; deben atacarse simultáneamente'], correcta:1 },
+    { enunciado:'¿Cuál es la diferencia entre un indicador "leading" y un "lagging" en el contexto de métricas de servicio al cliente?', opciones:['Leading = indicadores financieros; lagging = indicadores operativos','Leading anticipa problemas antes de que afecten al cliente (ej. fill rate cayendo); lagging mide el resultado después (ej. NPS trimestral)','Son sinónimos en contextos de cadena de suministro B2B','Leading = indicadores de proceso; lagging = indicadores de satisfacción del cliente'], correcta:1 },
+    { enunciado:'Un tablero de servicio al cliente con NPS, CES y FCR da una visión incompleta. ¿Qué métrica operativa conecta estos indicadores con la operación de cadena?', opciones:['El costo de transporte por hl como indicador de eficiencia','El OTIF: conecta el cumplimiento de la promesa de entrega (lo que la cadena controla) con la percepción del cliente (NPS, CES)','La rotación de inventario: refleja la eficiencia de la cadena más directamente que el OTIF','El número de SKUs activos: indica la complejidad que afecta los niveles de servicio'], correcta:1 },
+    { enunciado:'¿Por qué el servicio al cliente en Odyssey es "reactivo" aunque el equipo resuelve el 71% de los problemas de factura en primera llamada?', opciones:['Porque la tasa de resolución del 71% está por debajo del estándar de clase mundial del 90%','Porque los mismos problemas se repiten constantemente: el equipo gestiona síntomas sin que la operación elimine la causa raíz que genera los errores de factura','Porque el tiempo de resolución es demasiado lento aunque el porcentaje de resolución sea aceptable','Porque el equipo no tiene autoridad para tomar decisiones sobre devoluciones y créditos'], correcta:1 },
+    { enunciado:'¿Cuál umbral de alerta para el NPS semanal tendría mayor valor predictivo para evitar abandono de clientes?', opciones:['Alerta cuando el NPS cae por debajo de 50 en la medición trimestral','Alerta cuando hay 3 quejas del mismo tipo en una semana de un mismo cliente: indica un patrón de fricción antes de que el NPS lo refleje','Alerta solo cuando un cliente plantea explícitamente la intención de cancelar su contrato','Alerta cuando el NPS cae 5 puntos vs. el mes anterior en la medición general'], correcta:1 },
+    { enunciado:'¿Por qué integrar métricas de servicio al cliente en el tablero de gestión de la cadena es un cambio estratégico, no solo operativo?', opciones:['Porque cumple con certificaciones de calidad que exigen reportar estas métricas','Porque la voz del cliente señala dónde la cadena falla en generar valor, informando decisiones de inversión, proceso y prioridad operativa','Es principalmente operativo: ayuda al equipo de servicio a gestionar mejor las quejas','Porque permite justificar el presupuesto del área de servicio al cliente ante la dirección'], correcta:1 }
+  ],
+  9: [
+    { enunciado:'Con modelo reactivo: 91 fallas/año × 3 días promedio sin equipo × $360/día de impacto en ventas = $98,280/año en ventas perdidas por inactividad. ¿Qué conclusión se extrae sobre el modelo reactivo?', opciones:['$98,280 es un costo menor comparado con el costo de un sistema IoT; el modelo reactivo es más eficiente','El costo real del modelo reactivo incluye costos operativos directos ($379k) más pérdidas de ventas ($98k), haciendo la comparación con el modelo predictivo diferente de lo aparente','Las ventas perdidas son una externalidad que no debe incluirse en el análisis de costo del modelo de mantenimiento','Solo importa el costo operativo directo; el impacto en ventas depende de factores de mercado fuera del control operativo'], correcta:1 },
+    { enunciado:'¿Por qué analizar el sistema IoT predictivo como "inversión" en lugar de como "costo operativo" cambia la decisión?', opciones:['Porque permite diferir el gasto en múltiples ejercicios fiscales, reduciendo el impacto inmediato','Porque protege $28.8M en activos y la relación con Cadena Norte (40% del volumen); el costo de perder esa relación supera el incremento operativo','Solo cambia la presentación contable; la evaluación operativa debería ser la misma','Porque las inversiones tienen depreciación fiscal, mientras los costos operativos no'], correcta:1 },
+    { enunciado:'La FVR (First Visit Resolution) mejora de 62% a 94% con sistema IoT. ¿Cuál mecanismo operativo explica directamente esta mejora?', opciones:['El técnico tiene más experiencia después de manejar más fallas con el sistema antiguo','El diagnóstico remoto previo identifica la falla exacta antes de la visita; el técnico llega con la refacción correcta y el procedimiento preciso','El sistema IoT aumenta la velocidad de despacho, reduciendo el tiempo de respuesta','Los clientes son más tolerantes porque saben que la empresa usa tecnología moderna'], correcta:1 },
+    { enunciado:'¿Cuál es el argumento de experiencia del cliente (no financiero) para implementar mantenimiento predictivo en los 240 equipos de frío de Cadena Norte?', opciones:['Reduce el número de visitas del técnico, lo que molesta menos al personal de tienda','Un equipo que nunca falla elimina la interrupción en el punto de venta, protegiendo la disponibilidad del producto y la confianza que Cadena Norte deposita en Odyssey como socio de negocio','El técnico puede atender más puntos de venta en el mismo día, mejorando la eficiencia del servicio','Reduce la responsabilidad legal de Odyssey ante fallas que causen pérdida de producto refrigerado'], correcta:1 },
+    { enunciado:'¿Por qué el servicio de campo conectado (predictivo+IoT) es diferenciador estratégico en contratos B2B de largo plazo?', opciones:['Porque permite reducir el precio del contrato al ser más eficiente','Porque genera datos continuos del equipo del cliente que informan mejoras de producto y crean barreras de salida basadas en conocimiento y confianza','Porque elimina la necesidad de renovar contratos anualmente','Porque reduce el número de técnicos requeridos, liberando presupuesto para otras áreas'], correcta:1 },
+    { enunciado:'Comparando modelo reactivo (38% fallas/año) vs. predictivo (8% fallas/año), ¿cuál es el impacto más significativo para Cadena Norte más allá del costo?', opciones:['La reducción en el número de llamadas de servicio que el equipo de Odyssey debe gestionar','La disponibilidad del producto en el punto de venta: fallas menos frecuentes = menos interrupciones = mayor venta en el canal = mayor valor generado para Cadena Norte','La reducción en el tiempo de respuesta del técnico ante una falla eventual','La posibilidad de que Cadena Norte reduzca su inventario de seguridad al confiar en la disponibilidad del equipo'], correcta:1 },
+    { enunciado:'¿Cómo integra el servicio de campo conectado los conceptos del módulo (cliente conectado, omnicanalidad, fricción, métricas)?', opciones:['Es el último eslabón de la cadena de distribución física; no tiene conexión directa con los conceptos de experiencia del cliente','Cierra el ciclo de valor: conecta la cadena con la post-venta, generando visibilidad y datos que alimentan el diseño de la oferta y permiten medir el impacto de cada intervención en la experiencia real del cliente','Solo aplica a empresas manufactureras con activos físicos en los puntos de venta','Es un módulo independiente que aborda específicamente el área de mantenimiento industrial'], correcta:1 }
+  ],
+  10: [
+    { enunciado:'En 12 meses: NPS 51→72, costo $12.40→$7.20/hl, quiebres e-com 11.4%→3.1%, portal distribuidores 100% activo. ¿Cuál intervención tuvo el mayor ROI combinado (satisfacción + costo)?', opciones:['Implementación de notificaciones proactivas: bajo costo, impacto inmediato en NPS','Portal de distribuidores: eliminó $1.08M/año en fricción, recuperó contratos perdidos, mejoró NPS del canal más crítico','Integración de inventario omnicanal: redujo quiebres e-commerce de 11.4% a 3.1%','Racionalización de SKUs: liberó $688k/año en costos de gestión'], correcta:1 },
+    { enunciado:'El NPS llegó a 72 pero la meta es 80. ¿Qué dimensión del journey tiene mayor potencial de mejora dado el estado actual?', opciones:['Velocidad de entrega: reducir de 48h a 24h en todos los canales sin excepción','Resolución de discrepancias y facturación: generan el 60% de las quejas residuales y tienen la causa raíz aún sin resolver','Ampliar el portafolio disponible en e-commerce para aumentar la propuesta de valor','Reducir precios para mejorar la percepción de valor en segmentos sensibles al precio'], correcta:1 },
+    { enunciado:'¿Cuál es el principio más importante del módulo para diseñar una cadena de suministro desde cero?', opciones:['Optimizar el costo operativo total como punto de partida del diseño','Diseñar "demand-back": partir de las expectativas del cliente (CES, momentos de verdad, promesa) y configurar la operación para cumplirlas, no al revés','Implementar la tecnología más avanzada disponible como habilitador de todas las demás capacidades','Eliminar todos los intermediarios posibles para maximizar el control y el margen'], correcta:1 },
+    { enunciado:'¿Por qué la transformación de Odyssey no terminó al llegar el NPS a 72?', opciones:['Porque 72 es un NPS bajo para el sector; el estándar mínimo es 85','Porque las causas raíz de quiebres y discrepancias de factura siguen abiertas; las intervenciones realizadas mejoraron síntomas pero la siguiente fase debe atacar los procesos estructurales','Porque el equipo directivo no está comprometido con la transformación a largo plazo','Porque el mercado sigue cambiando y las mejoras se deprecian sin mantenimiento constante'], correcta:1 },
+    { enunciado:'Con $400k disponibles para la siguiente fase, ¿cómo se decide entre mantenimiento predictivo IoT vs. conciliación automática de facturas?', opciones:['Predictivo IoT: mayor impacto tecnológico y genera diferenciación visible para el cliente','Conciliación de facturas: elimina la causa raíz del 26.6% de quejas residuales con impacto directo en el NPS y costo de servicio reactivo que aún es de $1.26M/año','Dividir el presupuesto en partes iguales para avanzar en ambos frentes simultáneamente','Esperar a que se presenten más datos de uso del portal antes de decidir la siguiente inversión'], correcta:1 },
+    { enunciado:'¿Cuál es la conexión directa entre el módulo 1 (cliente conectado) y la estrategia de negocio de una distribuidora B2B?', opciones:['El módulo enseña buenas prácticas operativas; la conexión con la estrategia de negocio la define el equipo directivo','La cadena centrada en el cliente no es un proyecto operativo sino una ventaja competitiva sostenible: quien reduce fricción, aumenta visibilidad y diseña desde el cliente retiene más, crece más y opera con menor costo que quien solo optimiza internamente','El módulo aplica principalmente a empresas de e-commerce; las distribuidoras B2B deben adaptar el contenido','El cliente conectado es una tendencia; las empresas maduras con relaciones establecidas no requieren esta transformación'], correcta:1 },
+    { enunciado:'Al final del módulo, un participante dice: "Entendí que el NPS y el OTIF son lo mismo visto desde ángulos distintos." ¿Cuál es la respuesta correcta?', opciones:['Es correcto: ambas métricas miden el cumplimiento de la promesa de entrega desde perspectivas complementarias','Es incorrecto: el OTIF mide cumplimiento operativo interno; el NPS mide la disposición del cliente a recomendar basada en toda la experiencia, que incluye pero trasciende el OTIF','Es parcialmente correcto: el NPS incorpora el OTIF más factores de precio y calidad del producto','Solo difieren en la escala de medición; en esencia capturan la misma dimensión del servicio'], correcta:1 }
+  ]
+};
+
+// ── Generar preguntas con IA para el banco de evaluación ──
+function generarPreguntasIA(moduloId, diaNum, ri) {
+  const m = mockModulosGrid.find(x => x.id === moduloId);
+  const d = m?.contenido.find(d => d.dia === diaNum);
+  if (!d?.recursos[ri]) return;
+
+  const btn = document.getElementById(`btn-ia-${moduloId}-${diaNum}-${ri}`);
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando…';
+  }
+
+  setTimeout(() => {
+    // Detectar si es Módulo 1 (Connected Customer) y mapear banco por día
+    const esCCModulo = moduloId === 'connected-customer' || moduloId === 'cc' || moduloId === 'm1';
+    const banco = esCCModulo ? (BANCO_POR_DIA_CC[diaNum] || []) : [];
+
+    if (banco.length === 0) {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '✨ Generar con IA';
+      }
+      alert('No hay banco de preguntas IA disponible para este día todavía. Puedes agregar las preguntas manualmente.');
+      return;
+    }
+
+    // Poblar el banco con las preguntas generadas
+    d.recursos[ri].banco = banco.map(p => ({
+      enunciado: p.enunciado,
+      opciones: p.opciones,
+      correcta: p.correcta
+    }));
+    d.recursos[ri].numPreguntas = Math.min(5, banco.length);
+
+    const container = document.getElementById(`recursos-legacy-${moduloId}-${diaNum}`);
+    if (container) container.innerHTML = d.recursos.map((r, i) => renderRecursoEditor(moduloId, diaNum, i, r)).join('');
+  }, 1500);
+}
+
+// ── Banco de preguntas (evaluación) ──
+function agregarPreguntaBanco(moduloId, diaNum, ri) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  const d = m?.contenido.find(d=>d.dia===diaNum);
+  if (!d?.recursos[ri]) return;
+  if (!d.recursos[ri].banco) d.recursos[ri].banco = [];
+  d.recursos[ri].banco.push({ enunciado:'', opciones:['','','',''], correcta:0 });
+  const container = document.getElementById(`recursos-legacy-${moduloId}-${diaNum}`);
+  if (container) container.innerHTML = d.recursos.map((r,i)=>renderRecursoEditor(moduloId,diaNum,i,r)).join('');
+}
+
+function eliminarPreguntaBanco(moduloId, diaNum, ri, pi) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  const d = m?.contenido.find(d=>d.dia===diaNum);
+  if (!d?.recursos[ri]?.banco) return;
+  d.recursos[ri].banco.splice(pi,1);
+  const container = document.getElementById(`recursos-legacy-${moduloId}-${diaNum}`);
+  if (container) container.innerHTML = d.recursos.map((r,i)=>renderRecursoEditor(moduloId,diaNum,i,r)).join('');
+}
+
+function actualizarPreguntaBanco(moduloId, diaNum, ri, pi, campo, valor) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  const d = m?.contenido.find(d=>d.dia===diaNum);
+  if (!d?.recursos[ri]?.banco[pi]) return;
+  d.recursos[ri].banco[pi][campo] = valor;
+  if (campo === 'correcta') {
+    // Re-render para actualizar colores
+    const container = document.getElementById(`recursos-legacy-${moduloId}-${diaNum}`);
+    if (container) container.innerHTML = d.recursos.map((r,i)=>renderRecursoEditor(moduloId,diaNum,i,r)).join('');
+  }
+}
+
+function actualizarOpcionBanco(moduloId, diaNum, ri, pi, oi, valor) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  const d = m?.contenido.find(d=>d.dia===diaNum);
+  if (!d?.recursos[ri]?.banco[pi]) return;
+  if (!d.recursos[ri].banco[pi].opciones) d.recursos[ri].banco[pi].opciones = ['','','',''];
+  d.recursos[ri].banco[pi].opciones[oi] = valor;
+}
+
+// ── Simulador ──
+function actualizarSim(moduloId, diaNum, ri, campo, valor) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  const d = m?.contenido.find(d=>d.dia===diaNum);
+  if (!d?.recursos[ri]) return;
+  if (!d.recursos[ri].sim) d.recursos[ri].sim = {};
+  d.recursos[ri].sim[campo] = valor;
+}
+
+function agregarSimPregunta(moduloId, diaNum, ri) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  const d = m?.contenido.find(d=>d.dia===diaNum);
+  if (!d?.recursos[ri]) return;
+  if (!d.recursos[ri].sim) d.recursos[ri].sim = { preguntas:[] };
+  if (!d.recursos[ri].sim.preguntas) d.recursos[ri].sim.preguntas = [];
+  d.recursos[ri].sim.preguntas.push({ enunciado:'', claves:[] });
+  const container = document.getElementById(`recursos-legacy-${moduloId}-${diaNum}`);
+  if (container) container.innerHTML = d.recursos.map((r,i)=>renderRecursoEditor(moduloId,diaNum,i,r)).join('');
+}
+
+function eliminarSimPregunta(moduloId, diaNum, ri, pi) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  const d = m?.contenido.find(d=>d.dia===diaNum);
+  if (!d?.recursos[ri]?.sim?.preguntas) return;
+  d.recursos[ri].sim.preguntas.splice(pi,1);
+  const container = document.getElementById(`recursos-legacy-${moduloId}-${diaNum}`);
+  if (container) container.innerHTML = d.recursos.map((r,i)=>renderRecursoEditor(moduloId,diaNum,i,r)).join('');
+}
+
+function actualizarSimPregunta(moduloId, diaNum, ri, pi, campo, valor) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  const d = m?.contenido.find(d=>d.dia===diaNum);
+  if (!d?.recursos[ri]?.sim?.preguntas[pi]) return;
+  d.recursos[ri].sim.preguntas[pi][campo] = valor;
+}
+
 function renderEditorModulo(id) {
   const el = document.getElementById('admin-contenido-vista');
   const m  = mockModulosGrid.find(x => x.id === id);
   if (!el || !m) return;
 
+  const urlBorderColor = url => url==='#pendiente'?'orange':url==='#sharepoint'?'rgba(248,0,250,0.4)':url&&url!=='#'&&!url.startsWith('#')?'rgba(0,255,136,0.4)':'rgba(255,255,255,0.1)';
+
   const diasHtml = (m.contenido || []).map(dia => {
-    const pendientes = (dia.recursos || []).filter(r => r.url === '#pendiente' || r.url === '#sharepoint').length + (dia.actividad && (dia.actividad.url === '#pendiente' || dia.actividad.url === '#sharepoint') ? 1 : 0);
-    const recursosHtml = (dia.recursos || []).map((r, ri) => `
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:6px;flex-wrap:wrap;">
-        <i class="${TIPO_ICONO[r.tipo] || 'fas fa-file'}" style="color:${TIPO_COLOR[r.tipo] || 'white'};width:16px;"></i>
-        <span style="flex:1;font-size:13px;min-width:150px;">${r.titulo}</span>
-        <span style="font-size:11px;color:rgba(255,255,255,0.35);">${r.duracion || ''}</span>
-        <input value="${r.url}" placeholder="URL o link de SharePoint"
-          style="background:rgba(255,255,255,0.06);border:1px solid ${r.url==='#pendiente'?'orange':r.url==='#sharepoint'?'rgba(248,0,250,0.4)':'rgba(255,255,255,0.1)'};border-radius:6px;padding:5px 10px;font-size:12px;color:white;font-family:'Outfit',sans-serif;width:220px;"
-          onchange="actualizarRecurso('${id}',${dia.dia},${ri},'url',this.value);this.style.borderColor='rgba(0,255,136,0.5)'"/>
-      </div>`).join('');
+    const pendientes = (dia.recursos||[]).filter(r=>r.url==='#pendiente').length
+      + (dia.actividad?.url==='#pendiente'?1:0);
+
+    const recursosHtml = (dia.recursos||[]).map((r,ri) => renderRecursoEditor(id, dia.dia, ri, r)).join('');
 
     const actHtml = dia.actividad ? `
-      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(248,0,250,0.05);border:1px solid rgba(248,0,250,0.2);border-radius:8px;margin-top:6px;flex-wrap:wrap;">
-        <i class="fas fa-tasks" style="color:var(--magenta);width:16px;"></i>
-        <span style="flex:1;font-size:13px;min-width:150px;color:var(--magenta);">Actividad: ${dia.actividad.titulo}</span>
-        <span style="font-size:11px;color:rgba(255,255,255,0.35);">${dia.actividad.puntos} pts</span>
-        <input value="${dia.actividad.url}" placeholder="URL de la actividad"
-          style="background:rgba(255,255,255,0.06);border:1px solid ${dia.actividad.url==='#pendiente'?'orange':dia.actividad.url==='#sharepoint'?'rgba(248,0,250,0.4)':'rgba(255,255,255,0.1)'};border-radius:6px;padding:5px 10px;font-size:12px;color:white;font-family:'Outfit',sans-serif;width:220px;"
-          onchange="actualizarActividad('${id}',${dia.dia},'url',this.value);this.style.borderColor='rgba(0,255,136,0.5)'"/>
+      <div style="background:rgba(248,0,250,0.04);border:1px solid rgba(248,0,250,0.15);border-radius:8px;padding:10px 12px;margin-top:10px;">
+        <div style="font-size:11px;color:var(--magenta);font-weight:700;margin-bottom:8px;letter-spacing:0.05em;">ACTIVIDAD / EVALUACIÓN</div>
+        <div style="display:grid;grid-template-columns:1fr 60px 1fr;gap:8px;align-items:center;">
+          <input value="${dia.actividad.titulo||''}" placeholder="Título de la actividad"
+            style="background:rgba(255,255,255,0.06);border:1px solid rgba(248,0,250,0.2);border-radius:6px;padding:5px 10px;font-size:12px;color:white;font-family:'Outfit',sans-serif;"
+            onchange="actualizarActividad('${id}',${dia.dia},'titulo',this.value)"/>
+          <input value="${dia.actividad.puntos||10}" type="number" placeholder="Pts"
+            style="background:rgba(255,255,255,0.06);border:1px solid rgba(248,0,250,0.2);border-radius:6px;padding:5px 8px;font-size:12px;color:white;font-family:'Outfit',sans-serif;text-align:center;"
+            onchange="actualizarActividad('${id}',${dia.dia},'puntos',parseInt(this.value))"/>
+          <input value="${dia.actividad.url||''}" placeholder="https://... o #sharepoint"
+            style="background:rgba(255,255,255,0.06);border:1px solid ${urlBorderColor(dia.actividad.url)};border-radius:6px;padding:5px 10px;font-size:12px;color:white;font-family:'Outfit',sans-serif;"
+            onchange="actualizarActividad('${id}',${dia.dia},'url',this.value);this.style.borderColor='rgba(0,255,136,0.5)'"/>
+        </div>
       </div>` : '';
 
     return `
-      <div class="card" style="margin-bottom:14px;border-color:rgba(255,255,255,0.07);">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;cursor:pointer;" onclick="toggleDia(this)">
+      <div class="card" style="margin-bottom:12px;border-color:rgba(255,255,255,0.07);padding:0;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;background:rgba(255,255,255,0.02);" onclick="toggleDia(this)">
           <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">D${dia.dia}</div>
           <div style="flex:1;">
             <div style="font-weight:700;font-size:14px;">${dia.titulo}</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.4);">${dia.pregunta}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:2px;">${dia.pregunta||''}</div>
           </div>
-          ${pendientes > 0 ? `<span style="font-size:11px;color:orange;background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.3);border-radius:5px;padding:2px 7px;">${pendientes} pendiente${pendientes>1?'s':''}</span>` : `<span style="font-size:11px;color:#00ff88;">✓ Completo</span>`}
+          ${pendientes>0?`<span style="font-size:11px;color:orange;background:rgba(255,165,0,0.1);border:1px solid rgba(255,165,0,0.3);border-radius:5px;padding:2px 7px;">${pendientes} pendiente${pendientes>1?'s':''}</span>`:`<span style="font-size:11px;color:#00ff88;">✓ Completo</span>`}
           <i class="fas fa-chevron-down" style="color:rgba(255,255,255,0.3);transition:transform 0.2s;"></i>
         </div>
-        <div class="dia-recursos" style="display:none;">
-          <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.06);">
-            <i class="fas fa-bullseye" style="color:var(--cyan);margin-right:6px;"></i>${dia.objetivo}
+        <div class="dia-recursos" style="display:none;padding:16px;">
+          <!-- Título y pregunta editables -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+            <div>
+              <label style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;display:block;margin-bottom:4px;">TÍTULO DEL DÍA</label>
+              <input class="form-input" style="font-size:13px;padding:7px 10px;" value="${dia.titulo||''}"
+                onchange="actualizarDiaLegacy('${id}',${dia.dia},'titulo',this.value);this.closest('.card').querySelector('div>div>div:first-child').textContent=this.value;"/>
+            </div>
+            <div>
+              <label style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;display:block;margin-bottom:4px;">PREGUNTA DETONADORA</label>
+              <input class="form-input" style="font-size:13px;padding:7px 10px;" value="${dia.pregunta||''}"
+                onchange="actualizarDiaLegacy('${id}',${dia.dia},'pregunta',this.value)"/>
+            </div>
           </div>
-          ${recursosHtml}
+          <div style="margin-bottom:14px;">
+            <label style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;display:block;margin-bottom:4px;">OBJETIVO DE APRENDIZAJE</label>
+            <textarea class="form-input" style="font-size:13px;padding:7px 10px;resize:vertical;" rows="2"
+              onchange="actualizarDiaLegacy('${id}',${dia.dia},'objetivo',this.value)">${dia.objetivo||''}</textarea>
+          </div>
+          <!-- Recursos -->
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;margin-bottom:8px;">RECURSOS</div>
+          <div id="recursos-legacy-${id}-${dia.dia}">
+            ${recursosHtml||'<p style="font-size:12px;color:rgba(255,255,255,0.25);margin:4px 0 8px;">Sin recursos aún</p>'}
+          </div>
           ${actHtml}
-          <button class="btn btn-secondary btn-sm" style="margin-top:8px;font-size:12px;" onclick="agregarRecurso('${id}',${dia.dia})">
+          <button class="btn btn-secondary btn-sm" style="margin-top:12px;font-size:12px;" onclick="agregarRecurso('${id}',${dia.dia})">
             <i class="fas fa-plus"></i> Agregar recurso
           </button>
         </div>
       </div>`;
   }).join('');
 
+  // Resumen lateral
+  const total = (m.contenido||[]).reduce((a,d)=>a+(d.recursos||[]).length,0);
+  const pend  = (m.contenido||[]).reduce((a,d)=>a+(d.recursos||[]).filter(r=>r.url==='#pendiente').length,0);
+  const share = (m.contenido||[]).reduce((a,d)=>a+(d.recursos||[]).filter(r=>r.url==='#sharepoint').length,0);
+  const ok    = total-pend-share;
+  const pts   = (m.contenido||[]).reduce((a,d)=>a+(d.actividad?.puntos||0),0);
+
   el.innerHTML = `
-    <div style="margin-bottom:20px;">
-      <button class="btn btn-secondary btn-sm" onclick="cerrarEditorModulo()"><i class="fas fa-arrow-left"></i> Todos los módulos</button>
+    <div style="margin-bottom:24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-sm" onclick="navigate('screen-admin-modulos')"><i class="fas fa-arrow-left"></i> Biblioteca</button>
+      <div style="font-size:22px;">${m.icono}</div>
+      <div style="flex:1;">
+        <h2 style="font-size:20px;font-weight:800;margin-bottom:2px;">${m.nombre}</h2>
+        <span style="font-size:12px;color:rgba(255,255,255,0.4);">${m.nivel} · ${m.semanas}</span>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="guardarModuloLegacy('${id}')"><i class="fas fa-save"></i> Guardar cambios</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:flex-start;">
+
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:flex-start;">
       <div>
-        <div class="card" style="margin-bottom:20px;border-color:rgba(0,216,218,0.2);">
-          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
-            <div style="font-size:42px;">${m.icono}</div>
+        <!-- Datos generales -->
+        <div class="card" style="margin-bottom:20px;border-color:rgba(0,216,218,0.15);">
+          <h4 style="font-size:12px;font-weight:700;color:var(--cyan);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:14px;">Datos generales</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
             <div>
-              <h2 style="font-size:20px;font-weight:800;margin-bottom:4px;">${m.nombre}</h2>
-              <div style="font-size:13px;color:rgba(255,255,255,0.4);">${m.nivel} · ${m.semanas} · ${(m.contenido||[]).length} días</div>
+              <label style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;display:block;margin-bottom:4px;">NOMBRE DEL MÓDULO</label>
+              <input class="form-input" id="em-legacy-nombre" value="${m.nombre}" style="font-size:13px;"/>
+            </div>
+            <div>
+              <label style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;display:block;margin-bottom:4px;">NIVEL DREYFUS</label>
+              <select class="form-select" id="em-legacy-nivel" style="font-size:13px;">
+                ${['Nivel 1 — Novato','Nivel 2 — Principiante','Nivel 3 — Competente','Nivel 4 — Avanzado','Nivel 5 — Experto']
+                  .map(n=>`<option ${m.nivel===n?'selected':''}>${n}</option>`).join('')}
+              </select>
             </div>
           </div>
-          <p style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.6;">${m.descripcion}</p>
+          <div>
+            <label style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;display:block;margin-bottom:4px;">DESCRIPCIÓN / OBJETIVO GENERAL</label>
+            <textarea class="form-input" id="em-legacy-desc" rows="2" style="font-size:13px;resize:vertical;">${m.descripcion||''}</textarea>
+          </div>
         </div>
-        <h3 class="section-title" style="margin-bottom:16px;"><span>Días</span> de contenido</h3>
-        ${diasHtml || '<div class="card" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px;">Sin contenido mapeado aún</div>'}
+        <!-- Journey de días -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <h3 class="section-title" style="margin:0;"><span>Journey</span> del módulo — ${(m.contenido||[]).length} días</h3>
+          <button class="btn btn-outline btn-sm" style="font-size:12px;" onclick="agregarDiaLegacy('${id}')"><i class="fas fa-plus"></i> Agregar día</button>
+        </div>
+        ${diasHtml||'<div class="card" style="text-align:center;color:rgba(255,255,255,0.3);padding:40px;">Sin contenido mapeado aún</div>'}
       </div>
-      <div>
-        <div class="card" style="border-color:rgba(248,0,250,0.2);position:sticky;top:20px;">
-          <h4 style="margin-bottom:16px;color:var(--magenta);">Resumen del módulo</h4>
-          ${(() => {
-            const total = (m.contenido||[]).reduce((a,d) => a + (d.recursos||[]).length, 0);
-            const pend  = (m.contenido||[]).reduce((a,d) => a + (d.recursos||[]).filter(r=>r.url==='#pendiente').length, 0);
-            const share = (m.contenido||[]).reduce((a,d) => a + (d.recursos||[]).filter(r=>r.url==='#sharepoint').length, 0);
-            const ok    = total - pend - share;
-            const pts   = (m.contenido||[]).reduce((a,d) => a + (d.actividad?.puntos||0), 0);
-            return `
-              <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
-                <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Total recursos</span><strong>${total}</strong></div>
-                <div style="display:flex;justify-content:space-between;"><span style="color:#00ff88;">Con link</span><strong style="color:#00ff88;">${ok}</strong></div>
-                <div style="display:flex;justify-content:space-between;"><span style="color:var(--magenta);">En SharePoint</span><strong style="color:var(--magenta);">${share}</strong></div>
-                <div style="display:flex;justify-content:space-between;"><span style="color:orange;">Pendientes</span><strong style="color:orange;">${pend}</strong></div>
-                <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:10px;display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.5);">Puntos totales</span><strong style="color:var(--cyan);">${pts} pts</strong></div>
-              </div>`;
-          })()}
+
+      <!-- Panel lateral -->
+      <div style="position:sticky;top:20px;">
+        <div class="card" style="border-color:rgba(248,0,250,0.2);margin-bottom:16px;">
+          <h4 style="margin-bottom:14px;color:var(--magenta);font-size:13px;">Resumen de recursos</h4>
+          <div style="display:flex;flex-direction:column;gap:9px;font-size:13px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:rgba(255,255,255,0.4);">Total recursos</span><strong>${total}</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:#00ff88;">Con link externo</span><strong style="color:#00ff88;">${ok}</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--magenta);">En SharePoint</span><strong style="color:var(--magenta);">${share}</strong></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:orange;">Pendientes</span><strong style="color:orange;">${pend}</strong></div>
+            <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:9px;display:flex;justify-content:space-between;">
+              <span style="color:rgba(255,255,255,0.4);">Puntos totales</span><strong style="color:var(--cyan);">${pts} pts</strong>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="border-color:rgba(0,216,218,0.1);">
+          <h4 style="margin-bottom:12px;color:var(--cyan);font-size:13px;">Temas clave</h4>
+          <input class="form-input" id="em-legacy-temas" value="${(m.temas||[]).join(', ')}" placeholder="Tema 1, Tema 2..." style="font-size:12px;"/>
+          <p style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:6px;">Separados por coma</p>
         </div>
       </div>
     </div>`;
+}
+
+function actualizarDiaLegacy(moduloId, diaNum, campo, valor) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  if (!m) return;
+  const d = m.contenido.find(d=>d.dia===diaNum);
+  if (d) d[campo] = valor;
+}
+
+function eliminarRecursoLegacy(moduloId, diaNum, ri) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  if (!m) return;
+  const d = m.contenido.find(d=>d.dia===diaNum);
+  if (!d?.recursos) return;
+  d.recursos.splice(ri, 1);
+  const container = document.getElementById(`recursos-legacy-${moduloId}-${diaNum}`);
+  if (container) {
+    container.innerHTML = d.recursos.map((r,i)=>renderRecursoEditor(moduloId,diaNum,i,r)).join('')
+      || '<p style="font-size:12px;color:rgba(255,255,255,0.25);margin:4px 0;">Sin recursos aún</p>';
+  }
+}
+
+function agregarDiaLegacy(moduloId) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  if (!m) { if (!m) return; }
+  if (!m.contenido) m.contenido = [];
+  m.contenido.push({ dia: m.contenido.length+1, titulo:'Nuevo día '+(m.contenido.length+1), pregunta:'', objetivo:'', recursos:[], actividad:{titulo:'',puntos:10,url:''} });
+  renderEditorModulo(moduloId);
+  showToast('➕ Día agregado', 'success');
+}
+
+function guardarModuloLegacy(moduloId) {
+  const m = mockModulosGrid.find(x=>x.id===moduloId);
+  if (!m) return;
+  const nombre = document.getElementById('em-legacy-nombre')?.value?.trim();
+  const nivel  = document.getElementById('em-legacy-nivel')?.value;
+  const desc   = document.getElementById('em-legacy-desc')?.value?.trim();
+  const temas  = document.getElementById('em-legacy-temas')?.value;
+  if (nombre) m.nombre = nombre;
+  if (nivel)  m.nivel  = nivel;
+  if (desc !== undefined) m.descripcion = desc;
+  if (temas)  m.temas  = temas.split(',').map(t=>t.trim()).filter(Boolean);
+  renderModulosGrid();
+  showToast('✅ Módulo guardado correctamente', 'success');
 }
 
 function toggleDia(header) {
