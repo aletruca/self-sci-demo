@@ -2100,10 +2100,11 @@ function showConfigTab(tabId, btn) {
     btn.style.background = 'linear-gradient(135deg,var(--cyan),var(--purple))';
     btn.style.color = 'white';
   }
-  if (tabId === 'participantes')  renderTablaParticipantes();
-  if (tabId === 'modulos-config') renderModulosConfig();
-  if (tabId === 'sesiones-sync')  renderSesionesSync();
-  if (tabId === 'calendario')     renderCalendario();
+  if (tabId === 'participantes')       renderTablaParticipantes();
+  if (tabId === 'modulos-config')      renderModulosConfig();
+  if (tabId === 'sesiones-sync')       renderSesionesSync();
+  if (tabId === 'calendario')          { calState._manuallyChanged = false; renderCalendario(); }
+  if (tabId === 'dashboard-empresa')   renderDashboardEmpresa();
 }
 
 // ── Toggle forms ──
@@ -2193,7 +2194,21 @@ const mockPermisos = [
 function renderTablaParticipantes() {
   const tbody = document.getElementById('tabla-participantes');
   if (!tbody) return;
-  tbody.innerHTML = mockParticipantes.map((p, idx) => {
+  const gen = getGenData();
+  // Actualizar conteo en el título
+  const tituloH3 = document.querySelector('#tab-participantes h3.section-title');
+  if (tituloH3) tituloH3.innerHTML = `<span>Participantes</span> registrados (${gen.participantes})`;
+  // Subtítulo de generación
+  let genInfo = document.getElementById('participantes-gen-info');
+  if (!genInfo) {
+    genInfo = document.createElement('p');
+    genInfo.id = 'participantes-gen-info';
+    genInfo.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.35);margin:0 0 12px 0;';
+    tituloH3 && tituloH3.parentElement && tituloH3.parentElement.after(genInfo);
+  }
+  if (genInfo) genInfo.textContent = `${gen.nombre} · Inicio: ${gen.inicio} · Cierre: ${gen.cierre}`;
+  const lista = gen.participantesData || mockParticipantes;
+  tbody.innerHTML = lista.map((p, idx) => {
     const colorAvance = p.avance >= 80 ? 'var(--cyan)' : p.avance >= 50 ? 'var(--purple)' : 'orange';
     return `
     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -2226,7 +2241,12 @@ function renderTablaParticipantes() {
 function renderModulosConfig() {
   const container = document.getElementById('modulos-config-list');
   if (!container) return;
-  container.innerHTML = mockModulosConfig.map((m, i) => `
+  const gen = getGenData();
+  const mods = gen.modulosConfig || mockModulosConfig;
+  // Subtítulo con info de generación
+  const sub = document.getElementById('modulos-config-subtitle');
+  if (sub) sub.textContent = `${gen.nombre} · Inicio: ${gen.inicio} · Cierre: ${gen.cierre}`;
+  container.innerHTML = mods.map((m, i) => `
     <div class="card" style="padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
       <div style="width:44px;height:44px;border-radius:10px;background:rgba(0,216,218,0.09);border:1px solid rgba(0,216,218,0.2);display:flex;align-items:center;justify-content:center;font-size:21px;flex-shrink:0;">${m.icono}</div>
       <div style="flex:1;min-width:150px;">
@@ -2255,8 +2275,10 @@ function renderModulosConfig() {
 function renderSesionesSync() {
   const container = document.getElementById('sesiones-sync-list');
   if (!container) return;
+  const gen = getGenData();
+  const sesiones = gen.sesiones || mockSesiones;
   const iconoTipo = { 'Zoom':'🎥', 'Teams':'💼', 'Presencial':'🏢' };
-  container.innerHTML = mockSesiones.map((s, idx) => `
+  container.innerHTML = sesiones.map((s, idx) => `
     <div class="card" style="padding:18px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-color:rgba(0,216,218,0.12);">
       <div style="width:48px;height:48px;border-radius:12px;background:rgba(0,216,218,0.09);border:1px solid rgba(0,216,218,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${iconoTipo[s.tipo] || '📅'}</div>
       <div style="flex:1;min-width:160px;">
@@ -2993,16 +3015,19 @@ const MODULE_COLORS = [
 ];
 
 function getModuleCalEvents() {
-  return mockModulosConfig
+  const gen = getGenData();
+  const mods = gen.modulosConfig || mockModulosConfig;
+  const programStart = gen.startDate || PROGRAM_START;
+  return mods
     .filter(m => m.activo)
     .map((m, i) => {
       const match = m.semana.match(/Semana (\d+)[-–](\d+)/);
       if (!match) return null;
       const w1 = parseInt(match[1]);
       const w2 = parseInt(match[2]);
-      const startDate = new Date(PROGRAM_START);
+      const startDate = new Date(programStart);
       startDate.setDate(startDate.getDate() + (w1 - 1) * 7);
-      const endDate = new Date(PROGRAM_START);
+      const endDate = new Date(programStart);
       endDate.setDate(endDate.getDate() + w2 * 7 - 1);
       const clr = MODULE_COLORS[i % MODULE_COLORS.length];
       return { startDate, endDate, label: m.icono + ' ' + m.nombre, type: 'modulo', color: clr.color, bg: clr.bg };
@@ -3011,7 +3036,9 @@ function getModuleCalEvents() {
 }
 
 function getSessionCalEvents() {
-  return mockSesiones.map(s => {
+  const gen = getGenData();
+  const sesiones = gen.sesiones || mockSesiones;
+  return sesiones.map(s => {
     const parts = s.fecha.split(' ');
     const month = MESES_ABBR[parts[1]];
     if (month === undefined) return null;
@@ -3024,6 +3051,14 @@ function renderCalendario() {
   const label = document.getElementById('cal-mes-label');
   const grid  = document.getElementById('calendario-grid');
   if (!label || !grid) return;
+
+  // Si el calState no fue cambiado manualmente, posicionarlo en el mes de inicio de la generación
+  const gen = getGenData();
+  if (!calState._manuallyChanged) {
+    const start = gen.startDate || PROGRAM_START;
+    calState.year  = start.getFullYear();
+    calState.month = start.getMonth();
+  }
 
   const { year, month } = calState;
   label.textContent = MESES_ES[month] + ' ' + year;
@@ -3095,12 +3130,14 @@ function renderCalendario() {
 }
 
 function calendarPrev() {
+  calState._manuallyChanged = true;
   calState.month--;
   if (calState.month < 0) { calState.month = 11; calState.year--; }
   renderCalendario();
 }
 
 function calendarNext() {
+  calState._manuallyChanged = true;
   calState.month++;
   if (calState.month > 11) { calState.month = 0; calState.year++; }
   renderCalendario();
@@ -3128,6 +3165,419 @@ const mockEmpresas = [
   { nombre: 'Grupo Salud Integral', color: 'rgba(117,114,233,0.7)', border: 'var(--purple)', start: new Date(2025, 4, 1)  },
   { nombre: 'Retail Express MX',    color: 'rgba(255,165,0,0.7)',   border: 'orange',        start: null },
 ];
+
+const mockGeneraciones = [
+  {
+    id:'mayo-2025', nombre:'Generación Mayo 2025',
+    inicio:'28 Abr 2025', cierre:'8 Ago 2025',
+    startDate: new Date(2025, 3, 28),
+    estado:'En curso', participantes:24,
+    participantesData: [
+      { nombre:'Ana García',       correo:'ana.garcia@manufactura.mx',  rol:'Participante',    avance:88, estado:'Activo'   },
+      { nombre:'Carlos Méndez',    correo:'c.mendez@manufactura.mx',    rol:'Líder / Manager', avance:65, estado:'Activo'   },
+      { nombre:'Laura Torres',     correo:'l.torres@manufactura.mx',    rol:'Participante',    avance:42, estado:'Activo'   },
+      { nombre:'Roberto Silva',    correo:'r.silva@manufactura.mx',     rol:'RH',              avance:95, estado:'Activo'   },
+      { nombre:'María López',      correo:'m.lopez@manufactura.mx',     rol:'Participante',    avance:71, estado:'Activo'   },
+      { nombre:'José Hernández',   correo:'j.hernandez@manufactura.mx', rol:'Participante',    avance:30, estado:'Inactivo' },
+      { nombre:'Sofía Ramírez',    correo:'s.ramirez@manufactura.mx',   rol:'Participante',    avance:58, estado:'Activo'   },
+      { nombre:'Diego Castillo',   correo:'d.castillo@manufactura.mx',  rol:'Líder / Manager', avance:80, estado:'Activo'   },
+      { nombre:'Valeria Cruz',     correo:'v.cruz@manufactura.mx',      rol:'Participante',    avance:66, estado:'Activo'   },
+      { nombre:'Andrés Morales',   correo:'a.morales@manufactura.mx',   rol:'Participante',    avance:62, estado:'Activo'   },
+      { nombre:'Patricia Reyes',   correo:'p.reyes@manufactura.mx',     rol:'RH',              avance:59, estado:'Activo'   },
+      { nombre:'Fernando Guzmán',  correo:'f.guzman@manufactura.mx',    rol:'Participante',    avance:55, estado:'Inactivo' },
+      { nombre:'Isabel Vega',      correo:'i.vega@manufactura.mx',      rol:'Participante',    avance:53, estado:'Activo'   },
+      { nombre:'Miguel Ramos',     correo:'m.ramos@manufactura.mx',     rol:'Participante',    avance:49, estado:'Activo'   },
+      { nombre:'Carmen Ortiz',     correo:'c.ortiz@manufactura.mx',     rol:'Líder / Manager', avance:46, estado:'Activo'   },
+      { nombre:'Eduardo Jiménez',  correo:'e.jimenez@manufactura.mx',   rol:'Participante',    avance:44, estado:'Activo'   },
+      { nombre:'Lucía Flores',     correo:'l.flores@manufactura.mx',    rol:'Participante',    avance:41, estado:'Activo'   },
+      { nombre:'Héctor Domínguez', correo:'h.dominguez@manufactura.mx', rol:'Participante',    avance:38, estado:'Activo'   },
+      { nombre:'Gabriela Medina',  correo:'g.medina@manufactura.mx',    rol:'Participante',    avance:35, estado:'Inactivo' },
+      { nombre:'Ricardo Peña',     correo:'r.pena@manufactura.mx',      rol:'Participante',    avance:32, estado:'Activo'   },
+      { nombre:'Alejandra Vargas', correo:'a.vargas@manufactura.mx',    rol:'Participante',    avance:30, estado:'Activo'   },
+      { nombre:'Jorge Soto',       correo:'j.soto@manufactura.mx',      rol:'Participante',    avance:27, estado:'Activo'   },
+      { nombre:'Natalia Aguilar',  correo:'n.aguilar@manufactura.mx',   rol:'RH',              avance:25, estado:'Activo'   },
+      { nombre:'Claudia Ríos',     correo:'c.rios@manufactura.mx',      rol:'Participante',    avance:11, estado:'Inactivo' },
+    ],
+    modulosConfig: [
+      { nombre:'Connected Customer & Product',  icono:'🌐', semana:'Semana 1–2',   duracion:'10 días',   obligatorio:true,  activo:true  },
+      { nombre:'Planeación Sincrónica',          icono:'🔄', semana:'Semana 3–4',   duracion:'10 días',   obligatorio:true,  activo:true  },
+      { nombre:'Smart Operations',               icono:'⚙️', semana:'Semana 5–7',   duracion:'10 días',   obligatorio:true,  activo:true  },
+      { nombre:'Dynamic Fulfillment',            icono:'🚀', semana:'Semana 8–10',  duracion:'10 días',   obligatorio:true,  activo:true  },
+      { nombre:'Game Changers',                  icono:'🎯', semana:'Semana 11–15', duracion:'25 días',   obligatorio:false, activo:true  },
+    ],
+    sesiones: [
+      { titulo:'Kick-off Generación Mayo 2025', tipo:'Zoom',       fecha:'28 Abr 2025', hora:'10:00 AM', duracion:'90 min',  facilitador:'Dr. Santiago Rueda', inscritos:24, max:30 },
+      { titulo:'Taller: Liderazgo en acción',   tipo:'Teams',      fecha:'15 May 2025', hora:'3:00 PM',  duracion:'120 min', facilitador:'Lic. Andrea Mora',   inscritos:20, max:30 },
+      { titulo:'Cierre y diplomas',             tipo:'Presencial', fecha:'8 Ago 2025',  hora:'9:00 AM',  duracion:'180 min', facilitador:'Equipo SELF SCI',    inscritos:0,  max:30 },
+    ],
+  },
+  {
+    id:'ene-2025', nombre:'Generación Enero 2025',
+    inicio:'13 Ene 2025', cierre:'2 May 2025',
+    startDate: new Date(2025, 0, 13),
+    estado:'Completada', participantes:18,
+    participantesData: [
+      { nombre:'Beatriz Fuentes',  correo:'b.fuentes@manufactura.mx',   rol:'Participante',    avance:100, estado:'Activo' },
+      { nombre:'Ramón Castañeda',  correo:'r.castaneda@manufactura.mx', rol:'Líder / Manager', avance:100, estado:'Activo' },
+      { nombre:'Gloria Espinoza',  correo:'g.espinoza@manufactura.mx',  rol:'Participante',    avance:98,  estado:'Activo' },
+      { nombre:'Arturo Núñez',     correo:'a.nunez@manufactura.mx',     rol:'RH',              avance:96,  estado:'Activo' },
+      { nombre:'Diana Guerrero',   correo:'d.guerrero@manufactura.mx',  rol:'Participante',    avance:94,  estado:'Activo' },
+      { nombre:'Sergio Mendoza',   correo:'s.mendoza@manufactura.mx',   rol:'Participante',    avance:91,  estado:'Activo' },
+      { nombre:'Lorena Delgado',   correo:'l.delgado@manufactura.mx',   rol:'Participante',    avance:89,  estado:'Activo' },
+      { nombre:'Tomás Ibáñez',     correo:'t.ibanez@manufactura.mx',    rol:'Líder / Manager', avance:87,  estado:'Activo' },
+      { nombre:'Claudia Ríos',     correo:'c.rios2@manufactura.mx',     rol:'Participante',    avance:84,  estado:'Activo' },
+      { nombre:'Esteban Salinas',  correo:'e.salinas@manufactura.mx',   rol:'Participante',    avance:82,  estado:'Activo' },
+      { nombre:'Miriam Córdova',   correo:'m.cordova@manufactura.mx',   rol:'RH',              avance:78,  estado:'Activo' },
+      { nombre:'Rubén Herrera',    correo:'r.herrera@manufactura.mx',   rol:'Participante',    avance:75,  estado:'Activo' },
+      { nombre:'Sandra Velázquez', correo:'s.velazquez@manufactura.mx', rol:'Participante',    avance:72,  estado:'Activo' },
+      { nombre:'Cristóbal Mora',   correo:'c.mora@manufactura.mx',      rol:'Participante',    avance:68,  estado:'Activo' },
+      { nombre:'Alicia Barrera',   correo:'a.barrera@manufactura.mx',   rol:'Participante',    avance:65,  estado:'Activo' },
+      { nombre:'Ernesto Pacheco',  correo:'e.pacheco@manufactura.mx',   rol:'Participante',    avance:62,  estado:'Activo' },
+      { nombre:'Verónica Rivas',   correo:'v.rivas@manufactura.mx',     rol:'Líder / Manager', avance:55,  estado:'Activo' },
+      { nombre:'Omar Villanueva',  correo:'o.villanueva@manufactura.mx', rol:'Participante',   avance:40,  estado:'Inactivo' },
+    ],
+    modulosConfig: [
+      { nombre:'Connected Customer & Product',  icono:'🌐', semana:'Semana 1–2',   duracion:'10 días', obligatorio:true,  activo:true },
+      { nombre:'Planeación Sincrónica',          icono:'🔄', semana:'Semana 3–4',   duracion:'10 días', obligatorio:true,  activo:true },
+      { nombre:'Smart Operations',               icono:'⚙️', semana:'Semana 5–7',   duracion:'10 días', obligatorio:true,  activo:true },
+      { nombre:'Dynamic Fulfillment',            icono:'🚀', semana:'Semana 8–10',  duracion:'10 días', obligatorio:true,  activo:true },
+      { nombre:'Game Changers',                  icono:'🎯', semana:'Semana 11–15', duracion:'25 días', obligatorio:false, activo:true },
+    ],
+    sesiones: [
+      { titulo:'Kick-off Generación Enero 2025', tipo:'Zoom',       fecha:'13 Ene 2025', hora:'10:00 AM', duracion:'90 min',  facilitador:'Dr. Santiago Rueda', inscritos:18, max:20 },
+      { titulo:'Taller de Integración',          tipo:'Teams',      fecha:'5 Feb 2025',  hora:'3:00 PM',  duracion:'120 min', facilitador:'Lic. Andrea Mora',   inscritos:16, max:20 },
+      { titulo:'Cierre y diplomas Gen. Enero',   tipo:'Presencial', fecha:'2 May 2025',  hora:'9:00 AM',  duracion:'180 min', facilitador:'Equipo SELF SCI',    inscritos:17, max:20 },
+    ],
+  },
+];
+
+// Participantes extendidos con métricas para el Dashboard Admin
+const mockParticipantesStats = [
+  { nombre:'Roberto Silva',    pts:1820, aprov:91, delta:+22, nps:10, medallas:8, ranking:1 },
+  { nombre:'Ana García',       pts:1740, aprov:87, delta:+19, nps:9,  medallas:7, ranking:2 },
+  { nombre:'María López',      pts:1680, aprov:84, delta:+21, nps:9,  medallas:6, ranking:3 },
+  { nombre:'Diego Castillo',   pts:1590, aprov:80, delta:+18, nps:8,  medallas:6, ranking:4 },
+  { nombre:'Sofía Ramírez',    pts:1520, aprov:76, delta:+16, nps:8,  medallas:5, ranking:5 },
+  { nombre:'Carlos Méndez',    pts:1460, aprov:73, delta:+15, nps:7,  medallas:4, ranking:6 },
+  { nombre:'Laura Torres',     pts:1380, aprov:69, delta:+12, nps:7,  medallas:4, ranking:7 },
+  { nombre:'Valeria Cruz',     pts:1310, aprov:66, delta:+11, nps:8,  medallas:3, ranking:8 },
+  { nombre:'Andrés Morales',   pts:1240, aprov:62, delta:+10, nps:6,  medallas:3, ranking:9 },
+  { nombre:'Patricia Reyes',   pts:1180, aprov:59, delta:+9,  nps:7,  medallas:3, ranking:10 },
+  { nombre:'Fernando Guzmán',  pts:1100, aprov:55, delta:+8,  nps:6,  medallas:2, ranking:11 },
+  { nombre:'Isabel Vega',      pts:1050, aprov:53, delta:+7,  nps:6,  medallas:2, ranking:12 },
+  { nombre:'Miguel Ángel Ramos',pts:980, aprov:49, delta:+6,  nps:5,  medallas:2, ranking:13 },
+  { nombre:'Carmen Ortiz',     pts:920,  aprov:46, delta:+5,  nps:5,  medallas:1, ranking:14 },
+  { nombre:'Eduardo Jiménez',  pts:870,  aprov:44, delta:+4,  nps:4,  medallas:1, ranking:15 },
+  { nombre:'Lucía Flores',     pts:810,  aprov:41, delta:+4,  nps:5,  medallas:1, ranking:16 },
+  { nombre:'Héctor Domínguez', pts:750,  aprov:38, delta:+3,  nps:4,  medallas:1, ranking:17 },
+  { nombre:'Gabriela Medina',  pts:700,  aprov:35, delta:+3,  nps:4,  medallas:0, ranking:18 },
+  { nombre:'Ricardo Peña',     pts:640,  aprov:32, delta:+2,  nps:3,  medallas:0, ranking:19 },
+  { nombre:'Alejandra Vargas', pts:590,  aprov:30, delta:+2,  nps:5,  medallas:0, ranking:20 },
+  { nombre:'Jorge Soto',       pts:540,  aprov:27, delta:+1,  nps:3,  medallas:0, ranking:21 },
+  { nombre:'Natalia Aguilar',  pts:490,  aprov:25, delta:+1,  nps:4,  medallas:0, ranking:22 },
+  { nombre:'José Hernández',   pts:340,  aprov:17, delta: 0,  nps:2,  medallas:0, ranking:23 },
+  { nombre:'Claudia Ríos',     pts:210,  aprov:11, delta: 0,  nps:3,  medallas:0, ranking:24 },
+];
+
+// Estado expandido del ranking
+let rankingExpandido = false;
+
+function getGenData() {
+  const sel = document.getElementById('sel-generacion');
+  const genId = sel ? sel.value : 'mayo-2025';
+  return mockGeneraciones.find(g => g.id === genId) || mockGeneraciones[0];
+}
+
+// Llamado cuando cambia el selector global de generación
+function onGeneracionChange() {
+  // Actualizar badge
+  const gen = getGenData();
+  const badge = document.getElementById('gen-badge');
+  if (badge) {
+    if (gen.estado === 'En curso') {
+      badge.style.background = 'rgba(0,255,136,0.12)';
+      badge.style.borderColor = 'rgba(0,255,136,0.3)';
+      badge.style.color = '#00ff88';
+      badge.textContent = `🟢 En curso · ${gen.participantes} participantes`;
+    } else {
+      badge.style.background = 'rgba(117,114,233,0.12)';
+      badge.style.borderColor = 'rgba(117,114,233,0.3)';
+      badge.style.color = 'var(--purple)';
+      badge.textContent = `✅ Completada · ${gen.participantes} participantes`;
+    }
+  }
+  // Re-renderizar el tab activo
+  const activeTab = document.querySelector('.config-tab[style*="linear-gradient"]');
+  if (activeTab) {
+    const onclick = activeTab.getAttribute('onclick') || '';
+    const match = onclick.match(/showConfigTab\('([^']+)'/);
+    if (match) showConfigTab(match[1], activeTab);
+  }
+}
+
+function getModulosGlobales() {
+  // Datos simulados por módulo para el dashboard admin
+  return [
+    { nombre:'M1 · Connected Customer',   completados:18, aprov:82, pre:62, post:78, delta:+16 },
+    { nombre:'M2 · Planeación Sincrónica', completados:12, aprov:76, pre:55, post:74, delta:+19 },
+    { nombre:'M3 · Smart Operations',      completados:7,  aprov:79, pre:58, post:77, delta:+19 },
+    { nombre:'M4 · Dynamic Fulfillment',   completados:3,  aprov:71, pre:52, post:70, delta:+18 },
+    { nombre:'M5 · Game Changers',         completados:0,  aprov:0,  pre:0,  post:0,  delta:0   },
+  ];
+}
+
+function renderDashboardEmpresa() {
+  const gen = getGenData();
+  const isEnCurso = gen.estado === 'En curso';
+
+  // Actualizar badge
+  const badge = document.getElementById('gen-badge');
+  if (badge) {
+    if (isEnCurso) {
+      badge.style.background = 'rgba(0,255,136,0.12)';
+      badge.style.borderColor = 'rgba(0,255,136,0.3)';
+      badge.style.color = '#00ff88';
+      badge.textContent = `🟢 En curso · ${gen.participantes} participantes`;
+    } else {
+      badge.style.background = 'rgba(117,114,233,0.12)';
+      badge.style.borderColor = 'rgba(117,114,233,0.3)';
+      badge.style.color = 'var(--purple)';
+      badge.textContent = `✅ Completada · ${gen.participantes} participantes`;
+    }
+  }
+
+  const stats = mockParticipantesStats.slice(0, gen.participantes);
+  const activos = stats.filter(p => p.pts > 500).length;
+  const avgAprov = Math.round(stats.filter(p=>p.aprov>0).reduce((s,p)=>s+p.aprov,0) / stats.filter(p=>p.aprov>0).length);
+  const avgDelta = Math.round(stats.filter(p=>p.delta>0).reduce((s,p)=>s+p.delta,0) / stats.filter(p=>p.delta>0).length);
+  const npsScores = stats.map(p=>p.nps);
+  const promotores = npsScores.filter(n=>n>=9).length;
+  const detractores = npsScores.filter(n=>n<=6).length;
+  const nps = Math.round(((promotores - detractores) / npsScores.length) * 100);
+  const totalMedallas = stats.reduce((s,p)=>s+p.medallas,0);
+  const medallasPosibles = gen.participantes * 11;
+  const modData = getModulosGlobales();
+  const modsCompletados = modData.filter(m=>m.completados>0).length;
+  const avanceGlobal = Math.round((modData.reduce((s,m)=>s+m.completados,0) / (gen.participantes * modData.length)) * 100);
+
+  // KPIs fila 1
+  const kpisEl = document.getElementById('db-kpis');
+  if (kpisEl) {
+    kpisEl.innerHTML = [
+      { label:'Avance global', value:`${avanceGlobal}%`, sub:`Promedio de módulos completados`, color:'var(--cyan)', icon:'fa-chart-line' },
+      { label:'Promedio aprovechamiento', value:`${avgAprov}%`, sub:`Módulos con datos disponibles`, color:'#00ff88', icon:'fa-graduation-cap' },
+      { label:'Δ Aprendizaje promedio', value:`+${avgDelta}pp`, sub:`Pre→Post módulo (promedio grupal)`, color:'var(--purple)', icon:'fa-brain' },
+      { label:'NPS del grupo', value:`${nps}`, sub:`${promotores} promotores · ${detractores} detractores`, color:'var(--magenta)', icon:'fa-star' },
+    ].map(k=>`
+      <div class="card" style="text-align:center;padding:18px 12px;background:rgba(255,255,255,0.03);">
+        <div style="font-size:22px;color:${k.color};margin-bottom:6px;"><i class="fas ${k.icon}"></i></div>
+        <div style="font-size:28px;font-weight:800;color:${k.color};line-height:1;">${k.value}</div>
+        <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);margin-top:4px;letter-spacing:0.05em;text-transform:uppercase;">${k.label}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px;">${k.sub}</div>
+      </div>`).join('');
+  }
+
+  // KPIs fila 2
+  const kpis2El = document.getElementById('db-kpis2');
+  if (kpis2El) {
+    kpis2El.innerHTML = [
+      { label:'Medallas otorgadas', value:`${totalMedallas} / ${medallasPosibles}`, sub:`${Math.round(totalMedallas/medallasPosibles*100)}% de medallas posibles`, color:'#ffd700', icon:'fa-medal' },
+      { label:'Participantes activos', value:`${activos} / ${gen.participantes}`, sub:`${Math.round(activos/gen.participantes*100)}% de la generación`, color:'var(--cyan)', icon:'fa-users' },
+      { label:'Módulos en progreso', value:`${modsCompletados} / ${modData.length}`, sub:`Módulos con al menos 1 completado`, color:'var(--purple)', icon:'fa-layer-group' },
+    ].map(k=>`
+      <div class="card" style="display:flex;align-items:center;gap:14px;padding:16px;background:rgba(255,255,255,0.03);">
+        <div style="font-size:26px;color:${k.color};min-width:36px;text-align:center;"><i class="fas ${k.icon}"></i></div>
+        <div>
+          <div style="font-size:20px;font-weight:800;color:${k.color};">${k.value}</div>
+          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:0.05em;text-transform:uppercase;">${k.label}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;">${k.sub}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  // Ranking
+  renderRankingEmpresa(stats);
+
+  // Módulos global
+  const modEl = document.getElementById('db-modulos-global');
+  if (modEl) {
+    modEl.innerHTML = `
+      <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+            <th style="text-align:left;padding:8px 10px;color:rgba(255,255,255,0.4);font-weight:600;font-size:11px;letter-spacing:0.05em;">MÓDULO</th>
+            <th style="text-align:center;padding:8px 10px;color:rgba(255,255,255,0.4);font-weight:600;font-size:11px;">COMPLETADOS</th>
+            <th style="text-align:center;padding:8px 10px;color:rgba(255,255,255,0.4);font-weight:600;font-size:11px;">APROV. PROM.</th>
+            <th style="text-align:center;padding:8px 10px;color:rgba(255,255,255,0.4);font-weight:600;font-size:11px;">PRE</th>
+            <th style="text-align:center;padding:8px 10px;color:rgba(255,255,255,0.4);font-weight:600;font-size:11px;">POST</th>
+            <th style="text-align:center;padding:8px 10px;color:rgba(255,255,255,0.4);font-weight:600;font-size:11px;">Δ APRENDIZAJE</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${modData.map((m,i)=>{
+            const hasData = m.completados > 0;
+            const pct = Math.round(m.completados / gen.participantes * 100);
+            return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+              <td style="padding:10px 10px;font-weight:600;">${m.nombre}</td>
+              <td style="text-align:center;padding:10px;">
+                <span style="color:${hasData?'var(--cyan)':'rgba(255,255,255,0.25)'};">
+                  ${hasData ? `${m.completados}/${gen.participantes} <span style="font-size:10px;color:rgba(255,255,255,0.35);">(${pct}%)</span>` : '—'}
+                </span>
+              </td>
+              <td style="text-align:center;padding:10px;">
+                ${hasData ? `<span style="font-weight:700;color:${m.aprov>=80?'#00ff88':m.aprov>=65?'var(--cyan)':'rgba(255,255,255,0.5)'};">${m.aprov}%</span>` : '<span style="color:rgba(255,255,255,0.2);">—</span>'}
+              </td>
+              <td style="text-align:center;padding:10px;color:rgba(255,255,255,${hasData?'0.6':'0.2'});">${hasData?m.pre+'%':'—'}</td>
+              <td style="text-align:center;padding:10px;color:${hasData?'var(--cyan)':'rgba(255,255,255,0.2)'};">${hasData?m.post+'%':'—'}</td>
+              <td style="text-align:center;padding:10px;">
+                ${hasData ? `<span style="color:#00ff88;font-weight:700;">+${m.delta}pp</span>` : '<span style="color:rgba(255,255,255,0.2);">—</span>'}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      </div>`;
+  }
+
+  // Kirkpatrick grupal
+  renderKirkpatrickGrupal(modData);
+}
+
+function renderRankingEmpresa(stats) {
+  const el = document.getElementById('ranking-tabla-empresa');
+  if (!el) return;
+  const lista = rankingExpandido ? stats : stats.slice(0, 5);
+  const top3Colors = ['#FFD700','#C0C0C0','#CD7F32'];
+  el.innerHTML = `
+    <!-- Top 3 podio -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+      ${stats.slice(0,3).map((p,i)=>`
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:14px;text-align:center;${i===0?'border-color:rgba(255,215,0,0.4);background:rgba(255,215,0,0.06);':''}">
+          <div style="font-size:22px;margin-bottom:4px;">${i===0?'🥇':i===1?'🥈':'🥉'}</div>
+          <div style="font-size:13px;font-weight:700;color:${top3Colors[i]};margin-bottom:2px;">${p.nombre.split(' ')[0]} ${p.nombre.split(' ')[1]||''}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);">${p.pts.toLocaleString()} pts</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);">Aprov. ${p.aprov}% · Δ+${p.delta}pp</div>
+        </div>`).join('')}
+    </div>
+    <!-- Tabla lista -->
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+          <th style="text-align:left;padding:6px 8px;color:rgba(255,255,255,0.35);font-size:10px;font-weight:700;letter-spacing:0.05em;">#</th>
+          <th style="text-align:left;padding:6px 8px;color:rgba(255,255,255,0.35);font-size:10px;font-weight:700;letter-spacing:0.05em;">PARTICIPANTE</th>
+          <th style="text-align:center;padding:6px 8px;color:rgba(255,255,255,0.35);font-size:10px;font-weight:700;letter-spacing:0.05em;">PTS</th>
+          <th style="text-align:center;padding:6px 8px;color:rgba(255,255,255,0.35);font-size:10px;font-weight:700;letter-spacing:0.05em;">APROV.</th>
+          <th style="text-align:center;padding:6px 8px;color:rgba(255,255,255,0.35);font-size:10px;font-weight:700;letter-spacing:0.05em;">Δ APRENDIZAJE</th>
+          <th style="text-align:center;padding:6px 8px;color:rgba(255,255,255,0.35);font-size:10px;font-weight:700;letter-spacing:0.05em;">NPS</th>
+          <th style="text-align:center;padding:6px 8px;color:rgba(255,255,255,0.35);font-size:10px;font-weight:700;letter-spacing:0.05em;">MEDALLAS</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lista.map((p,i)=>{
+          const pos = i+1;
+          const medal = pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'';
+          const npsColor = p.nps>=9?'#00ff88':p.nps>=7?'var(--cyan)':'rgba(255,255,255,0.4)';
+          return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);${pos<=3?'background:rgba(255,255,255,0.02);':''}">
+            <td style="padding:8px 8px;color:rgba(255,255,255,0.4);font-weight:700;">${medal||pos}</td>
+            <td style="padding:8px 8px;font-weight:600;">${p.nombre}</td>
+            <td style="text-align:center;padding:8px;color:var(--cyan);font-weight:700;">${p.pts.toLocaleString()}</td>
+            <td style="text-align:center;padding:8px;"><span style="color:${p.aprov>=80?'#00ff88':p.aprov>=65?'var(--cyan)':'rgba(255,255,255,0.5)'};">${p.aprov}%</span></td>
+            <td style="text-align:center;padding:8px;color:#00ff88;font-weight:600;">${p.delta>0?'+'+p.delta+'pp':'—'}</td>
+            <td style="text-align:center;padding:8px;font-weight:700;color:${npsColor};">${p.nps}</td>
+            <td style="text-align:center;padding:8px;color:rgba(255,255,255,0.5);">${p.medallas > 0 ? '🏅'.repeat(Math.min(p.medallas,5))+(p.medallas>5?` +${p.medallas-5}`:'') : '—'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    ${!rankingExpandido && stats.length > 5 ? `<div style="text-align:center;margin-top:12px;font-size:12px;color:rgba(255,255,255,0.3);">Mostrando top 5 de ${stats.length} participantes · Usa "Ver todos" para expandir</div>` : ''}`;
+}
+
+function renderKirkpatrickGrupal(modData) {
+  const el = document.getElementById('db-kirkpatrick-global');
+  if (!el) return;
+  const activeData = modData.filter(m=>m.completados>0);
+  if (!activeData.length) {
+    el.innerHTML = `<p style="text-align:center;color:rgba(255,255,255,0.3);font-size:13px;padding:20px;">Sin datos de evaluación aún</p>`;
+    return;
+  }
+  const canvasId = 'chart-kirkpatrick-global';
+  el.innerHTML = `<canvas id="${canvasId}" style="max-height:260px;"></canvas>`;
+  setTimeout(()=>{
+    const ctx = document.getElementById(canvasId);
+    if (!ctx) return;
+    if (ctx._chartInstance) ctx._chartInstance.destroy();
+    ctx._chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: activeData.map(m=>m.nombre.split(' · ')[1]||m.nombre.split('·')[0]),
+        datasets: [
+          {
+            label: 'Evaluación inicial (Pre)',
+            data: activeData.map(m=>m.pre),
+            backgroundColor: 'rgba(248,0,250,0.5)',
+            borderColor: '#F800fa',
+            borderWidth: 1.5,
+            borderRadius: 4,
+          },
+          {
+            label: 'Evaluación final (Post)',
+            data: activeData.map(m=>m.post),
+            backgroundColor: 'rgba(0,216,218,0.5)',
+            borderColor: '#00d8da',
+            borderWidth: 1.5,
+            borderRadius: 4,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { color:'rgba(255,255,255,0.7)', font:{size:12} } },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.dataset.label}: ${ctx.raw}%`,
+              afterDatasetsDraw: () => {}
+            }
+          }
+        },
+        scales: {
+          x: { ticks:{color:'rgba(255,255,255,0.5)',font:{size:11}}, grid:{color:'rgba(255,255,255,0.05)'} },
+          y: { min:0, max:100, ticks:{color:'rgba(255,255,255,0.5)',callback:v=>v+'%'}, grid:{color:'rgba(255,255,255,0.05)'} }
+        }
+      }
+    });
+  }, 50);
+}
+
+function toggleRankingCompleto() {
+  rankingExpandido = !rankingExpandido;
+  const label = document.getElementById('ranking-toggle-label');
+  if (label) label.textContent = rankingExpandido ? 'Ver top 5' : 'Ver todos';
+  const gen = getGenData();
+  const stats = mockParticipantesStats.slice(0, gen.participantes);
+  renderRankingEmpresa(stats);
+}
+
+function descargarRanking() {
+  const gen = getGenData();
+  const stats = mockParticipantesStats.slice(0, gen.participantes);
+  const rows = ['#,Nombre,Puntos,Aprovechamiento,Δ Aprendizaje,NPS,Medallas'];
+  stats.forEach((p,i)=>{
+    rows.push(`${i+1},"${p.nombre}",${p.pts},${p.aprov}%,+${p.delta}pp,${p.nps},${p.medallas}`);
+  });
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ranking-${gen.id}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function nuevaGeneracion() {
+  alert('Funcionalidad próximamente: crear nueva generación para esta empresa.');
+}
 
 function getGlobalEvents(year, month) {
   const events = {}; // { 'YYYY-MM-DD': [{ label, color, border, type }] }
