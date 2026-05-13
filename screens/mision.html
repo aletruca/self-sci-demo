@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Simulador Odyssey — SELF SCI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+:root {
+  --cyan:#00d8da; --magenta:#F800fa; --purple:#7572e9;
+  --white:#fdfdfd; --black:#020202; --dark1:#0a0a0a; --dark2:#111; --dark3:#181820;
+  --green:#4ade80; --red:#f87171; --orange:#fb923c; --amber:#fbbf24;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--dark1);color:var(--white);overflow:hidden;}
+
+/* ── HEX BG ── */
+.hex-bg{position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 0%,rgba(0,216,218,0.1) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 50% at 90% 100%,rgba(248,0,250,0.07) 0%,transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='92'%3E%3Cpolygon points='40,2 78,22 78,62 40,82 2,62 2,22' fill='none' stroke='rgba(255,255,255,0.025)' stroke-width='1'/%3E%3C/svg%3E"),
+    var(--dark1);
+  background-size:auto,auto,80px 92px,auto;
+}
+
+/* ── STATES ── */
+.sim-state{position:fixed;inset:0;z-index:1;display:none;flex-direction:column;overflow:hidden;}
+.sim-state.active{display:flex;animation:fadeUp .45s cubic-bezier(.4,0,.2,1);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── BACK NAV ── */
+#back-nav{position:fixed;top:16px;left:20px;z-index:600;display:flex;align-items:center;gap:8px;
+  color:rgba(255,255,255,0.3);font-size:11px;font-weight:700;letter-spacing:.1em;cursor:pointer;transition:color .2s;}
+#back-nav:hover{color:var(--cyan);}
+
+/* ══════════════════════════════
+   INTRO SCREEN
+══════════════════════════════ */
+#state-intro{align-items:center;justify-content:flex-start;overflow-y:auto;padding:60px 24px 48px;}
+.intro-wrap{width:100%;max-width:900px;margin:0 auto;}
+
+.sim-badge{display:inline-flex;align-items:center;gap:10px;
+  background:rgba(0,216,218,0.07);border:1.5px solid rgba(0,216,218,0.3);
+  border-radius:100px;padding:8px 20px;font-size:10px;font-weight:800;letter-spacing:.18em;color:var(--cyan);
+  margin-bottom:28px;animation:badgePulse 3s ease-in-out infinite;}
+@keyframes badgePulse{0%,100%{box-shadow:0 0 0 0 rgba(0,216,218,0);}50%{box-shadow:0 0 0 8px rgba(0,216,218,0.06);}}
+.sim-badge .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:dotBlink 1.4s ease-in-out infinite;}
+@keyframes dotBlink{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+.intro-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;}
+@media(max-width:700px){.intro-grid{grid-template-columns:1fr;}}
+
+/* WhatsApp card */
+.wa-card{background:rgba(255,255,255,0.03);border:1px solid rgba(0,216,218,0.15);border-radius:16px;padding:20px;}
+.wa-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.wa-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,rgba(248,0,250,.3),rgba(117,114,233,.4));
+  border:1.5px solid rgba(248,0,250,.3);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;}
+.wa-name{font-size:13px;font-weight:700;}.wa-role{font-size:10px;color:rgba(255,255,255,.4);}
+.wa-time{margin-left:auto;font-size:10px;color:rgba(255,255,255,.3);}
+.wa-bubble{background:rgba(255,255,255,.05);border:1px solid rgba(0,216,218,.18);border-radius:14px 14px 4px 14px;
+  padding:14px 16px;font-size:13px;line-height:1.65;color:rgba(255,255,255,.8);}
+.wa-bubble strong{color:var(--cyan);}
+.wa-check{text-align:right;font-size:10px;color:var(--cyan);margin-top:7px;}
+
+/* Company state card */
+.state-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:20px;}
+.state-card-title{font-size:9px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.3);margin-bottom:16px;}
+.metric-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,.04);}
+.metric-row:last-child{border-bottom:none;}
+.metric-label{font-size:12px;color:rgba(255,255,255,.5);}
+.metric-val{font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.metric-trend{font-size:11px;margin-left:6px;}
+.val-bad{color:var(--red);}.val-warn{color:var(--orange);}.val-ok{color:var(--amber);}.val-good{color:var(--green);}
+
+/* Context info */
+.context-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px;}
+.ctx-block{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:14px;text-align:center;}
+.ctx-icon{font-size:20px;margin-bottom:6px;}
+.ctx-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.3);margin-bottom:4px;}
+.ctx-val{font-size:12px;font-weight:700;line-height:1.35;}
+
+.btn-start{width:100%;padding:18px;background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border:none;border-radius:14px;font-family:'Outfit',sans-serif;font-size:16px;font-weight:800;
+  color:var(--black);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:all .25s;box-shadow:0 0 30px rgba(0,216,218,.2);}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 8px 40px rgba(0,216,218,.3);}
+
+/* ══════════════════════════════
+   DECISION SCREEN
+══════════════════════════════ */
+#state-decision{flex-direction:column;}
+
+/* Top bar */
+.dec-topbar{flex-shrink:0;background:rgba(2,2,2,.92);backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(255,255,255,.07);padding:0 24px;
+  display:flex;align-items:center;gap:0;height:52px;}
+.dec-round-label{font-size:10px;font-weight:800;letter-spacing:.18em;color:var(--cyan);
+  white-space:nowrap;padding-right:20px;border-right:1px solid rgba(255,255,255,.08);}
+.dec-round-title{font-size:13px;font-weight:700;color:rgba(255,255,255,.8);padding:0 20px;flex:1;}
+/* Budget tracker */
+.budget-wrap{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.budget-label{font-size:10px;color:rgba(255,255,255,.35);white-space:nowrap;}
+.budget-bar-track{width:140px;height:6px;background:rgba(255,255,255,.08);border-radius:100px;overflow:hidden;}
+.budget-bar-fill{height:100%;border-radius:100px;transition:width .3s,background .3s;background:var(--green);}
+.budget-bar-fill.warn{background:var(--orange);}
+.budget-bar-fill.over{background:var(--red);}
+.budget-num{font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:700;
+  color:var(--green);transition:color .3s;white-space:nowrap;}
+.budget-num.warn{color:var(--orange);}.budget-num.over{color:var(--red);}
+
+/* Two-panel body */
+.dec-body{flex:1;display:grid;grid-template-columns:300px 1fr;overflow:hidden;}
+@media(max-width:800px){.dec-body{grid-template-columns:1fr;}}
+
+/* LEFT: metrics panel */
+.metrics-panel{overflow-y:auto;padding:20px 18px;border-right:1px solid rgba(255,255,255,.06);
+  display:flex;flex-direction:column;gap:16px;}
+.mp-title{font-size:9px;font-weight:800;letter-spacing:.14em;color:rgba(255,255,255,.3);}
+.mp-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px;}
+.mp-metric{display:flex;align-items:center;justify-content:space-between;padding:7px 0;
+  border-bottom:1px solid rgba(255,255,255,.04);}
+.mp-metric:last-child{border-bottom:none;}
+.mp-metric-name{font-size:11px;color:rgba(255,255,255,.5);}
+.mp-vals{display:flex;align-items:center;gap:6px;}
+.mp-current{font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;}
+.mp-arrow{font-size:10px;color:rgba(255,255,255,.2);}
+.mp-predicted{font-size:12px;font-weight:700;font-family:'JetBrains Mono',monospace;transition:all .3s;}
+.mp-delta{font-size:10px;font-weight:700;transition:all .3s;}
+.delta-pos{color:var(--green);}.delta-neg{color:var(--red);}.delta-zero{color:rgba(255,255,255,.2);}
+
+/* selected summary */
+.sel-summary{background:rgba(0,216,218,.04);border:1px solid rgba(0,216,218,.12);border-radius:10px;padding:14px;}
+.sel-sum-title{font-size:9px;font-weight:800;letter-spacing:.14em;color:rgba(0,216,218,.6);margin-bottom:10px;}
+.sel-sum-empty{font-size:12px;color:rgba(255,255,255,.2);font-style:italic;}
+.sel-item{display:flex;align-items:center;justify-content:space-between;
+  font-size:11px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.sel-item:last-child{border-bottom:none;}
+.sel-item-name{color:rgba(255,255,255,.7);flex:1;}
+.sel-item-cost{color:var(--cyan);font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;}
+
+.btn-ejecutar{width:100%;padding:14px;background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;
+  color:var(--black);cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:8px;
+  opacity:.35;}
+.btn-ejecutar:not(:disabled){opacity:1;}
+.btn-ejecutar:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,216,218,.3);}
+
+/* RIGHT: decisions */
+.decisions-panel{overflow-y:auto;padding:20px 20px;}
+.dp-header{margin-bottom:16px;}
+.dp-situation{font-size:12px;line-height:1.6;color:rgba(255,255,255,.5);
+  background:rgba(255,255,255,.02);border-left:3px solid rgba(248,0,250,.4);
+  border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:14px;}
+.dp-situation strong{color:rgba(255,255,255,.8);}
+.dp-ask{font-size:14px;font-weight:700;color:var(--white);line-height:1.45;}
+.dp-budget-note{font-size:11px;color:rgba(255,255,255,.35);margin-top:6px;}
+
+.dec-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+
+/* Decision card */
+.dec-card{background:rgba(255,255,255,.03);border:1.5px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:16px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;}
+.dec-card:hover:not(.dec-selected){border-color:rgba(117,114,233,.4);background:rgba(117,114,233,.05);}
+.dec-card.dec-selected{border-color:var(--cyan);background:rgba(0,216,218,.06);
+  box-shadow:0 0 0 1px rgba(0,216,218,.2),0 4px 20px rgba(0,216,218,.1);}
+.dec-card.dec-disabled{opacity:.4;cursor:not-allowed;pointer-events:none;}
+
+.dc-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.dc-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;}
+.dc-title{font-size:13px;font-weight:700;line-height:1.3;flex:1;}
+.dc-check{font-size:16px;color:var(--cyan);margin-left:auto;opacity:0;transition:opacity .2s;}
+.dec-card.dec-selected .dc-check{opacity:1;}
+
+.dc-meta{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.dc-tag{display:inline-flex;align-items:center;gap:4px;border-radius:100px;padding:3px 10px;
+  font-size:10px;font-weight:700;}
+.tag-cost{background:rgba(0,216,218,.1);color:var(--cyan);border:1px solid rgba(0,216,218,.2);}
+.tag-time{background:rgba(255,255,255,.06);color:rgba(255,255,255,.5);}
+.tag-risk-low{background:rgba(74,222,128,.1);color:var(--green);}
+.tag-risk-med{background:rgba(251,146,60,.1);color:var(--orange);}
+.tag-risk-high{background:rgba(248,113,113,.1);color:var(--red);}
+
+.dc-impacts{border-top:1px solid rgba(255,255,255,.06);padding-top:10px;
+  display:flex;flex-wrap:wrap;gap:6px;}
+.dc-impact{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;
+  background:rgba(255,255,255,.04);border-radius:6px;padding:3px 8px;}
+.imp-pos{color:var(--green);}.imp-neg{color:var(--red);}.imp-neutral{color:rgba(255,255,255,.3);}
+
+/* ══════════════════════════════
+   RESULTS SCREEN
+══════════════════════════════ */
+#state-results{align-items:center;justify-content:flex-start;overflow-y:auto;padding:48px 24px;}
+.results-wrap{width:100%;max-width:760px;margin:0 auto;}
+
+.results-header{text-align:center;margin-bottom:32px;}
+.results-round-tag{font-size:10px;font-weight:800;letter-spacing:.16em;color:rgba(255,255,255,.3);margin-bottom:10px;}
+.results-title{font-size:26px;font-weight:900;margin-bottom:8px;}
+.results-sub{font-size:13px;color:rgba(255,255,255,.45);}
+
+/* Score badge */
+.score-badge{display:inline-flex;align-items:center;gap:14px;
+  background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);
+  border-radius:16px;padding:16px 24px;margin-bottom:28px;}
+.score-grade{font-size:48px;font-weight:900;line-height:1;}
+.score-grade.A{color:var(--green);text-shadow:0 0 20px rgba(74,222,128,.4);}
+.score-grade.B{color:var(--cyan);text-shadow:0 0 20px rgba(0,216,218,.4);}
+.score-grade.C{color:var(--amber);text-shadow:0 0 20px rgba(251,191,36,.3);}
+.score-grade.D{color:var(--red);}
+.score-pts{text-align:left;}
+.score-num{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;}
+.score-lbl{font-size:11px;color:rgba(255,255,255,.35);margin-top:2px;}
+
+/* Metrics change grid */
+.metrics-change-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px;}
+.mc-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;
+  padding:16px;text-align:center;}
+.mc-label{font-size:10px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.3);margin-bottom:8px;}
+.mc-values{display:flex;align-items:center;justify-content:center;gap:10px;}
+.mc-from{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,.35);}
+.mc-arrow{font-size:14px;color:rgba(255,255,255,.2);}
+.mc-to{font-size:20px;font-weight:900;font-family:'JetBrains Mono',monospace;}
+.mc-delta{font-size:11px;font-weight:700;margin-top:4px;}
+.mc-improved{color:var(--green);}.mc-worse{color:var(--red);}.mc-same{color:rgba(255,255,255,.3);}
+
+/* Debrief */
+.debrief-box{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:20px;margin-bottom:24px;}
+.db-label{font-size:9px;font-weight:800;letter-spacing:.14em;color:rgba(248,0,250,.6);margin-bottom:10px;}
+.db-text{font-size:13px;line-height:1.7;color:rgba(255,255,255,.6);}
+.db-optimal{margin-top:12px;padding:10px 14px;
+  background:rgba(0,216,218,.05);border:1px solid rgba(0,216,218,.15);border-radius:8px;
+  font-size:12px;color:rgba(0,216,218,.8);}
+
+.btn-siguiente{width:100%;padding:16px;background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border:none;border-radius:12px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;
+  color:var(--black);cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:10px;}
+.btn-siguiente:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,216,218,.3);}
+
+/* ══════════════════════════════
+   FINAL SCORECARD
+══════════════════════════════ */
+#state-final{align-items:center;justify-content:center;overflow-y:auto;padding:40px 24px;}
+.final-wrap{width:100%;max-width:680px;text-align:center;}
+.final-trophy{font-size:56px;margin-bottom:20px;animation:trophyBounce .8s cubic-bezier(.34,1.56,.64,1);}
+@keyframes trophyBounce{from{transform:scale(0) rotate(-10deg);}to{transform:scale(1) rotate(0);}}
+.final-title{font-size:32px;font-weight:900;margin-bottom:8px;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.final-sub{font-size:15px;color:rgba(255,255,255,.45);margin-bottom:32px;line-height:1.6;}
+
+.final-metrics-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:28px;}
+@media(max-width:600px){.final-metrics-grid{grid-template-columns:repeat(3,1fr);}}
+.final-metric{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;padding:12px 8px;text-align:center;}
+.fm-label{font-size:8px;font-weight:700;letter-spacing:.1em;color:rgba(255,255,255,.3);margin-bottom:6px;}
+.fm-before{font-size:11px;color:rgba(255,255,255,.25);font-family:'JetBrains Mono',monospace;margin-bottom:2px;}
+.fm-after{font-size:16px;font-weight:900;font-family:'JetBrains Mono',monospace;}
+.fm-change{font-size:10px;font-weight:700;margin-top:3px;}
+
+.final-score-big{display:inline-flex;align-items:center;gap:16px;
+  background:rgba(255,255,255,.04);border:1.5px solid rgba(0,216,218,.2);
+  border-radius:16px;padding:20px 32px;margin-bottom:28px;}
+.fsb-grade{font-size:64px;font-weight:900;line-height:1;}
+.fsb-info{text-align:left;}
+.fsb-pts{font-size:28px;font-weight:900;font-family:'JetBrains Mono',monospace;}
+.fsb-label{font-size:12px;color:rgba(255,255,255,.4);}
+
+.btn-volver{padding:14px 32px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;
+  color:rgba(255,255,255,.6);cursor:pointer;transition:all .2s;}
+.btn-volver:hover{background:rgba(255,255,255,.1);color:var(--white);}
+
+/* ── ANIMATIONS ── */
+@keyframes countUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.animate-in{animation:countUp .5s ease forwards;}
+  </style>
+</head>
+<body>
+
+<div class="hex-bg"></div>
+<div id="back-nav" onclick="window.location.href='../index.html'">
+  <i class="fas fa-arrow-left" style="font-size:10px;"></i> VOLVER
+</div>
+
+<!-- ══════════════════════════════
+     INTRO
+══════════════════════════════ -->
+<div id="state-intro" class="sim-state active">
+  <div class="intro-wrap" style="padding-top:64px;">
+
+    <div style="text-align:center;margin-bottom:24px;">
+      <div class="sim-badge"><span class="dot"></span>SIMULADOR · ODYSSEY BEBIDAS · MÓDULO 1</div>
+      <h1 style="font-size:30px;font-weight:900;line-height:1.15;margin-bottom:10px;">
+        Toma las decisiones.<br>
+        <span style="background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+          Mira las consecuencias.
+        </span>
+      </h1>
+      <p style="font-size:13px;color:rgba(255,255,255,.45);max-width:520px;margin:0 auto;line-height:1.65;">
+        4 rondas de decisiones reales con presupuesto limitado. Cada elección cambia las métricas de Odyssey.<br>
+        No hay respuestas correctas en el manual — solo en los resultados.
+      </p>
+    </div>
+
+    <div class="intro-grid">
+      <!-- WhatsApp -->
+      <div class="wa-card">
+        <div class="wa-head">
+          <div class="wa-av">MR</div>
+          <div><div class="wa-name">Marcela Reyes</div><div class="wa-role">CEO — Odyssey Bebidas</div></div>
+          <div class="wa-time">09:14</div>
+        </div>
+        <div class="wa-bubble">
+          Rodrigo, necesito que te hagas cargo de esto. Nuestro <strong>OTIF está al 97%</strong>, invertimos en operaciones todo el año… y el <strong>NPS cayó 17 puntos</strong>, las quejas subieron 340%.<br><br>
+          Tienes <strong>4 decisiones críticas</strong> que tomar. El consejo espera resultados en 12 meses.
+        </div>
+        <div class="wa-check">✓✓ Leído · 09:15</div>
+      </div>
+
+      <!-- Company State -->
+      <div class="state-card">
+        <div class="state-card-title">ESTADO ACTUAL — ODYSSEY Q1 2025</div>
+        <div class="metric-row">
+          <span class="metric-label">NPS</span>
+          <span><span class="metric-val val-bad">41 pts</span><span class="metric-trend val-bad">↓ −17</span></span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">OTIF</span>
+          <span><span class="metric-val val-ok">97.3%</span><span class="metric-trend val-ok">↑ +2.1</span></span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Costo de atención</span>
+          <span><span class="metric-val val-bad">$12.40/hl</span></span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Quiebres e-com</span>
+          <span><span class="metric-val val-bad">11.4%</span><span class="metric-trend val-bad">↑↑</span></span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Customer Effort Score</span>
+          <span><span class="metric-val val-bad">5.4 / 7</span></span>
+        </div>
+        <div class="metric-row" style="border-bottom:none;">
+          <span class="metric-label">Quejas vs año anterior</span>
+          <span><span class="metric-val val-bad">+340%</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="context-strip">
+      <div class="ctx-block">
+        <div class="ctx-icon">🎯</div>
+        <div class="ctx-lbl">Tu objetivo</div>
+        <div class="ctx-val">NPS ≥ 70 en 12 meses</div>
+      </div>
+      <div class="ctx-block">
+        <div class="ctx-icon">💰</div>
+        <div class="ctx-lbl">Presupuesto total</div>
+        <div class="ctx-val">$1,110,000 en 4 rondas</div>
+      </div>
+      <div class="ctx-block">
+        <div class="ctx-icon">⚡</div>
+        <div class="ctx-lbl">Rondas</div>
+        <div class="ctx-val">4 decisiones, 1 año simulado</div>
+      </div>
+    </div>
+
+    <button class="btn-start" onclick="iniciarSimulador()">
+      <i class="fas fa-rocket"></i>
+      Aceptar misión — Tomar el control de Odyssey
+    </button>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════
+     DECISION SCREEN
+══════════════════════════════ -->
+<div id="state-decision" class="sim-state">
+
+  <!-- Top bar -->
+  <div class="dec-topbar">
+    <span class="dec-round-label" id="dec-round-label">RONDA 01 / 04</span>
+    <span class="dec-round-title" id="dec-round-title">Situación</span>
+    <div class="budget-wrap">
+      <span class="budget-label">PRESUPUESTO</span>
+      <div class="budget-bar-track"><div class="budget-bar-fill" id="budget-fill" style="width:0%"></div></div>
+      <span class="budget-num" id="budget-num">$0 / $150k</span>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="dec-body">
+
+    <!-- LEFT: metrics -->
+    <div class="metrics-panel">
+      <div class="mp-title">MÉTRICAS EN TIEMPO REAL</div>
+      <div class="mp-card" id="metrics-panel-content">
+        <!-- Populated by JS -->
+      </div>
+      <div class="sel-summary">
+        <div class="sel-sum-title">DECISIONES SELECCIONADAS</div>
+        <div id="sel-summary-content"><div class="sel-sum-empty">Ninguna aún</div></div>
+      </div>
+      <button class="btn-ejecutar" id="btn-ejecutar" disabled onclick="ejecutarEstrategia()">
+        <i class="fas fa-play"></i> Ejecutar estrategia
+      </button>
+    </div>
+
+    <!-- RIGHT: decision cards -->
+    <div class="decisions-panel">
+      <div class="dp-header">
+        <div class="dp-situation" id="dp-situation"></div>
+        <div class="dp-ask" id="dp-ask"></div>
+        <div class="dp-budget-note" id="dp-budget-note"></div>
+      </div>
+      <div class="dec-grid" id="dec-grid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════
+     RESULTS SCREEN
+══════════════════════════════ -->
+<div id="state-results" class="sim-state">
+  <div class="results-wrap">
+
+    <div class="results-header">
+      <div class="results-round-tag" id="res-round-tag">RONDA 01 — RESULTADOS</div>
+      <div class="results-title" id="res-title">Estrategia ejecutada</div>
+      <div class="results-sub" id="res-sub">Los números de Odyssey han cambiado</div>
+    </div>
+
+    <div style="text-align:center;margin-bottom:24px;">
+      <div class="score-badge">
+        <div class="score-grade" id="res-grade">B</div>
+        <div class="score-pts">
+          <div class="score-num" id="res-pts">65 pts</div>
+          <div class="score-lbl">de 100 puntos posibles</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="metrics-change-grid" id="metrics-change-grid">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="debrief-box">
+      <div class="db-label">ANÁLISIS DE TU ESTRATEGIA</div>
+      <div class="db-text" id="res-debrief"></div>
+      <div class="db-optimal" id="res-optimal"></div>
+    </div>
+
+    <button class="btn-siguiente" id="btn-siguiente" onclick="siguienteRonda()">
+      <i class="fas fa-arrow-right"></i>
+      <span id="btn-sig-text">Continuar a Ronda 2</span>
+    </button>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════
+     FINAL SCORECARD
+══════════════════════════════ -->
+<div id="state-final" class="sim-state">
+  <div class="final-wrap">
+    <div class="final-trophy">🏆</div>
+    <div class="final-title">Simulación completada</div>
+    <div class="final-sub" id="final-sub">Así quedó Odyssey después de tus 4 decisiones</div>
+
+    <div class="final-metrics-grid" id="final-metrics-grid"></div>
+
+    <div style="display:flex;justify-content:center;margin-bottom:28px;">
+      <div class="final-score-big">
+        <div class="fsb-grade" id="final-grade">B</div>
+        <div class="fsb-info">
+          <div class="fsb-pts" id="final-pts">240 pts</div>
+          <div class="fsb-label">Puntuación total / 400</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:4px;" id="final-verdict"></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-volver" onclick="reiniciar()">
+      <i class="fas fa-redo" style="margin-right:8px;"></i>Jugar de nuevo
+    </button>
+  </div>
+</div>
+
+
+<script>
+// ════════════════════════════════════════════════════════
+//  DATA
+// ════════════════════════════════════════════════════════
+
+const ROUNDS = [
+  // ─── RONDA 1: Crisis inmediata ───
+  {
+    num: 1,
+    titulo: 'Crisis inmediata',
+    situacion: 'El NPS cayó 17 puntos en un trimestre con OTIF al 97%. El 67% de las quejas son por falta de visibilidad y comunicación. El e-commerce tiene 11.4% de quiebres.',
+    pregunta: '¿Cómo asignas el presupuesto para detener la hemorragia de NPS en los próximos 60 días?',
+    presupuesto: 150000,
+    decisions: [
+      { id:'noti', titulo:'Notificaciones proactivas', desc:'Automatizar alertas WhatsApp/email al momento del despacho con tracking en tiempo real.',
+        icon:'fas fa-bell', iconBg:'rgba(0,216,218,.12)', iconColor:'var(--cyan)',
+        costo:45000, tiempo:'2 semanas', riesgo:'Bajo',
+        impacto:{nps:+8, costo:-.3, quiebres:0, ces:-.5, otif:0},
+        valor:35, costoTag:'$45k' },
+      { id:'portal', titulo:'Portal de visibilidad', desc:'Plataforma web para tracking de pedidos en tiempo real. Los clientes consultan estatus sin llamar.',
+        icon:'fas fa-eye', iconBg:'rgba(117,114,233,.12)', iconColor:'var(--purple)',
+        costo:85000, tiempo:'6 semanas', riesgo:'Medio',
+        impacto:{nps:+12, costo:-.8, quiebres:-1.2, ces:-.9, otif:0},
+        valor:50, costoTag:'$85k' },
+      { id:'buffer', titulo:'Buffer inventario e-com', desc:'Reservar stock físico dedicado exclusivamente al canal e-commerce para reducir quiebres.',
+        icon:'fas fa-boxes', iconBg:'rgba(251,146,60,.1)', iconColor:'var(--orange)',
+        costo:120000, tiempo:'1 semana', riesgo:'Bajo',
+        impacto:{nps:+4, costo:+1.2, quiebres:-6.8, ces:-.2, otif:+.3},
+        valor:20, costoTag:'$120k' },
+      { id:'auditoria', titulo:'Auditoría proceso e-com', desc:'Mapear y rediseñar el flujo de pedido-confirmación-entrega del canal digital eliminando pasos manuales.',
+        icon:'fas fa-magnifying-glass-chart', iconBg:'rgba(74,222,128,.1)', iconColor:'var(--green)',
+        costo:30000, tiempo:'3 semanas', riesgo:'Bajo',
+        impacto:{nps:+3, costo:-.3, quiebres:-2.1, ces:-.3, otif:0},
+        valor:25, costoTag:'$30k' },
+      { id:'cap_cs', titulo:'Capacitación servicio al cliente', desc:'Programa intensivo para que el equipo de CS resuelva el 95%+ de incidencias en primera llamada.',
+        icon:'fas fa-headset', iconBg:'rgba(248,0,250,.08)', iconColor:'var(--magenta)',
+        costo:25000, tiempo:'1 semana', riesgo:'Bajo',
+        impacto:{nps:+3, costo:-.2, quiebres:0, ces:-.4, otif:0},
+        valor:20, costoTag:'$25k' },
+      { id:'sla', titulo:'Rediseño SLA transportistas', desc:'Renegociar ventanas de entrega y penalidades. Implementar reporting diario de cumplimiento.',
+        icon:'fas fa-truck', iconBg:'rgba(251,191,36,.1)', iconColor:'var(--amber)',
+        costo:65000, tiempo:'4 semanas', riesgo:'Medio',
+        impacto:{nps:+5, costo:-.5, quiebres:-1.8, ces:-.3, otif:+1.2},
+        valor:30, costoTag:'$65k' }
+    ],
+    optimalIds:['noti','auditoria','cap_cs'],
+    optimalExplain:'Las notificaciones ($45k) + auditoría ($30k) + capacitación ($25k) ofrecen el mayor impacto en NPS y CES por cada peso invertido. El portal es más poderoso pero tarda más. El buffer ataca el síntoma sin resolver la causa raíz de visibilidad.'
+  },
+
+  // ─── RONDA 2: Integración omnicanal ───
+  {
+    num: 2,
+    titulo: 'Integrar o fragmentar',
+    situacion: '3 meses después. NPS mejoró parcialmente pero e-commerce sigue perdiendo pedidos por inventario no integrado. El canal creció 33%/año y representa ya el 25% del volumen.',
+    pregunta: 'El e-com sigue con >9% de quiebres. ¿Cuál es la solución correcta a largo plazo?',
+    presupuesto: 420000,
+    decisions: [
+      { id:'integracion', titulo:'Integración total OMS/ATP', desc:'Sistema unificado de inventario con Available-to-Promise en tiempo real. Ningún canal puede reclamar stock que ya está comprometido.',
+        icon:'fas fa-network-wired', iconBg:'rgba(0,216,218,.12)', iconColor:'var(--cyan)',
+        costo:420000, tiempo:'3 meses', riesgo:'Medio',
+        impacto:{nps:+9, costo:-1.8, quiebres:-6.2, ces:-.6, otif:+.5},
+        valor:70, costoTag:'$420k' },
+      { id:'buffer_seg', titulo:'Buffer segmentado por canal', desc:'Stock físico separado para cada canal en el almacén. Solución rápida pero eleva costos de inventario.',
+        icon:'fas fa-layer-group', iconBg:'rgba(251,146,60,.1)', iconColor:'var(--orange)',
+        costo:156000, tiempo:'2 semanas', riesgo:'Bajo',
+        impacto:{nps:+4, costo:+.8, quiebres:-4.1, ces:-.2, otif:0},
+        valor:30, costoTag:'$156k' },
+      { id:'piloto', titulo:'Piloto con 20 SKUs top', desc:'Integrar solo los 20 SKUs de mayor rotación en e-com. Rápido y barato, pero no resuelve el problema completo.',
+        icon:'fas fa-flask', iconBg:'rgba(74,222,128,.1)', iconColor:'var(--green)',
+        costo:85000, tiempo:'5 semanas', riesgo:'Bajo',
+        impacto:{nps:+3, costo:-.3, quiebres:-2.8, ces:-.2, otif:0},
+        valor:20, costoTag:'$85k' },
+      { id:'3pl', titulo:'Contratar 3PL e-commerce', desc:'Externalizar el fulfillment digital a un operador especializado. Rápido de implementar pero incrementa costo por unidad.',
+        icon:'fas fa-handshake', iconBg:'rgba(248,0,250,.08)', iconColor:'var(--magenta)',
+        costo:380000, tiempo:'2 meses', riesgo:'Alto',
+        impacto:{nps:+6, costo:+2.1, quiebres:-5.5, ces:-.5, otif:+.8},
+        valor:35, costoTag:'$380k' }
+    ],
+    optimalIds:['integracion'],
+    optimalExplain:'La integración total ($420k) es la única opción que elimina la causa raíz: inventario no integrado. El payback es 5.7 meses. El buffer segmentado y el 3PL son más baratos o rápidos pero no resuelven el problema — el mismo stock seguirá reclamado por dos canales simultáneamente.'
+  },
+
+  // ─── RONDA 3: Resiliencia ───
+  {
+    num: 3,
+    titulo: 'Proveedor en crisis',
+    situacion: 'El proveedor de tapas de aluminio (Guangdong, lead time 110 días) se interrumpió 6 semanas. Pérdida directa $1.46M + riesgo de $9.16M en contratos. 3 de 4 insumos críticos dependen de proveedor único importado.',
+    pregunta: '¿Cómo proteges la cadena de futuras disrupciones sin comprometer el margen?',
+    presupuesto: 340000,
+    decisions: [
+      { id:'near', titulo:'Nearshoring tapas (México)', desc:'Desarrollar proveedor local de tapas. Lead time de 110→18 días, 90% reducción del riesgo de disrupción.',
+        icon:'fas fa-industry', iconBg:'rgba(0,216,218,.12)', iconColor:'var(--cyan)',
+        costo:340000, tiempo:'6 meses', riesgo:'Medio',
+        impacto:{nps:0, costo:-.3, quiebres:0, ces:0, otif:+.8},
+        valor:60, costoTag:'$340k' },
+      { id:'dual', titulo:'Dual sourcing México + China', desc:'Mantener proveedor chino + desarrollar 40% con proveedor local. Mitiga el riesgo sin eliminar el costo bajo.',
+        icon:'fas fa-code-branch', iconBg:'rgba(117,114,233,.12)', iconColor:'var(--purple)',
+        costo:180000, tiempo:'3 meses', riesgo:'Bajo',
+        impacto:{nps:0, costo:+.4, quiebres:0, ces:0, otif:+.4},
+        valor:45, costoTag:'$180k' },
+      { id:'buff_inv', titulo:'Buffer inventario 3 meses', desc:'Mantener stock de seguridad equivalente a 3 meses de consumo de insumos críticos.',
+        icon:'fas fa-warehouse', iconBg:'rgba(251,146,60,.1)', iconColor:'var(--orange)',
+        costo:156000, tiempo:'2 semanas', riesgo:'Bajo',
+        impacto:{nps:0, costo:+1.2, quiebres:0, ces:0, otif:+.2},
+        valor:35, costoTag:'$156k' },
+      { id:'seguro', titulo:'Seguro de interrupción de negocio', desc:'Póliza que cubre pérdidas por disrupción de proveedor crítico. No previene, solo compensa.',
+        icon:'fas fa-shield-halved', iconBg:'rgba(74,222,128,.1)', iconColor:'var(--green)',
+        costo:48000, tiempo:'1 mes', riesgo:'Bajo',
+        impacto:{nps:0, costo:+.4, quiebres:0, ces:0, otif:0},
+        valor:20, costoTag:'$48k' }
+    ],
+    optimalIds:['near'],
+    optimalExplain:'El nearshoring ($340k) es la única acción que elimina la vulnerabilidad raíz. El costo esperado anual del riesgo (~$436k) supera la inversión. El dual sourcing es bueno pero solo mitiga parcialmente. El buffer extiende el tiempo de reacción pero no elimina la dependencia de proveedor único.'
+  },
+
+  // ─── RONDA 4: Causas raíz ───
+  {
+    num: 4,
+    titulo: 'Cerrar las causas raíz',
+    situacion: 'Mes 9. NPS llegó a 58 (meta: 70). Las mismas 3 quejas persisten: discrepancias en factura (27%), faltantes en entrega (34%), falta de visibilidad (14%). El costo de servicio reactivo sigue en $1.26M/año.',
+    pregunta: 'Con $200k, ¿cuál causa raíz atacas primero para llegar al NPS 70?',
+    presupuesto: 200000,
+    decisions: [
+      { id:'factura', titulo:'Automatización conciliación facturas', desc:'Sistema que reconcilia automáticamente pedido-entrega-factura, eliminando los errores manuales que generan el 27% de quejas.',
+        icon:'fas fa-file-invoice', iconBg:'rgba(0,216,218,.12)', iconColor:'var(--cyan)',
+        costo:185000, tiempo:'2 meses', riesgo:'Bajo',
+        impacto:{nps:+8, costo:-.6, quiebres:-.3, ces:-.5, otif:0},
+        valor:55, costoTag:'$185k' },
+      { id:'wms', titulo:'Upgrade WMS + predicción demanda', desc:'Nuevo sistema de gestión de almacén con algoritmos de demand sensing para reducir faltantes en entrega.',
+        icon:'fas fa-brain', iconBg:'rgba(117,114,233,.12)', iconColor:'var(--purple)',
+        costo:200000, tiempo:'4 meses', riesgo:'Alto',
+        impacto:{nps:+4, costo:-.9, quiebres:-2.8, ces:-.3, otif:+1.1},
+        valor:45, costoTag:'$200k' },
+      { id:'iot_campo', titulo:'IoT servicio de campo predictivo', desc:'Sensores en 240 equipos de frío de Cadena Norte para mantenimiento predictivo. Reduce fallas de 38% a 8%.',
+        icon:'fas fa-microchip', iconBg:'rgba(74,222,128,.1)', iconColor:'var(--green)',
+        costo:180000, tiempo:'3 meses', riesgo:'Medio',
+        impacto:{nps:+5, costo:-.4, quiebres:0, ces:-.4, otif:0},
+        valor:40, costoTag:'$180k' },
+      { id:'portal_dist', titulo:'Portal autoservicio distribuidores', desc:'Eliminar el proceso de 6 pasos y 47 min para hacer un pedido. Portal con confirmación en <2 minutos.',
+        icon:'fas fa-store', iconBg:'rgba(248,0,250,.08)', iconColor:'var(--magenta)',
+        costo:160000, tiempo:'2 meses', riesgo:'Bajo',
+        impacto:{nps:+7, costo:-.9, quiebres:0, ces:-.7, otif:0},
+        valor:50, costoTag:'$160k' }
+    ],
+    optimalIds:['factura'],
+    optimalExplain:'La conciliación automática de facturas ($185k) ataca la causa raíz del 27% de quejas con el mayor impacto en NPS por peso invertido. El portal de distribuidores también es excelente (+7 NPS) pero el problema de factura es la queja más costosa de resolver manualmente ($340k/año en retrabajo).'
+  }
+];
+
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+const sim = {
+  currentRound: 0,  // 0-indexed
+  metrics: { nps:41, costo:12.40, quiebres:11.4, ces:5.4, otif:97.3 },
+  metricsAtRoundStart: null,
+  selected: [],     // array of decision ids
+  budgetUsed: 0,
+  scores: [],       // score per round
+  totalScore: 0
+};
+
+const METRIC_CONFIG = [
+  { key:'nps',      label:'NPS',           unit:' pts',  prefix:'',   higherIsBetter:true  },
+  { key:'costo',    label:'Costo/hl',      unit:'',      prefix:'$',  higherIsBetter:false },
+  { key:'quiebres', label:'Quiebres e-com',unit:'%',     prefix:'',   higherIsBetter:false },
+  { key:'ces',      label:'CES',           unit:'/7',    prefix:'',   higherIsBetter:false },
+  { key:'otif',     label:'OTIF',          unit:'%',     prefix:'',   higherIsBetter:true  }
+];
+
+function fmt(mc, val) {
+  return mc.prefix + val.toFixed(mc.key==='nps'||mc.key==='otif'?1:2) + mc.unit;
+}
+
+// ════════════════════════════════════════════════════════
+//  SHOW/HIDE STATES
+// ════════════════════════════════════════════════════════
+function showState(id) {
+  document.querySelectorAll('.sim-state').forEach(s=>{
+    s.classList.remove('active');
+    s.style.display='none';
+  });
+  const el = document.getElementById(id);
+  el.style.display='flex';
+  requestAnimationFrame(()=>el.classList.add('active'));
+  el.scrollTop=0;
+}
+
+// ════════════════════════════════════════════════════════
+//  INICIO
+// ════════════════════════════════════════════════════════
+function iniciarSimulador() {
+  sim.currentRound = 0;
+  sim.metrics = { nps:41, costo:12.40, quiebres:11.4, ces:5.4, otif:97.3 };
+  sim.scores = [];
+  sim.totalScore = 0;
+  renderDecisionScreen();
+  showState('state-decision');
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER DECISION SCREEN
+// ════════════════════════════════════════════════════════
+function renderDecisionScreen() {
+  const round = ROUNDS[sim.currentRound];
+  sim.selected = [];
+  sim.budgetUsed = 0;
+  sim.metricsAtRoundStart = {...sim.metrics};
+
+  // Top bar
+  document.getElementById('dec-round-label').textContent = `RONDA 0${round.num} / 04`;
+  document.getElementById('dec-round-title').textContent = round.titulo;
+
+  // Situation
+  document.getElementById('dp-situation').innerHTML = round.situacion;
+  document.getElementById('dp-ask').textContent = round.pregunta;
+  document.getElementById('dp-budget-note').textContent =
+    `Presupuesto disponible: $${(round.presupuesto/1000).toFixed(0)}k — Puedes seleccionar una o más decisiones mientras no excedas el presupuesto.`;
+
+  // Decision cards
+  const grid = document.getElementById('dec-grid');
+  grid.innerHTML = round.decisions.map(d => `
+    <div class="dec-card" id="dc-${d.id}" onclick="toggleDecision('${d.id}')">
+      <div class="dc-head">
+        <div class="dc-icon" style="background:${d.iconBg};color:${d.iconColor};">
+          <i class="${d.icon}"></i>
+        </div>
+        <div>
+          <div class="dc-title">${d.titulo}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:3px;line-height:1.4;">${d.desc}</div>
+        </div>
+        <div class="dc-check"><i class="fas fa-check-circle"></i></div>
+      </div>
+      <div class="dc-meta">
+        <span class="dc-tag tag-cost"><i class="fas fa-dollar-sign" style="font-size:9px;"></i> ${d.costoTag}</span>
+        <span class="dc-tag tag-time"><i class="fas fa-clock" style="font-size:9px;"></i> ${d.tiempo}</span>
+        <span class="dc-tag tag-risk-${d.riesgo.toLowerCase().replace('é','e')}">⚡ ${d.riesgo}</span>
+      </div>
+      <div class="dc-impacts">
+        ${METRIC_CONFIG.map(mc => {
+          const delta = d.impacto[mc.key];
+          if(delta===0) return '';
+          const cls = (delta>0&&mc.higherIsBetter)||(delta<0&&!mc.higherIsBetter) ? 'imp-pos' : 'imp-neg';
+          const sign = delta>0 ? '+' : '';
+          return `<span class="dc-impact ${cls}"><i class="fas fa-${delta>0?'arrow-up':'arrow-down'}" style="font-size:8px;"></i> ${mc.label} ${sign}${delta.toFixed(1)}${mc.unit}</span>`;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  updateMetricsPanel();
+  updateBudget();
+  updateSelectedSummary();
+  updateEjecutarBtn();
+}
+
+// ════════════════════════════════════════════════════════
+//  TOGGLE DECISION
+// ════════════════════════════════════════════════════════
+function toggleDecision(id) {
+  const round = ROUNDS[sim.currentRound];
+  const dec = round.decisions.find(d=>d.id===id);
+  const isSelected = sim.selected.includes(id);
+
+  if(isSelected) {
+    sim.selected = sim.selected.filter(x=>x!==id);
+    sim.budgetUsed -= dec.costo;
+  } else {
+    if(sim.budgetUsed + dec.costo > round.presupuesto) return; // over budget
+    sim.selected.push(id);
+    sim.budgetUsed += dec.costo;
+  }
+
+  document.getElementById('dc-'+id).classList.toggle('dec-selected', !isSelected);
+  updateBudget();
+  updateMetricsPanel();
+  updateSelectedSummary();
+  updateEjecutarBtn();
+
+  // Disable cards that would exceed budget
+  round.decisions.forEach(d => {
+    const card = document.getElementById('dc-'+d.id);
+    if(!sim.selected.includes(d.id)) {
+      const wouldExceed = sim.budgetUsed + d.costo > round.presupuesto;
+      card.classList.toggle('dec-disabled', wouldExceed);
+    } else {
+      card.classList.remove('dec-disabled');
+    }
+  });
+}
+
+function updateBudget() {
+  const round = ROUNDS[sim.currentRound];
+  const pct = (sim.budgetUsed / round.presupuesto) * 100;
+  const fill = document.getElementById('budget-fill');
+  const num = document.getElementById('budget-num');
+  fill.style.width = Math.min(pct,100)+'%';
+  const used = sim.budgetUsed/1000;
+  const total = round.presupuesto/1000;
+  num.textContent = `$${used.toFixed(0)}k / $${total.toFixed(0)}k`;
+  const isOver = pct>100, isWarn = pct>80;
+  fill.className = 'budget-bar-fill'+(isOver?' over':isWarn?' warn':'');
+  num.className = 'budget-num'+(isOver?' over':isWarn?' warn':'');
+}
+
+function updateSelectedSummary() {
+  const round = ROUNDS[sim.currentRound];
+  const el = document.getElementById('sel-summary-content');
+  if(sim.selected.length===0){
+    el.innerHTML='<div class="sel-sum-empty">Ninguna aún</div>';
+    return;
+  }
+  el.innerHTML = sim.selected.map(id=>{
+    const d = round.decisions.find(x=>x.id===id);
+    return `<div class="sel-item"><span class="sel-item-name">${d.titulo}</span><span class="sel-item-cost">${d.costoTag}</span></div>`;
+  }).join('');
+}
+
+function updateEjecutarBtn() {
+  const btn = document.getElementById('btn-ejecutar');
+  btn.disabled = sim.selected.length===0;
+}
+
+// ════════════════════════════════════════════════════════
+//  METRICS PANEL (live preview)
+// ════════════════════════════════════════════════════════
+function updateMetricsPanel() {
+  const round = ROUNDS[sim.currentRound];
+  // Sum deltas of selected decisions
+  const totalDelta = {nps:0,costo:0,quiebres:0,ces:0,otif:0};
+  sim.selected.forEach(id=>{
+    const d = round.decisions.find(x=>x.id===id);
+    Object.keys(totalDelta).forEach(k=>totalDelta[k]+=d.impacto[k]||0);
+  });
+
+  const base = sim.metricsAtRoundStart||sim.metrics;
+  const panel = document.getElementById('metrics-panel-content');
+  panel.innerHTML = METRIC_CONFIG.map(mc=>{
+    const current = base[mc.key];
+    const delta = totalDelta[mc.key];
+    const predicted = current + delta;
+    const isGood = (delta>0&&mc.higherIsBetter)||(delta<0&&!mc.higherIsBetter);
+    const isBad  = (delta>0&&!mc.higherIsBetter)||(delta<0&&mc.higherIsBetter);
+    const deltaClass = delta===0?'delta-zero':isGood?'delta-pos':'delta-neg';
+    const predictedColor = delta===0?'rgba(255,255,255,.7)':isGood?'var(--green)':'var(--red)';
+    const sign = delta>0?'+':'';
+    return `
+      <div class="mp-metric">
+        <span class="mp-metric-name">${mc.label}</span>
+        <div class="mp-vals">
+          <span class="mp-current" style="color:rgba(255,255,255,.45);">${fmt(mc,current)}</span>
+          ${delta!==0?`<span class="mp-arrow">→</span><span class="mp-predicted" style="color:${predictedColor};">${fmt(mc,predicted)}</span>
+          <span class="mp-delta ${deltaClass}">${sign}${delta.toFixed(mc.key==='nps'?0:1)}</span>`:''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  EJECUTAR ESTRATEGIA
+// ════════════════════════════════════════════════════════
+function ejecutarEstrategia() {
+  const round = ROUNDS[sim.currentRound];
+  const btn = document.getElementById('btn-ejecutar');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Ejecutando…';
+
+  setTimeout(()=>{
+    // Calculate new metrics
+    const newMetrics = {...sim.metrics};
+    sim.selected.forEach(id=>{
+      const d = round.decisions.find(x=>x.id===id);
+      Object.keys(newMetrics).forEach(k=>{ if(d.impacto[k]!==undefined) newMetrics[k]+=d.impacto[k]; });
+    });
+    // Clamp
+    newMetrics.nps  = Math.max(0,Math.min(100,newMetrics.nps));
+    newMetrics.otif = Math.max(0,Math.min(100,newMetrics.otif));
+    newMetrics.ces  = Math.max(1,Math.min(7,newMetrics.ces));
+    newMetrics.quiebres = Math.max(0,newMetrics.quiebres);
+    newMetrics.costo = Math.max(0,newMetrics.costo);
+
+    // Calculate score
+    const roundScore = calcularScore(round, sim.selected);
+    sim.scores.push(roundScore);
+    sim.totalScore += roundScore;
+
+    // Render results
+    renderResults(round, sim.metrics, newMetrics, roundScore);
+
+    // Update state
+    sim.metrics = newMetrics;
+
+    showState('state-results');
+  }, 900);
+}
+
+function calcularScore(round, selected) {
+  const totalValor = selected.reduce((sum,id)=>{
+    const d = round.decisions.find(x=>x.id===id);
+    return sum + (d?d.valor:0);
+  },0);
+  // Normalize to 100
+  const maxPossible = round.decisions.reduce((max,d)=>{
+    // Best combination within budget
+    return max + d.valor;
+  },0) / round.decisions.length * 2;
+  return Math.min(100, Math.round((totalValor / maxPossible)*100));
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER RESULTS
+// ════════════════════════════════════════════════════════
+function renderResults(round, oldMetrics, newMetrics, score) {
+  document.getElementById('res-round-tag').textContent = `RONDA 0${round.num} — RESULTADOS`;
+
+  // Grade
+  const grade = score>=80?'A':score>=60?'B':score>=40?'C':'D';
+  const gradeEl = document.getElementById('res-grade');
+  gradeEl.textContent = grade;
+  gradeEl.className = 'score-grade '+grade;
+  document.getElementById('res-pts').textContent = score+' pts';
+
+  // Title based on grade
+  const titles = {A:'Decisión estratégica excelente',B:'Buena estrategia, hay oportunidades',C:'Parcialmente efectivo',D:'Estrategia de alto riesgo'};
+  document.getElementById('res-title').textContent = titles[grade];
+  document.getElementById('res-sub').textContent =
+    `Ronda ${round.num} de 4 completada — así cambiaron las métricas de Odyssey`;
+
+  // Metrics change grid
+  const grid = document.getElementById('metrics-change-grid');
+  grid.innerHTML = METRIC_CONFIG.map(mc=>{
+    const from = oldMetrics[mc.key];
+    const to   = newMetrics[mc.key];
+    const delta = to - from;
+    const isGood = (delta>0&&mc.higherIsBetter)||(delta<0&&!mc.higherIsBetter);
+    const isSame = Math.abs(delta)<0.05;
+    const cls = isSame?'mc-same':isGood?'mc-improved':'mc-worse';
+    const toColor = isSame?'rgba(255,255,255,.7)':isGood?'var(--green)':'var(--red)';
+    const sign = delta>0?'+':'';
+    return `
+      <div class="mc-card animate-in">
+        <div class="mc-label">${mc.label}</div>
+        <div class="mc-values">
+          <span class="mc-from">${fmt(mc,from)}</span>
+          <span class="mc-arrow">→</span>
+          <span class="mc-to" style="color:${toColor};">${fmt(mc,to)}</span>
+        </div>
+        ${!isSame?`<div class="mc-delta ${cls}">${sign}${delta.toFixed(mc.key==='nps'?0:1)}${mc.unit}</div>`:'<div class="mc-delta mc-same">sin cambio</div>'}
+      </div>`;
+  }).join('');
+
+  // Debrief
+  const selectedNames = sim.selected.map(id=>round.decisions.find(x=>x.id===id).titulo).join(', ');
+  document.getElementById('res-debrief').textContent =
+    `Seleccionaste: ${selectedNames||'ninguna'}. ` +
+    (grade==='A'?'Excelente — identificaste las acciones de mayor ROI dentro del presupuesto.':
+     grade==='B'?'Buena estrategia. Hay combinaciones más eficientes pero tu dirección es correcta.':
+     grade==='C'?'La estrategia fue parcialmente efectiva. Revisa qué criterio usarías para priorizar.':
+     'Riesgo alto o retorno bajo. Las métricas no mejorarán lo suficiente para llegar al NPS 70.');
+  document.getElementById('res-optimal').textContent =
+    '💡 Estrategia óptima: '+round.optimalExplain;
+
+  // Next button
+  const isLast = sim.currentRound===3;
+  document.getElementById('btn-sig-text').textContent =
+    isLast?'Ver scorecard final':'Continuar a Ronda '+(round.num+1);
+}
+
+function siguienteRonda() {
+  sim.currentRound++;
+  if(sim.currentRound>=ROUNDS.length) {
+    renderFinal();
+    showState('state-final');
+  } else {
+    renderDecisionScreen();
+    showState('state-decision');
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  FINAL SCORECARD
+// ════════════════════════════════════════════════════════
+function renderFinal() {
+  const startMetrics = { nps:41, costo:12.40, quiebres:11.4, ces:5.4, otif:97.3 };
+  const end = sim.metrics;
+
+  const grid = document.getElementById('final-metrics-grid');
+  grid.innerHTML = METRIC_CONFIG.map(mc=>{
+    const from=startMetrics[mc.key], to=end[mc.key], delta=to-from;
+    const isGood=(delta>0&&mc.higherIsBetter)||(delta<0&&!mc.higherIsBetter);
+    const isSame=Math.abs(delta)<0.05;
+    const col=isSame?'rgba(255,255,255,.4)':isGood?'var(--green)':'var(--red)';
+    const sign=delta>0?'+':'';
+    return `
+      <div class="final-metric">
+        <div class="fm-label">${mc.label}</div>
+        <div class="fm-before">${fmt(mc,from)}</div>
+        <div class="fm-after" style="color:${col};">${fmt(mc,to)}</div>
+        ${!isSame?`<div class="fm-change" style="color:${col};">${sign}${delta.toFixed(1)}${mc.unit}</div>`:''}
+      </div>`;
+  }).join('');
+
+  const avg = Math.round(sim.totalScore/sim.scores.length);
+  const grade = avg>=80?'A':avg>=60?'B':avg>=40?'C':'D';
+  const gradeEl = document.getElementById('final-grade');
+  gradeEl.textContent=grade; gradeEl.className='fsb-grade '+grade;
+  document.getElementById('final-pts').textContent=sim.totalScore+' pts';
+
+  const verdicts={
+    A:'Strategist — Dominas el pensamiento sistémico en cadena.',
+    B:'Analyst — Buenas decisiones, algunas causas raíz sin resolver.',
+    C:'Operator — Atacas síntomas más que causas.',
+    D:'Learner — Revisita los conceptos del módulo.'
+  };
+  document.getElementById('final-verdict').textContent=verdicts[grade];
+  document.getElementById('final-sub').textContent=
+    `NPS: ${startMetrics.nps}→${end.nps.toFixed(0)} pts · Costo: $${startMetrics.costo}→$${end.costo.toFixed(2)}/hl · ${sim.scores.map((s,i)=>'R'+(i+1)+': '+s+'pts').join(' · ')}`;
+}
+
+function reiniciar() {
+  sim.currentRound=0;
+  sim.metrics={nps:41,costo:12.40,quiebres:11.4,ces:5.4,otif:97.3};
+  sim.scores=[];sim.totalScore=0;
+  showState('state-intro');
+}
+</script>
+</body>
+</html>
