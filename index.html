@@ -127,32 +127,38 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
          onerror="this.style.display='none'"/>
   </div>
   <div class="sb-user">
-    <div class="sb-avatar">AG</div>
+    <div class="sb-avatar" id="sb-avatar-initials">AG</div>
     <div>
-      <div class="sb-user-name">Ana García</div>
-      <div class="sb-user-role">Analista de Compras</div>
+      <div class="sb-user-name" id="sb-user-name">Ana García</div>
+      <div class="sb-user-role" id="sb-user-role">Analista de Compras</div>
     </div>
   </div>
-  <nav class="sb-nav">
+
+  <!-- NAV COLABORADOR -->
+  <nav class="sb-nav" id="sb-nav-colaborador">
     <div class="sb-section-label">COMO COLABORADOR</div>
-    <a class="sb-item" data-screen="screen-dashboard" onclick="navigate('screen-dashboard')">
+    <a class="sb-item" data-screen="screen-journey" onclick="navigate('screen-journey')">
       <i class="fas fa-home"></i> Inicio
+    </a>
+    <a class="sb-item" data-screen="screen-dashboard" onclick="navigate('screen-dashboard')">
+      <i class="fas fa-chart-line"></i> Mi progreso
     </a>
     <a class="sb-item" data-screen="screen-modulo" onclick="navigate('screen-modulo')">
       <i class="fas fa-graduation-cap"></i> Mi aprendizaje
     </a>
-    <a class="sb-item" data-screen="screen-assessment-briefing" onclick="navigate('screen-assessment-briefing')">
-      <i class="fas fa-clipboard-check"></i> Evaluaciones
+    <a class="sb-item" data-screen="screen-preferencias" onclick="navigate('screen-preferencias')">
+      <i class="fas fa-sliders"></i> Mi perfil
     </a>
     <a class="sb-item" data-screen="screen-resultados" onclick="navigate('screen-resultados')">
       <i class="fas fa-chart-bar"></i> Mis resultados
     </a>
-    <a class="sb-item" data-screen="screen-preferencias" onclick="navigate('screen-preferencias')">
-      <i class="fas fa-sliders"></i> Mi perfil
-    </a>
-    <div class="sb-section-label" style="margin-top:24px;">ADMINISTRACIÓN</div>
+  </nav>
+
+  <!-- NAV ADMINISTRADOR -->
+  <nav class="sb-nav" id="sb-nav-admin" style="display:none;">
+    <div class="sb-section-label">COMO ADMINISTRADOR</div>
     <a class="sb-item" data-screen="screen-admin-dashboard" onclick="navigate('screen-admin-dashboard')">
-      <i class="fas fa-gauge"></i> Dashboard
+      <i class="fas fa-home"></i> Inicio
     </a>
     <a class="sb-item" data-screen="screen-admin-modulos" onclick="navigate('screen-admin-modulos')">
       <i class="fas fa-book"></i> Módulos
@@ -160,11 +166,11 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
     <a class="sb-item" data-screen="screen-admin-contenido" onclick="navigate('screen-admin-contenido')">
       <i class="fas fa-file-alt"></i> Contenido
     </a>
-    <a class="sb-item" data-screen="screen-admin-empresa-config" onclick="navigate('screen-admin-empresa-config')">
-      <i class="fas fa-building"></i> Empresa
-    </a>
     <a class="sb-item" data-screen="screen-admin-permisos" onclick="navigate('screen-admin-permisos')">
       <i class="fas fa-shield-halved"></i> Permisos
+    </a>
+    <a class="sb-item" data-screen="screen-admin-dashboard" data-tab="calendario" onclick="navigate('screen-admin-dashboard');setTimeout(()=>{const el=document.getElementById('cal-global-section');if(el)el.scrollIntoView({behavior:'smooth'});},300)">
+      <i class="fas fa-calendar"></i> Calendario
     </a>
   </nav>
 </div>

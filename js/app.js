@@ -1158,19 +1158,22 @@ function navigate(screenId) {
     window.scrollTo(0, 0);
   }
 
-  // Sidebar — mostrar/ocultar según pantalla
-  const SIDEBAR_SCREENS = [
-    'screen-dashboard','screen-modulo','screen-resultados','screen-preferencias',
-    'screen-admin-dashboard','screen-admin-contenido','screen-admin-empresa-config',
-    'screen-admin-modulos','screen-admin-permisos','screen-admin-empresas'
-  ];
+  // Sidebar — mostrar/ocultar y cambiar nav según rol
+  const SIDEBAR_COLABORADOR = ['screen-journey','screen-dashboard','screen-modulo','screen-resultados','screen-preferencias','screen-assessment-briefing'];
+  const SIDEBAR_ADMIN = ['screen-admin-dashboard','screen-admin-contenido','screen-admin-empresa-config','screen-admin-modulos','screen-admin-permisos','screen-admin-empresas'];
   const sidebar = document.getElementById('app-sidebar');
   if (sidebar) {
-    const show = SIDEBAR_SCREENS.includes(screenId);
+    const isColaborador = SIDEBAR_COLABORADOR.includes(screenId);
+    const isAdmin = SIDEBAR_ADMIN.includes(screenId);
+    const show = isColaborador || isAdmin;
     sidebar.style.display = show ? 'flex' : 'none';
     document.body.classList.toggle('with-sidebar', show);
+    const navColab = document.getElementById('sb-nav-colaborador');
+    const navAdmin = document.getElementById('sb-nav-admin');
+    if (navColab) navColab.style.display = isAdmin ? 'none' : 'block';
+    if (navAdmin) navAdmin.style.display = isAdmin ? 'block' : 'none';
     sidebar.querySelectorAll('.sb-item').forEach(el => {
-      el.classList.toggle('active', el.dataset.screen === screenId);
+      el.classList.toggle('active', el.dataset.screen === screenId && !el.dataset.tab);
     });
   }
 
