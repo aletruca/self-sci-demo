@@ -1158,6 +1158,22 @@ function navigate(screenId) {
     window.scrollTo(0, 0);
   }
 
+  // Sidebar — mostrar/ocultar según pantalla
+  const SIDEBAR_SCREENS = [
+    'screen-dashboard','screen-modulo','screen-resultados','screen-preferencias',
+    'screen-admin-dashboard','screen-admin-contenido','screen-admin-empresa-config',
+    'screen-admin-modulos','screen-admin-permisos','screen-admin-empresas'
+  ];
+  const sidebar = document.getElementById('app-sidebar');
+  if (sidebar) {
+    const show = SIDEBAR_SCREENS.includes(screenId);
+    sidebar.style.display = show ? 'flex' : 'none';
+    document.body.classList.toggle('with-sidebar', show);
+    sidebar.querySelectorAll('.sb-item').forEach(el => {
+      el.classList.toggle('active', el.dataset.screen === screenId);
+    });
+  }
+
   // Acciones especiales al entrar a pantallas
   if (screenId === 'screen-seleccion-rol') {
     setTimeout(renderRoleCards, 80);
