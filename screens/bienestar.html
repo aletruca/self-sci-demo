@@ -1,0 +1,150 @@
+<!-- ══════════════════════════════════════
+     PANTALLA: MI BIENESTAR
+     Rueda de vida · NOM-035 · Plan de Carrera
+══════════════════════════════════════ -->
+<section id="screen-bienestar" class="screen">
+<div style="padding:32px 24px;flex:1;">
+<div class="container-wide">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px;">
+    <div>
+      <h1 class="page-title">Mi Bienestar</h1>
+      <p class="page-subtitle">Rueda de vida · NOM-035 · Plan integral de carrera</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <span id="bienestar-pts-badge" style="display:none;background:rgba(0,255,136,0.12);border:1px solid rgba(0,255,136,0.3);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:700;color:#00ff88;">
+        <i class="fas fa-star"></i> <span id="bienestar-pts-val">0</span> pts ganados
+      </span>
+    </div>
+  </div>
+
+  <!-- Progress strip -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:32px;">
+    <div id="strip-rueda" class="bw-strip" onclick="scrollToBienestarSection('rueda')">
+      <div class="bw-strip-icon" style="background:rgba(0,216,218,0.12);color:var(--cyan);"><i class="fas fa-circle-half-stroke"></i></div>
+      <div>
+        <div class="bw-strip-title">Rueda de Vida</div>
+        <div class="bw-strip-sub" id="strip-rueda-sub">Pendiente · +50 pts</div>
+      </div>
+      <div id="strip-rueda-check" style="display:none;margin-left:auto;color:#00ff88;font-size:18px;"><i class="fas fa-circle-check"></i></div>
+    </div>
+    <div id="strip-nom" class="bw-strip" onclick="scrollToBienestarSection('nom')">
+      <div class="bw-strip-icon" style="background:rgba(117,114,233,0.12);color:var(--purple);"><i class="fas fa-shield-heart"></i></div>
+      <div>
+        <div class="bw-strip-title">NOM-035</div>
+        <div class="bw-strip-sub" id="strip-nom-sub">Pendiente · +75 pts</div>
+      </div>
+      <div id="strip-nom-check" style="display:none;margin-left:auto;color:#00ff88;font-size:18px;"><i class="fas fa-circle-check"></i></div>
+    </div>
+    <div id="strip-plan" class="bw-strip" onclick="scrollToBienestarSection('plan')">
+      <div class="bw-strip-icon" style="background:rgba(248,0,250,0.1);color:var(--magenta);"><i class="fas fa-rocket"></i></div>
+      <div>
+        <div class="bw-strip-title">Plan de Carrera</div>
+        <div class="bw-strip-sub" id="strip-plan-sub">Completa los anteriores</div>
+      </div>
+      <div id="strip-plan-check" style="display:none;margin-left:auto;color:#00ff88;font-size:18px;"><i class="fas fa-circle-check"></i></div>
+    </div>
+  </div>
+
+  <!-- ① RUEDA DE VIDA -->
+  <div id="bw-section-rueda" class="card" style="margin-bottom:24px;border-color:rgba(0,216,218,0.2);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,216,218,0.1);display:flex;align-items:center;justify-content:center;color:var(--cyan);font-size:16px;flex-shrink:0;"><i class="fas fa-circle-half-stroke"></i></div>
+      <div>
+        <h3 style="margin:0;font-size:17px;font-weight:700;">Rueda de Vida</h3>
+        <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.45);">Evalúa tu nivel de satisfacción en cada área (1 = muy bajo · 10 = pleno)</p>
+      </div>
+      <span style="margin-left:auto;background:rgba(0,255,136,0.1);border:1px solid rgba(0,255,136,0.25);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;color:#00ff88;">+50 pts</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:20px;align-items:start;">
+
+      <!-- Sliders -->
+      <div id="rueda-sliders" style="display:flex;flex-direction:column;gap:14px;">
+      </div>
+
+      <!-- Radar chart -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <canvas id="rueda-chart" width="280" height="280"></canvas>
+        <button id="btn-guardar-rueda" class="btn btn-primary" style="width:100%;" onclick="guardarRueda()">
+          <i class="fas fa-save"></i> Guardar mi rueda de vida
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② NOM-035 -->
+  <div id="bw-section-nom" class="card" style="margin-bottom:24px;border-color:rgba(117,114,233,0.2);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:rgba(117,114,233,0.1);display:flex;align-items:center;justify-content:center;color:var(--purple);font-size:16px;flex-shrink:0;"><i class="fas fa-shield-heart"></i></div>
+      <div>
+        <h3 style="margin:0;font-size:17px;font-weight:700;">Diagnóstico NOM-035</h3>
+        <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.45);">Factores de riesgo psicosocial en el trabajo (STPS · obligatorio)</p>
+      </div>
+      <span style="margin-left:auto;background:rgba(117,114,233,0.1);border:1px solid rgba(117,114,233,0.3);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;color:var(--purple);">+75 pts</span>
+    </div>
+
+    <div id="nom-intro" style="margin-top:16px;">
+      <p style="font-size:14px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:16px;">
+        Este cuestionario identifica los factores de riesgo psicosocial que pueden afectar tu salud y bienestar en el trabajo. Es confidencial y sus resultados te ayudarán a diseñar un plan de acción personalizado.
+      </p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--purple);">35</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">Preguntas</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--cyan);">10</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">Minutos</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:#00ff88);">100%</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:2px;">Confidencial</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="iniciarNOM()">
+        <i class="fas fa-play"></i> Iniciar diagnóstico NOM-035
+      </button>
+    </div>
+
+    <div id="nom-cuestionario" style="display:none;margin-top:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <span style="font-size:13px;color:rgba(255,255,255,0.5);">Pregunta <span id="nom-q-current">1</span> de <span id="nom-q-total">35</span></span>
+        <span style="font-size:13px;color:var(--purple);font-weight:600;" id="nom-categoria-label"></span>
+      </div>
+      <div class="progress-bar-wrap" style="margin-bottom:20px;">
+        <div class="progress-bar-fill" id="nom-progress" style="width:0%;background:var(--purple);"></div>
+      </div>
+      <div class="card" style="background:rgba(117,114,233,0.05);border-color:rgba(117,114,233,0.2);margin-bottom:16px;">
+        <p id="nom-pregunta-texto" style="font-size:15px;font-weight:500;line-height:1.6;margin:0;"></p>
+      </div>
+      <div id="nom-opciones" style="display:flex;flex-direction:column;gap:10px;"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:16px;">
+        <button class="btn btn-secondary btn-sm" id="nom-btn-back" onclick="nomPrev()" style="display:none;"><i class="fas fa-arrow-left"></i> Anterior</button>
+        <button class="btn btn-primary btn-sm" id="nom-btn-next" onclick="nomNext()" style="margin-left:auto;" disabled><i class="fas fa-arrow-right"></i> Siguiente</button>
+      </div>
+    </div>
+
+    <div id="nom-resultado" style="display:none;margin-top:16px;"></div>
+  </div>
+
+  <!-- ③ PLAN INTEGRAL DE CARRERA -->
+  <div id="bw-section-plan" class="card" style="margin-bottom:24px;border-color:rgba(248,0,250,0.2);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+      <div style="width:36px;height:36px;border-radius:10px;background:rgba(248,0,250,0.1);display:flex;align-items:center;justify-content:center;color:var(--magenta);font-size:16px;flex-shrink:0;"><i class="fas fa-rocket"></i></div>
+      <div>
+        <h3 style="margin:0;font-size:17px;font-weight:700;">Plan Integral de Carrera</h3>
+        <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.45);">Tu hoja de ruta personalizada basada en diagnóstico SCI + bienestar</p>
+      </div>
+    </div>
+    <div id="plan-locked" style="margin-top:16px;text-align:center;padding:32px;">
+      <div style="font-size:48px;margin-bottom:12px;">🔒</div>
+      <p style="color:rgba(255,255,255,0.4);font-size:14px;">Completa la Rueda de Vida y el diagnóstico NOM-035 para desbloquear tu plan integral de carrera.</p>
+    </div>
+    <div id="plan-contenido" style="display:none;margin-top:16px;"></div>
+  </div>
+
+</div>
+</div>
+</section>

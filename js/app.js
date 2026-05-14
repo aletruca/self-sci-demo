@@ -1159,7 +1159,7 @@ function navigate(screenId) {
   }
 
   // Sidebar — mostrar/ocultar y cambiar nav según rol
-  const SIDEBAR_COLABORADOR = ['screen-journey','screen-dashboard','screen-modulo','screen-resultados','screen-preferencias','screen-assessment-briefing'];
+  const SIDEBAR_COLABORADOR = ['screen-journey','screen-dashboard','screen-modulo','screen-resultados','screen-preferencias','screen-assessment-briefing','screen-bienestar'];
   const SIDEBAR_ADMIN = ['screen-admin-dashboard','screen-admin-contenido','screen-admin-empresa-config','screen-admin-modulos','screen-admin-permisos','screen-admin-empresas'];
   const sidebar = document.getElementById('app-sidebar');
   if (sidebar) {
@@ -1217,6 +1217,9 @@ function navigate(screenId) {
   }
   if (screenId === 'screen-admin-permisos') {
     setTimeout(renderPermisosTabla, 80);
+  }
+  if (screenId === 'screen-bienestar') {
+    setTimeout(initBienestar, 150);
   }
 }
 
@@ -6745,3 +6748,365 @@ function simCasoSubmit(diaNum) {
 }
 
 
+
+// ══════════════════════════════════════════════════════════════
+//  MI BIENESTAR — Rueda de Vida · NOM-035 · Plan de Carrera
+// ══════════════════════════════════════════════════════════════
+
+// ── Estado bienestar ──
+const bienestarState = {
+  rueda: { completada: false, valores: {} },
+  nom:   { completada: false, respuestas: [], riesgo: null, indiceActual: 0 },
+  plan:  { generado: false }
+};
+
+// ── Dimensiones rueda de vida ──
+const RUEDA_DIMS = [
+  { id: 'trabajo',    label: 'Trabajo & Carrera',   color: 'rgba(0,216,218,0.8)' },
+  { id: 'salud',      label: 'Salud & Energía',      color: 'rgba(0,255,136,0.8)' },
+  { id: 'familia',    label: 'Familia',               color: 'rgba(117,114,233,0.8)' },
+  { id: 'social',     label: 'Vida Social',           color: 'rgba(248,0,250,0.8)' },
+  { id: 'finanzas',   label: 'Finanzas',              color: 'rgba(255,200,60,0.8)' },
+  { id: 'desarrollo', label: 'Desarrollo Personal',   color: 'rgba(255,120,60,0.8)' },
+  { id: 'ocio',       label: 'Ocio & Descanso',       color: 'rgba(60,180,255,0.8)' },
+  { id: 'proposito',  label: 'Propósito & Sentido',   color: 'rgba(255,60,120,0.8)' },
+];
+
+// ── Preguntas NOM-035 (35 preguntas, 5 categorías) ──
+const NOM_PREGUNTAS = [
+  // Ambiente laboral
+  { cat:'Ambiente laboral', texto:'¿Tu área de trabajo tiene las condiciones físicas adecuadas (iluminación, temperatura, espacio)?' },
+  { cat:'Ambiente laboral', texto:'¿Cuentas con las herramientas y equipos necesarios para realizar tu trabajo?' },
+  { cat:'Ambiente laboral', texto:'¿Tu entorno de trabajo está libre de ruidos excesivos que dificulten tu concentración?' },
+  { cat:'Ambiente laboral', texto:'¿El espacio físico donde trabajas te permite realizar tus actividades de forma segura?' },
+  { cat:'Ambiente laboral', texto:'¿Las condiciones de tu lugar de trabajo generan estrés o malestar físico?' },
+  { cat:'Ambiente laboral', texto:'¿Puedes trabajar sin interrupciones excesivas que afecten tu productividad?' },
+  { cat:'Ambiente laboral', texto:'¿El ambiente de trabajo promueve tu bienestar físico y emocional?' },
+  // Carga de trabajo
+  { cat:'Carga de trabajo', texto:'¿La cantidad de trabajo que tienes es manejable dentro de tu jornada laboral?' },
+  { cat:'Carga de trabajo', texto:'¿Tienes suficiente tiempo para completar tus tareas sin trabajar horas extras constantemente?' },
+  { cat:'Carga de trabajo', texto:'¿Tus responsabilidades y funciones están claramente definidas?' },
+  { cat:'Carga de trabajo', texto:'¿Puedes tomarte descansos durante tu jornada laboral?' },
+  { cat:'Carga de trabajo', texto:'¿El ritmo de trabajo es razonable y no te genera agotamiento?' },
+  { cat:'Carga de trabajo', texto:'¿Tienes control sobre cómo organizas y priorizas tu trabajo?' },
+  { cat:'Carga de trabajo', texto:'¿Puedes desconectarte del trabajo fuera de tu horario laboral?' },
+  // Relaciones laborales
+  { cat:'Relaciones laborales', texto:'¿Tu relación con tu jefe directo es respetuosa y profesional?' },
+  { cat:'Relaciones laborales', texto:'¿Recibes retroalimentación constructiva sobre tu desempeño?' },
+  { cat:'Relaciones laborales', texto:'¿Tus compañeros de trabajo colaboran contigo de manera positiva?' },
+  { cat:'Relaciones laborales', texto:'¿Te sientes respetado/a por tus compañeros y superiores?' },
+  { cat:'Relaciones laborales', texto:'¿Has experimentado situaciones de conflicto frecuente con alguien en el trabajo?' },
+  { cat:'Relaciones laborales', texto:'¿La comunicación en tu equipo es clara y efectiva?' },
+  { cat:'Relaciones laborales', texto:'¿Te sientes incluido/a y valorado/a en tu equipo de trabajo?' },
+  // Reconocimiento y desarrollo
+  { cat:'Reconocimiento', texto:'¿Tu trabajo es reconocido y valorado por tu organización?' },
+  { cat:'Reconocimiento', texto:'¿Tienes oportunidades de crecimiento y desarrollo profesional en tu empresa?' },
+  { cat:'Reconocimiento', texto:'¿Tu salario y beneficios son acordes a tu responsabilidad y esfuerzo?' },
+  { cat:'Reconocimiento', texto:'¿Sientes que tu trabajo contribuye a los objetivos de la organización?' },
+  { cat:'Reconocimiento', texto:'¿Tu empresa invierte en tu formación y capacitación?' },
+  { cat:'Reconocimiento', texto:'¿Tienes claridad sobre tu trayectoria y posibilidades de crecimiento?' },
+  { cat:'Reconocimiento', texto:'¿Te sientes comprometido/a con el trabajo que realizas?' },
+  // Bienestar emocional
+  { cat:'Bienestar emocional', texto:'¿Puedes manejar el estrés que genera tu trabajo sin afectar tu vida personal?' },
+  { cat:'Bienestar emocional', texto:'¿Tu trabajo te genera satisfacción y motivación la mayoría de los días?' },
+  { cat:'Bienestar emocional', texto:'¿Sientes que tienes un equilibrio adecuado entre tu vida laboral y personal?' },
+  { cat:'Bienestar emocional', texto:'¿Puedes expresar tus opiniones y preocupaciones en el trabajo sin temor?' },
+  { cat:'Bienestar emocional', texto:'¿Duermes bien y te recuperas adecuadamente después de tu jornada laboral?' },
+  { cat:'Bienestar emocional', texto:'¿Te sientes con energía y motivación al comenzar tu jornada laboral?' },
+  { cat:'Bienestar emocional', texto:'¿Tu trabajo te genera sensación de bienestar y realización personal?' },
+];
+
+const NOM_OPCIONES = [
+  { label: 'Siempre',        valor: 4 },
+  { label: 'Casi siempre',   valor: 3 },
+  { label: 'Algunas veces',  valor: 2 },
+  { label: 'Casi nunca',     valor: 1 },
+  { label: 'Nunca',          valor: 0 },
+];
+
+// ── Init pantalla bienestar ──
+function initBienestar() {
+  renderRuedaSliders();
+  renderRuedaChart();
+}
+
+// ── Rueda de vida ──
+function renderRuedaSliders() {
+  const cont = document.getElementById('rueda-sliders');
+  if (!cont) return;
+  cont.innerHTML = RUEDA_DIMS.map(d => {
+    const val = bienestarState.rueda.valores[d.id] || 5;
+    return `
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:13px;color:rgba(255,255,255,0.7);">${d.label}</span>
+        <span id="rueda-val-${d.id}" style="font-size:13px;font-weight:700;color:${d.color};">${val}</span>
+      </div>
+      <input type="range" min="1" max="10" value="${val}"
+        style="width:100%;accent-color:${d.color};"
+        oninput="updateRuedaDim('${d.id}',this.value)"
+      />
+    </div>`;
+  }).join('');
+}
+
+function updateRuedaDim(id, val) {
+  bienestarState.rueda.valores[id] = parseInt(val);
+  const lbl = document.getElementById(`rueda-val-${id}`);
+  if (lbl) lbl.textContent = val;
+  renderRuedaChart();
+}
+
+let ruedaChartInstance = null;
+function renderRuedaChart() {
+  const canvas = document.getElementById('rueda-chart');
+  if (!canvas) return;
+  const data = RUEDA_DIMS.map(d => bienestarState.rueda.valores[d.id] || 5);
+  const labels = RUEDA_DIMS.map(d => d.label);
+  if (ruedaChartInstance) ruedaChartInstance.destroy();
+  ruedaChartInstance = new Chart(canvas, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Mi bienestar',
+        data,
+        backgroundColor: 'rgba(0,216,218,0.15)',
+        borderColor: 'rgba(0,216,218,0.8)',
+        borderWidth: 2,
+        pointBackgroundColor: 'rgba(0,216,218,1)',
+        pointRadius: 4,
+      }]
+    },
+    options: {
+      responsive: false,
+      scales: {
+        r: {
+          min: 0, max: 10,
+          ticks: { stepSize: 2, color: 'rgba(255,255,255,0.3)', font: { size: 10 } },
+          grid: { color: 'rgba(255,255,255,0.08)' },
+          angleLines: { color: 'rgba(255,255,255,0.08)' },
+          pointLabels: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } },
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+function guardarRueda() {
+  bienestarState.rueda.completada = true;
+  // Strip check
+  const check = document.getElementById('strip-rueda-check');
+  const sub   = document.getElementById('strip-rueda-sub');
+  if (check) check.style.display = 'block';
+  if (sub)   sub.textContent = 'Completada ✓';
+  // Puntos
+  agregarPtsBienestar(50, 'Rueda de Vida completada');
+  // Unlock plan si ambos completos
+  checkPlanUnlock();
+  showToast('🎉 ¡Rueda de vida guardada! +50 pts', 'success');
+}
+
+// ── NOM-035 ──
+function iniciarNOM() {
+  bienestarState.nom.respuestas = new Array(NOM_PREGUNTAS.length).fill(null);
+  bienestarState.nom.indiceActual = 0;
+  document.getElementById('nom-intro').style.display = 'none';
+  document.getElementById('nom-cuestionario').style.display = 'block';
+  renderNOMPregunta();
+}
+
+function renderNOMPregunta() {
+  const idx = bienestarState.nom.indiceActual;
+  const p   = NOM_PREGUNTAS[idx];
+  document.getElementById('nom-q-current').textContent = idx + 1;
+  document.getElementById('nom-q-total').textContent = NOM_PREGUNTAS.length;
+  document.getElementById('nom-categoria-label').textContent = p.cat;
+  document.getElementById('nom-pregunta-texto').textContent = p.texto;
+  document.getElementById('nom-progress').style.width = `${((idx) / NOM_PREGUNTAS.length) * 100}%`;
+  document.getElementById('nom-btn-back').style.display = idx > 0 ? 'inline-flex' : 'none';
+  document.getElementById('nom-btn-next').disabled = bienestarState.nom.respuestas[idx] === null;
+  document.getElementById('nom-btn-next').textContent = idx === NOM_PREGUNTAS.length - 1 ? 'Ver resultado' : 'Siguiente →';
+
+  const respActual = bienestarState.nom.respuestas[idx];
+  document.getElementById('nom-opciones').innerHTML = NOM_OPCIONES.map((o, oi) => `
+    <div onclick="seleccionarNOM(${oi})" style="
+      padding:12px 16px;border-radius:10px;cursor:pointer;transition:all 0.18s;
+      background:${respActual === oi ? 'rgba(117,114,233,0.2)' : 'rgba(255,255,255,0.04)'};
+      border:1px solid ${respActual === oi ? 'rgba(117,114,233,0.6)' : 'rgba(255,255,255,0.08)'};
+      color:${respActual === oi ? 'var(--purple)' : 'rgba(255,255,255,0.7)'};
+      font-size:14px;font-weight:${respActual === oi ? '600' : '400'};
+    ">
+      ${respActual === oi ? '<i class="fas fa-circle-dot" style="margin-right:8px;"></i>' : '<i class="far fa-circle" style="margin-right:8px;opacity:0.4;"></i>'}
+      ${o.label}
+    </div>
+  `).join('');
+}
+
+function seleccionarNOM(opcionIdx) {
+  bienestarState.nom.respuestas[bienestarState.nom.indiceActual] = opcionIdx;
+  document.getElementById('nom-btn-next').disabled = false;
+  renderNOMPregunta();
+}
+
+function nomNext() {
+  const idx = bienestarState.nom.indiceActual;
+  if (idx === NOM_PREGUNTAS.length - 1) {
+    calcularNOM();
+  } else {
+    bienestarState.nom.indiceActual++;
+    renderNOMPregunta();
+  }
+}
+
+function nomPrev() {
+  if (bienestarState.nom.indiceActual > 0) {
+    bienestarState.nom.indiceActual--;
+    renderNOMPregunta();
+  }
+}
+
+function calcularNOM() {
+  const respuestas = bienestarState.nom.respuestas;
+  const total = respuestas.reduce((sum, r) => sum + (r !== null ? NOM_OPCIONES[r].valor : 0), 0);
+  const maxPts = NOM_PREGUNTAS.length * 4;
+  const pct = (total / maxPts) * 100;
+
+  let nivel, color, icon, desc, recomendaciones;
+  if (pct >= 75) {
+    nivel = 'Bajo riesgo'; color = '#00ff88'; icon = 'fa-circle-check';
+    desc = 'Tu entorno laboral presenta condiciones favorables para tu bienestar. Continúa fortaleciendo los hábitos positivos.';
+    recomendaciones = ['Mantén la comunicación abierta con tu equipo','Sigue priorizando el equilibrio vida-trabajo','Comparte tus prácticas positivas con tu equipo'];
+  } else if (pct >= 50) {
+    nivel = 'Riesgo medio'; color = '#ffc83c'; icon = 'fa-triangle-exclamation';
+    desc = 'Existen algunos factores de riesgo que merecen atención. Con acciones concretas puedes mejorar tu bienestar laboral.';
+    recomendaciones = ['Habla con tu manager sobre la carga de trabajo','Establece límites claros para tu tiempo fuera del trabajo','Identifica las 2 áreas con mayor impacto y crea un plan'];
+  } else {
+    nivel = 'Riesgo alto'; color = '#ff6b6b'; icon = 'fa-circle-exclamation';
+    desc = 'Se detectaron factores de riesgo significativos. Es importante tomar acciones y buscar apoyo para mejorar tu bienestar.';
+    recomendaciones = ['Agenda una conversación con tu manager o RRHH','Busca apoyo del programa de bienestar de tu empresa','Prioriza tu autocuidado: sueño, alimentación y descanso'];
+  }
+
+  bienestarState.nom.completada = true;
+  bienestarState.nom.riesgo = nivel;
+
+  document.getElementById('nom-cuestionario').style.display = 'none';
+  document.getElementById('nom-resultado').style.display = 'block';
+  document.getElementById('nom-resultado').innerHTML = `
+    <div style="text-align:center;padding:24px 0 16px;">
+      <i class="fas ${icon}" style="font-size:48px;color:${color};margin-bottom:12px;display:block;"></i>
+      <div style="font-size:22px;font-weight:800;color:${color};margin-bottom:6px;">${nivel}</div>
+      <p style="font-size:14px;color:rgba(255,255,255,0.6);max-width:500px;margin:0 auto 20px;">${desc}</p>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:0.06em;margin-bottom:10px;">RECOMENDACIONES</div>
+      ${recomendaciones.map(r => `
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:13px;color:rgba(255,255,255,0.7);">
+          <i class="fas fa-arrow-right" style="color:${color};margin-top:3px;flex-shrink:0;font-size:11px;"></i>${r}
+        </div>`).join('')}
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.04);border-radius:10px;padding:12px 16px;">
+      <span style="font-size:13px;color:rgba(255,255,255,0.5);">Puntaje: ${total}/${maxPts} · ${Math.round(pct)}% favorable</span>
+      <span style="background:rgba(117,114,233,0.15);border:1px solid rgba(117,114,233,0.3);border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;color:var(--purple);">+75 pts</span>
+    </div>
+  `;
+
+  // Strip
+  const check = document.getElementById('strip-nom-check');
+  const sub   = document.getElementById('strip-nom-sub');
+  if (check) check.style.display = 'block';
+  if (sub)   sub.textContent = `${nivel} · Completado ✓`;
+
+  agregarPtsBienestar(75, 'NOM-035 completado');
+  checkPlanUnlock();
+  showToast(`✅ NOM-035 completado · ${nivel} · +75 pts`, 'success');
+}
+
+// ── Plan integral de carrera ──
+function checkPlanUnlock() {
+  if (!bienestarState.rueda.completada || !bienestarState.nom.completada) return;
+  generarPlanCarrera();
+}
+
+function generarPlanCarrera() {
+  const locked  = document.getElementById('plan-locked');
+  const cont    = document.getElementById('plan-contenido');
+  const strip   = document.getElementById('strip-plan-sub');
+  const check   = document.getElementById('strip-plan-check');
+  if (locked) locked.style.display = 'none';
+  if (cont)   cont.style.display = 'block';
+  if (strip)  strip.textContent = 'Generado ✓';
+  if (check)  check.style.display = 'block';
+
+  // Calcular dimensión más baja de rueda
+  const vals = Object.entries(bienestarState.rueda.valores);
+  const lowest = vals.sort((a,b) => a[1]-b[1])[0];
+  const dimLow = RUEDA_DIMS.find(d => d.id === lowest?.[0])?.label || 'Bienestar general';
+  const riesgo = bienestarState.nom.riesgo || 'Bajo riesgo';
+  const rColor = riesgo === 'Bajo riesgo' ? '#00ff88' : riesgo === 'Riesgo medio' ? '#ffc83c' : '#ff6b6b';
+
+  cont.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-bottom:20px;">
+      <div style="background:rgba(0,216,218,0.06);border:1px solid rgba(0,216,218,0.2);border-radius:12px;padding:16px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:rgba(255,255,255,0.35);margin-bottom:8px;">NIVEL SCI ACTUAL</div>
+        <div style="font-size:20px;font-weight:800;color:var(--cyan);">Nivel 2 — Competente</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;">Diagnóstico: 62% · Connected Customer</div>
+      </div>
+      <div style="background:rgba(117,114,233,0.06);border:1px solid rgba(117,114,233,0.2);border-radius:12px;padding:16px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:rgba(255,255,255,0.35);margin-bottom:8px;">BIENESTAR NOM-035</div>
+        <div style="font-size:20px;font-weight:800;color:${rColor};">${riesgo}</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;">Área de atención: ${dimLow}</div>
+      </div>
+      <div style="background:rgba(248,0,250,0.06);border:1px solid rgba(248,0,250,0.2);border-radius:12px;padding:16px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;color:rgba(255,255,255,0.35);margin-bottom:8px;">OBJETIVO A 6 MESES</div>
+        <div style="font-size:20px;font-weight:800;color:var(--magenta);">Nivel 3 — Proficiente</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:4px;">+2 módulos SCI · Rueda ≥ 7.5 promedio</div>
+      </div>
+    </div>
+
+    <div style="font-size:14px;font-weight:700;color:rgba(255,255,255,0.6);margin-bottom:12px;letter-spacing:0.04em;">HOJA DE RUTA — PRÓXIMOS 6 MESES</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+      ${[
+        { mes:'Mes 1–2', titulo:'Fortalecer bases técnicas', desc:'Completar Módulo 2 (Dynamic Fulfillment) · Aplicar rueda de vida mensual', color:'var(--cyan)', icon:'fa-graduation-cap' },
+        { mes:'Mes 2–3', titulo:'Atender bienestar: '+dimLow, desc:'Plan de acción para el área con menor puntuación · Sesión con mentor', color:'var(--purple)', icon:'fa-heart' },
+        { mes:'Mes 3–4', titulo:'Módulo 3 + proyecto aplicado', desc:'Smart Operations · Proyecto de mejora en tu área actual', color:'var(--magenta)', icon:'fa-rocket' },
+        { mes:'Mes 5–6', titulo:'Evaluación de impacto', desc:'NOM-035 de seguimiento · Assessment Nivel 3 · Actualizar plan de carrera', color:'#00ff88', icon:'fa-chart-line' },
+      ].map(step => `
+        <div style="display:flex;gap:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px;align-items:flex-start;">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;color:${step.color};flex-shrink:0;">
+            <i class="fas ${step.icon}"></i>
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+              <span style="font-size:11px;font-weight:700;color:${step.color};">${step.mes}</span>
+              <span style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.85);">${step.titulo}</span>
+            </div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.45);">${step.desc}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+    <button class="btn btn-primary" onclick="navigate('screen-journey')">
+      <i class="fas fa-arrow-right"></i> Ver mi Journey actualizado
+    </button>
+  `;
+
+  bienestarState.plan.generado = true;
+  showToast('🚀 Plan integral de carrera generado', 'success');
+}
+
+// ── Utilidades ──
+function scrollToBienestarSection(id) {
+  const el = document.getElementById(`bw-section-${id}`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function agregarPtsBienestar(pts, motivo) {
+  const badge = document.getElementById('bienestar-pts-badge');
+  const val   = document.getElementById('bienestar-pts-val');
+  if (!badge || !val) return;
+  const actual = parseInt(val.textContent) || 0;
+  val.textContent = actual + pts;
+  badge.style.display = 'inline-flex';
+  if (typeof showFloatingPoints === 'function') showFloatingPoints(pts);
+}

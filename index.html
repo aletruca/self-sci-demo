@@ -146,6 +146,9 @@ if (sessionStorage.getItem('sci-demo-auth') === '1') {
     <a class="sb-item" data-screen="screen-modulo" onclick="navigate('screen-modulo')">
       <i class="fas fa-graduation-cap"></i> Mi aprendizaje
     </a>
+    <a class="sb-item" data-screen="screen-bienestar" onclick="navigate('screen-bienestar')">
+      <i class="fas fa-heart-pulse"></i> Mi bienestar
+    </a>
     <a class="sb-item" data-screen="screen-preferencias" onclick="navigate('screen-preferencias')">
       <i class="fas fa-sliders"></i> Mi perfil
     </a>
@@ -956,7 +959,8 @@ async function loadScreens() {
   const files = [
     'screens/journey.html',
     'screens/dashboard.html',
-    'screens/admin.html'
+    'screens/admin.html',
+    'screens/bienestar.html'
   ];
   const container = document.getElementById('screens-ext');
   for (const f of files) {
